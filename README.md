@@ -23,3 +23,14 @@ This has the added advantage of being lower latency, at the cost of a loss of ab
 The repository is built on DynamoDB. This is merely out of convenience of having that database already present in the infrastructure (again, not wanting to run too many services), not because we need the inherent scale. In fact, the eventually consistent model is suboptimal for our use case as we would like to have easily understood, step-wise schema evolution; we avoid that by using consistent reads.
 
 Honestly, schema shouldn't be that large or changing super frequently - a traditional, single node RDBMS would be more than enough for quite a while ($$$ is tough).
+
+###### Security
+
+Schema is just as important as the actual data and must be encrypted at all times - on the wire, at rest and backups.
+
+Schema changes are monitored just as any other access to the platform (through the realtime stream, stored in NODS and CAS). This means we can monitor and audit all schema changes.
+
+###### Backups
+
+Since schema changes are proliferated through the platform, we can also set them aside in S3 for a special set of backups. Schema backups are different from other events because they need to be replayed differently.
+
