@@ -34,3 +34,12 @@ Schema changes are monitored just as any other access to the platform (through t
 
 Since schema changes are proliferated through the platform, we can also set them aside in S3 for a special set of backups. Schema backups are different from other events because they need to be replayed differently.
 
+## Tests
+
+Tests rely on a local dynamoDB instance to be stood up - this is handled as part of the tests, but relies on maven to copy the SQLlite jars to target/dependencies. Thus, to run tests, do:
+
+```
+ $ mvn clean test
+```
+
+This will also setup the target/ directory so you can run tests from the IDE.
