@@ -1,0 +1,27 @@
+{
+  "namespace" : "io.fineo.internal.customer.metric",
+  "name": "MetricMetadata",
+  "type" : "record",
+  "fields" : [
+    {"name" : "cannonicalname", "type": "string"},
+    {"name" : "aliases", "type" :[ "null", {"type": "array", "items" :"string"}]},
+    {
+      "name" : "schema", "type" : "string",
+      "doc": "The actual storage of the schema for the record"
+    },
+    {"name" : "fieldMap", "type" : {
+      "type": "array", "items": {
+        "type" : "record",
+        "name" : "MetricField",
+        "fields" : [
+          {
+            "name" : "canonicalName", "type": "string",
+            "doc" : "The name used in the schema file to identify the field"
+          },
+          {"name" : "aliases", "type": {"type": "array", "items" :"string"}}
+          ]
+        }
+      }
+    }
+  ]
+}

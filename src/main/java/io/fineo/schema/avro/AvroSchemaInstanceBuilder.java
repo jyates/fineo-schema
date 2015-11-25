@@ -6,9 +6,12 @@ import javafx.util.Pair;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Build a Fineo-style schema.
@@ -24,54 +27,63 @@ public class AvroSchemaInstanceBuilder {
 
   public static final String PARENT_NAME_PREFIX = "p";
   private static final String FIELD_NAME_PREFIX = "f";
+
+  private static final String BASE_SCHEMA_TYPE = "io.fineo.internal.customer.BaseRecord";
+  private final String BASE_SCHEMA_FILE = "avro/base-metric.avsc";
+  private final Schema base;
   private String namespace;
-  private String schemaName;
   private List<AvroFieldBuilder> fields = new ArrayList<>();
-  private List<String> names = new ArrayList<>(1);
   private SchemaNameGenerator generator = new SchemaNameGenerator();
+
+  public AvroSchemaInstanceBuilder() throws IOException {
+    Schema.Parser parser = new Schema.Parser();
+    parser.parse(getFile(BASE_SCHEMA_FILE));
+    this.base = parser.getTypes().get(BASE_SCHEMA_TYPE);
+  }
+
+  public AvroSchemaInstanceBuilder(Schema base) {
+    this.base = base;
+  }
+
+  private File getFile(String testPath) {
+    ClassLoader classLoader = getClass().getClassLoader();
+    return new File(classLoader.getResource(testPath).getFile());
+  }
 
   public AvroSchemaInstanceBuilder withNamespace(String customerId) {
     this.namespace = SchemaUtils.getCustomerNamespace(customerId);
     return this;
   }
 
-  /**
-   * Set the names used in the schema. Can be used multiple times to specify the aliases, with
-   * the last specified name as the 'display name' for the user.
-   *
-   * @param schemaName names that the schema can be known by
-   * @return this
-   */
-  public AvroSchemaInstanceBuilder withSchemaName(String schemaName) {
-    this.names.add(schemaName);
-    return this;
+  public AvroFieldBuilder newField() {
+    AvroFieldBuilder field = new AvroFieldBuilder();
+    this.fields.add(field);
+    return field;
   }
 
-  public static AvroFieldBuilder newField() {
-    return new AvroFieldBuilder();
-  }
-
-  public AvroSchemaInstanceBuilder withField(AvroFieldBuilder fieldBuilder) {
-    this.fields.add(fieldBuilder);
-    return this;
-  }
-
-  public SchemaDescription build() {
+  public Schema build() {
     String schemaName = generator.generateSchemaName();
     SchemaBuilder.RecordBuilder<Schema> builder = SchemaBuilder.record(schemaName).namespace(
       namespace);
-    SchemaBuilder.FieldAssembler<Schema> assembler = builder.fields();
-    assembler = addAliasArray(assembler);
+    final SchemaBuilder.FieldAssembler<Schema> assembler = builder.fields();
+    // add the fields in the base record
+    this.base.getFields().stream()
+             .forEach(field -> {
+               assembler.name(field.name()).type(field.schema()).noDefault();
+             });
+
 
     // add each field from the field builder
-    int i = 0;
     List<Pair<String, String>> fieldAliases = new ArrayList<>();
     for (AvroFieldBuilder field : fields) {
-      assembler = field.build(i++, assembler);
+      field.build(assembler);
       fieldAliases.add(new Pair<>(field.name, field.id));
     }
-    Schema schema = assembler.endRecord();
-    return new SchemaDescription(schema, names, fieldAliases);
+    return assembler.endRecord();
+  }
+
+  public Collection<String> getBaseFieldNames() {
+    return this.base.getFields().stream().map(field -> field.name()).collect(Collectors.toList());
   }
 
   @VisibleForTesting
@@ -99,22 +111,9 @@ public class AvroSchemaInstanceBuilder {
       return this;
     }
 
-    public SchemaBuilder.FieldAssembler<Schema> build(int index,
+    private SchemaBuilder.FieldAssembler<Schema> build(
       SchemaBuilder.FieldAssembler<Schema> assembler) {
-      String name = FIELD_NAME_PREFIX + index;
-      this.id = name;
-      SchemaBuilder.FieldAssembler<SchemaBuilder.RecordDefault<Schema>> building = assembler
-        .name(name).type().record(name)
-        .fields()
-        .name("value").type(this.type).noDefault()
-        .name("hidden").type().nullable().booleanType().noDefault()
-        .name("hidden_time").type().nullable().longType().noDefault();
-      return addAliasArray(building).endRecord().noDefault();
+      return assembler.name(name).type(type).noDefault();
     }
-  }
-
-  private static <R> SchemaBuilder.FieldAssembler<R> addAliasArray(
-    SchemaBuilder.FieldAssembler<R> assembler) {
-    return assembler.name("aliases").type().array().items().stringType().noDefault();
   }
 }
