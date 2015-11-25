@@ -13,6 +13,8 @@
     <aws.java.sdk.version>[1.10.5.1, 2.0.0)</aws.java.sdk.version>
     <aws.dynamodb.local.version>1.10.5.1</aws.dynamodb.local.version>
 
+    <avro.version>1.7.7</avro.version>
+
     <!-- Test dependencies -->
     <junit.version>4.12</junit.version>
     <surefire.version>2.19</surefire.version>
@@ -52,7 +54,9 @@
           <configuration>
             <redirectTestOutputToFile>${test.output.to.file}</redirectTestOutputToFile>
             <skip>true</skip>
-            <argLine>-enableassertions -Djava.security.egd=file:/dev/./urandom -Dsqlite4java.library.path=${project.build.directory}/dependencies</argLine>
+            <argLine>-enableassertions -Djava.security.egd=file:/dev/./urandom
+              -Dsqlite4java.library.path=${project.build.directory}/dependencies
+            </argLine>
             <excludes>
               <!-- users can add -D option to skip particular test classes
              ex: mvn test -Dtest.exclude.pattern=**/TestFoo.java,**/TestBar.java
@@ -112,10 +116,37 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Add the test/avro file to the resources so we can reference it in the tests -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.3</version>
+        <executions>
+          <execution>
+            <id>add-test-resource</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>src/test/avro</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${avro.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.schemarepo</groupId>
       <artifactId>schema-repo-common</artifactId>
@@ -149,12 +180,12 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-      <dependency>
-        <groupId>com.amazonaws</groupId>
-        <artifactId>DynamoDBLocal</artifactId>
-        <version>${aws.dynamodb.local.version}</version>
-        <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>DynamoDBLocal</artifactId>
+      <version>${aws.dynamodb.local.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.fineo.aws</groupId>
       <artifactId>aws-common</artifactId>
