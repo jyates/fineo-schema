@@ -6,6 +6,7 @@ import io.fineo.internal.customer.metric.MetricMetadata;
 import io.fineo.internal.customer.metric.OrganizationMetadata;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
+import io.fineo.schema.avro.SchemaUtils;
 import javafx.util.Pair;
 import org.apache.avro.Schema;
 
@@ -22,7 +23,9 @@ public class SchemaBuilder {
 
   public static final String ORG_ID_KEY = "companykey";
   public static final String ORG_METRIC_TYPE_KEY = "metrictype";
-  /** name of the field in the base-metric.avsc that stores a map of the unknown fields */
+  /**
+   * name of the field in the base-metric.avsc that stores a map of the unknown fields
+   */
   public static final String UNKNWON_KEYS = "unknown_fields";
 
   public SchemaBuilder(SchemaNameGenerator gen) {
@@ -35,53 +38,75 @@ public class SchemaBuilder {
     return new OrganizationBuilder(orgID);
   }
 
-  public OrganizationBuilder updateOrg(OrganizationMetadata org) {
+  public OrganizationBuilder updateOrg(Organization org) {
     return new OrganizationBuilder(org);
   }
 
-  public class OrganizationBuilder {
-    private final List<CharSequence> fields = new ArrayList<>();
-    private final OrganizationMetadata.Builder org;
+  public class Organization {
+    private final OrganizationMetadata metadata;
+    private final List<MetricMetadata> schemas;
 
-    public OrganizationBuilder(OrganizationMetadata org) {
-      fields.addAll(org.getFieldTypes());
-      this.org = OrganizationMetadata.newBuilder(org);
+    private Organization(OrganizationMetadata metadata, List<MetricMetadata> schemas) {
+      this.metadata = metadata;
+      this.schemas = schemas;
+    }
+
+    public OrganizationMetadata getMetadata() {
+      return metadata;
+    }
+
+    public List<MetricMetadata> getSchemas() {
+      return schemas;
+    }
+  }
+
+  public class OrganizationBuilder {
+    private final List<CharSequence> canonicalFieldNames = new ArrayList<>();
+    private final OrganizationMetadata.Builder org;
+    private List<MetricMetadata> schemas = new ArrayList<>();
+
+    public OrganizationBuilder(Organization org) {
+      org.getSchemas().forEach(metric -> addMetadata(metric));
+      this.org = OrganizationMetadata.newBuilder(org.getMetadata());
     }
 
     public OrganizationBuilder(String id) {
       this.org = OrganizationMetadata.newBuilder().setOrgId(id);
     }
 
-    public OrganizationBuilder addMetadata(MetricMetadata metadata) {
+    private OrganizationBuilder addMetadata(MetricMetadata metadata) {
       CharSequence id = metadata.getCannonicalname();
-      if (fields.contains(id)) {
+      if (canonicalFieldNames.contains(id)) {
         throw new IllegalArgumentException("Already have a field with that id!");
       }
-      fields.add(id);
+      canonicalFieldNames.add(id);
+      schemas.add(metadata);
       return this;
     }
 
-    public OrganizationMetadata build() {
-      return org.setFieldTypes(fields).build();
+    public Organization build() {
+      return new Organization(org.setFieldTypes(canonicalFieldNames).build(), schemas);
     }
 
 
     public MetadataBuilder newSchema() {
-      return new MetadataBuilder((String) org.getOrgId());
+      return new MetadataBuilder((String) org.getOrgId(), this);
     }
   }
 
   public class MetadataBuilder {
     private final String orgId;
+    private final OrganizationBuilder parent;
     private MetricMetadata.Builder metadata = MetricMetadata.newBuilder();
     private List<CharSequence> names = new ArrayList<>();
     private List<Pair<MetricField, String>> fields = new ArrayList<>();
 
-    public MetadataBuilder(String orgId) {
+    public MetadataBuilder(String orgId, OrganizationBuilder parent) {
+      this.parent = parent;
       this.orgId = orgId;
     }
 
-    public MetricMetadata build() throws IOException {
+    public OrganizationBuilder build() throws IOException {
       Preconditions
         .checkArgument(names.size() > 0, "Must have at least one name for the metadata types");
 
@@ -96,7 +121,7 @@ public class SchemaBuilder {
                                    Collections.<CharSequence>emptyList()))
                                  .collect(Collectors.toList()));
       // start building the actual record
-      instance.withNamespace(orgId);
+      instance.withNamespace(SchemaUtils.getCustomerNamespace(orgId));
       fields.stream().forEach(pair -> {
         instance.newField()
                 .name(String.valueOf(pair.getKey().getCanonicalName()))
@@ -106,11 +131,12 @@ public class SchemaBuilder {
       Schema recordSchema = instance.build();
 
       // generate the final metadata
-      metadata.setAliases(names)
-              .setCannonicalname(recordSchema.getFullName())
+      metadata.setCannonicalname(gen.generateSchemaName())
+              .setAliases(names)
               .setSchema$(recordSchema.toString())
               .setFieldMap(fieldSchema);
-      return metadata.build();
+      parent.addMetadata(metadata.build());
+      return parent;
     }
 
     public MetadataBuilder withName(String name) {

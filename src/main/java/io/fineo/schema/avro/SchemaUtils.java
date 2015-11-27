@@ -1,5 +1,7 @@
 package io.fineo.schema.avro;
 
+import org.apache.avro.Schema;
+
 /**
  *
  */
@@ -17,5 +19,11 @@ public class SchemaUtils {
       customerid = customerid.replaceFirst("[.]", "");
     }
     return customerid;
+  }
+
+  public static Schema parseSchema(CharSequence schema, CharSequence name){
+    Schema.Parser parser = new Schema.Parser();
+    parser.parse(String.valueOf(schema));
+    return parser.getTypes().get(name);
   }
 }

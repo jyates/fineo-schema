@@ -25,9 +25,6 @@ import java.util.stream.Collectors;
  */
 public class AvroSchemaInstanceBuilder {
 
-  public static final String PARENT_NAME_PREFIX = "p";
-  private static final String FIELD_NAME_PREFIX = "f";
-
   private static final String BASE_SCHEMA_TYPE = "io.fineo.internal.customer.BaseRecord";
   private final String BASE_SCHEMA_FILE = "avro/base-metric.avsc";
   private final Schema base;
@@ -56,8 +53,7 @@ public class AvroSchemaInstanceBuilder {
   }
 
   public AvroFieldBuilder newField() {
-    AvroFieldBuilder field = new AvroFieldBuilder();
-    this.fields.add(field);
+    AvroFieldBuilder field = new AvroFieldBuilder(this);
     return field;
   }
 
@@ -74,10 +70,8 @@ public class AvroSchemaInstanceBuilder {
 
 
     // add each field from the field builder
-    List<Pair<String, String>> fieldAliases = new ArrayList<>();
     for (AvroFieldBuilder field : fields) {
       field.build(assembler);
-      fieldAliases.add(new Pair<>(field.name, field.id));
     }
     return assembler.endRecord();
   }
@@ -92,13 +86,12 @@ public class AvroSchemaInstanceBuilder {
   }
 
   public static class AvroFieldBuilder {
-
+    private final AvroSchemaInstanceBuilder parent;
     private String type;
     private String name;
-    // generated once we build the field
-    private String id;
 
-    private AvroFieldBuilder() {
+    private AvroFieldBuilder(AvroSchemaInstanceBuilder parent) {
+      this.parent = parent;
     }
 
     public AvroFieldBuilder type(String type) {
@@ -109,6 +102,11 @@ public class AvroSchemaInstanceBuilder {
     public AvroFieldBuilder name(String fieldName) {
       this.name = fieldName;
       return this;
+    }
+
+    public AvroSchemaInstanceBuilder done(){
+      parent.fields.add(this);
+      return parent;
     }
 
     private SchemaBuilder.FieldAssembler<Schema> build(

@@ -3,17 +3,9 @@
   "type" : "record",
   "name" : "a1",
   "fields" : [
-    {"name": "aliases", "type" : {"type" : "array", "items": "string"}},
-    {"name": "f0", "type" : {
-      "type": "record",
-      "name": "f0",
-       "fields": [
-        { "name": "value",   "type": "int"},
-        { "name": "hidden",  "type": ["boolean", "null"]},
-        { "name": "hidden_time",  "type": ["long", "null"]},
-        { "name": "aliases", "type" : {"type" : "array", "items": "string"}}
-       ]
-      }
-    }
+    {"name" :"hidden", "type" : ["boolean", "null"]},
+    {"name" : "hidden_time", "type" : ["long", "null"]},
+    {"name" : "unknown_fields", "type" : {"type" : "map", "values" : "string"}},
+    {"name" : "somename", "type" : "int"}
   ]
 }

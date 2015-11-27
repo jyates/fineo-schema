@@ -22,12 +22,22 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Test the interaction we go through with the schema store when we get a record and need to
  * convert it to an avro-serialized form (and reading it back out).
  */
 public class TestRecordSchemaInteraction {
+
+  /**
+   * Seems to have problems when we i/o to the store
+   * @throws Exception
+   */
+  @Test
+  public void testSerDe() throws Exception{
+    fail("not yet implemented");
+  }
 
   @Test
   public void testLoadSchema() throws Exception {
@@ -37,9 +47,10 @@ public class TestRecordSchemaInteraction {
     String id = "123d43";
     SchemaBuilder.OrganizationBuilder metadata = builder.newOrg(id);
     String field = "bField";
-    metadata.addMetadata(metadata.newSchema().withBoolean(field).asField().build());
-    OrganizationMetadata meta = metadata.build();
-    store.createNewOrganization(meta);
+    metadata.newSchema().withName("newschema").withBoolean(field).asField().build();
+    SchemaBuilder.Organization organization = metadata.build();
+    OrganizationMetadata meta = organization.getMetadata();
+    store.createNewOrganization(organization);
 
     // create a simple record with a field the same name of the metric type we created
     Map<String, Object> fields = new HashMap<>();
@@ -58,7 +69,7 @@ public class TestRecordSchemaInteraction {
     // for each schema name (metric type) load the actual metric information
     MetricMetadata metric = null;
     for (CharSequence mm : orgMetadata.getFieldTypes()) {
-      metric = store.getMetricMetadata(String.valueOf(mm));
+      metric = store.getMetricMetadata(orgMetadata.getOrgId(), String.valueOf(mm));
       ///the one that matches has an alias of the type they specified
       if (metric.getAliases().contains(type)) {
         break;

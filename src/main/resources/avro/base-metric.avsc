@@ -4,8 +4,8 @@
   "type" : "record",
   "doc" : "The base schema for a single field in a record used to generate the actual schema for metric type",
   "fields" : [
-    {"name" :"hidden", "type" : "boolean"},
-    {"name" : "hidden_time", "type" : ["null", "long"]},
+    {"name" :"hidden", "type" : ["boolean", "null"]},
+    {"name" : "hidden_time", "type" : ["long", "null"]},
     {"name" : "unknown_fields", "type" : {"type" : "map", "values" : "string"}}
   ]
 }

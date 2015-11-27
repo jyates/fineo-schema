@@ -1,5 +1,6 @@
 package io.fineo.schema.avro;
 
+import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -25,43 +26,43 @@ public class TestAvroSchemaBuilder {
     final Schema fromFile = parser.getTypes().get(ns + "." + name);
 
     // then build the schema manually
-    AvroSchemaInstanceBuilder builder = new AvroSchemaInstanceBuilder()
-      .withNamespace("123x2g")
-      .withSchemaName("object1 schema")
-      .withField(AvroSchemaInstanceBuilder.newField().type("int").name("somename"));
+    AvroSchemaInstanceBuilder builder = new AvroSchemaInstanceBuilder().withNamespace(customerID);
+
+    // check to make sure we have the expected base fields
+    assertEquals(Lists.newArrayList("hidden", "hidden_time", "unknown_fields"),
+      Lists.newArrayList(builder.getBaseFieldNames()));
+
+    // add fields
+    builder.newField().name("somename").type("int").done();
 
     SchemaNameGenerator gen = Mockito.mock(SchemaNameGenerator.class);
     Mockito.when(gen.generateSchemaName()).thenReturn(name);
     builder.setSchemaNameGeneratorForTesting(gen);
 
-    SchemaDescription description = builder.build();
-    assertEquals(
-      "Schemas don't match! Expected: \n" + fromFile.toString(true) + "\n --- \n" + description
-        .getSchema().toString(true),
-      fromFile, description.getSchema());
-
-    fail("check field name alias mapping");
+    Schema built = builder.build();
+    assertEquals("Schemas don't match! Expected: \n" + fromFile.toString(true) + "\n --- \n" + built
+      .toString(true), fromFile, built);
   }
 
   @Test
-  public void testChangeFieldName() throws Exception{
+  public void testChangeFieldName() throws Exception {
     fail("Give the builder a previous schema instance");
     fail("Set the new field name");
   }
 
   @Test
-  public void testAddFieldAliasNoFieldChange() throws Exception{
+  public void testAddFieldAliasNoFieldChange() throws Exception {
     fail("Give the builder a previous schema instance");
     fail("Add a field alias, but don't change the field name");
   }
 
   @Test
-  public void testAddField() throws Exception{
+  public void testAddField() throws Exception {
     fail("Add a new field to a previous schema");
   }
 
   @Test
-  public void testRemoveField() throws Exception{
+  public void testRemoveField() throws Exception {
     fail("Remove a field from the schema as hidden");
   }
 
