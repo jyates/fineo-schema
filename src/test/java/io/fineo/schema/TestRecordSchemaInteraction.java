@@ -1,7 +1,7 @@
 package io.fineo.schema;
 
-import io.fineo.internal.customer.metric.MetricMetadata;
-import io.fineo.internal.customer.metric.OrganizationMetadata;
+import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -18,11 +18,11 @@ import org.schemarepo.ValidatorFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Test the interaction we go through with the schema store when we get a record and need to
@@ -40,13 +40,14 @@ public class TestRecordSchemaInteraction {
     String field = "bField";
     metadata.newSchema().withName("newschema").withBoolean(field).asField().build();
     SchemaBuilder.Organization organization = metadata.build();
-    OrganizationMetadata meta = organization.getMetadata();
+    Metadata meta = organization.getMetadata();
     store.createNewOrganization(organization);
 
     // create a simple record with a field the same name of the metric type we created
     Map<String, Object> fields = new HashMap<>();
     fields.put(SchemaBuilder.ORG_ID_KEY, id);
-    fields.put(SchemaBuilder.ORG_METRIC_TYPE_KEY, meta.getFieldTypes().get(0));
+    Map<CharSequence, List<CharSequence>> metrics = meta.getMetricTypes().getCanonicalNamesToAliases();
+    fields.put(SchemaBuilder.ORG_METRIC_TYPE_KEY, metrics.keySet().iterator().next());
     fields.put(field, "true");
     String unknown = "unknownFieldName";
     fields.put(unknown, "1231");
@@ -55,14 +56,15 @@ public class TestRecordSchemaInteraction {
     // try to understand the schema to which the record should conform
     String orgid = record.getStringByField(SchemaBuilder.ORG_ID_KEY);
     // load the schema for the org, which is really just a bunch of names of possible schemas
-    OrganizationMetadata orgMetadata = store.getSchemaTypes(orgid);
+    Metadata orgMetadata = store.getSchemaTypes(orgid);
     String type = record.getStringByField(SchemaBuilder.ORG_METRIC_TYPE_KEY);
     // for each schema name (metric type) load the actual metric information
-    MetricMetadata metric = null;
-    for (CharSequence mm : orgMetadata.getFieldTypes()) {
-      metric = store.getMetricMetadata(orgMetadata.getOrgId(), String.valueOf(mm));
-      ///the one that matches has an alias of the type they specified
-      if (metric.getAliases().contains(type)) {
+    Metric metric = null;
+    for (Map.Entry<CharSequence, List<CharSequence>> metricNameAlias : metrics.entrySet()) {
+      // first alias set that matches
+      if(metricNameAlias.getValue().contains(type)){
+        metric = store.getMetricMetadata(orgMetadata.getCanonicalName(),
+          String.valueOf(metricNameAlias.getKey()));
         break;
       }
     }

@@ -1,17 +1,22 @@
 package io.fineo.schema;
 
 import com.google.common.collect.Lists;
-import io.fineo.internal.customer.metric.MetricField;
-import io.fineo.internal.customer.metric.MetricMetadata;
+import io.fineo.internal.customer.FieldNameMap;
+import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -26,43 +31,62 @@ public class TestSchemaUtils {
   @Test
   public void testSerDe() throws Exception {
     String schema = "";
-    MetricField fieldMap =
-      MetricField.newBuilder().setAliases(Lists.newArrayList("fieldAlias1")).setCanonicalName(
-        "fieldCName").build();
-    MetricMetadata metadata = MetricMetadata.newBuilder().setAliases(null)
-                                            .setCannonicalname("schemaCName")
-                                            .setFieldMap(Lists.newArrayList(fieldMap))
-                                            .setSchema$(schema)
-                                            .build();
 
-    verifyReadWrite(metadata);
+    Map<CharSequence, List<CharSequence>> fields = new HashMap<>(1);
+    fields.put("fieldCName", Lists.newArrayList(" fieldAlias1"));
+    FieldNameMap map = FieldNameMap.newBuilder().setCanonicalNamesToAliases(fields).build();
+    // read/write the map to ensure we support more than 1 type
+    verifyReadWrite(map);
+
+    Metadata metricMetadata = Metadata.newBuilder()
+                                      .setCanonicalName("schemaCName")
+                                      .setMetricTypes(FieldNameMap
+                                        .newBuilder()
+                                        .setCanonicalNamesToAliases(null)
+                                        .build())
+                                      .build();
+    verifyReadWrite(metricMetadata);
+
+    Metric metric = Metric.newBuilder()
+                          .setMetadata(metricMetadata)
+                          .setMetricSchema(schema)
+                          .build();
+    verifyReadWrite(metric);
 
     // set some aliases, which is a nulled-union field
-    metadata = MetricMetadata.newBuilder().setAliases(Lists.newArrayList("alias1"))
-                             .setCannonicalname("schemaCName")
-                             .setFieldMap(Lists.newArrayList(fieldMap))
-                             .setSchema$(schema)
-                             .build();
-    verifyReadWrite(metadata);
+    metric = Metric
+      .newBuilder()
+      .setMetadata(Metadata
+        .newBuilder()
+        .setMetricTypes(map)
+        .setCanonicalName("schemaCName")
+        .build())
+      .setMetricSchema(schema)
+      .build();
+    verifyReadWrite(metric);
 
     // add some 'schema' in the form of sub-record
     AvroSchemaInstanceBuilder instance = new AvroSchemaInstanceBuilder(new SchemaNameGenerator());
     instance.withNamespace("ns");
     Schema s = instance.build();
     schema = s.toString();
-    metadata = MetricMetadata.newBuilder().setAliases(Lists.newArrayList("alias1"))
-                             .setCannonicalname("schemaCName")
-                             .setFieldMap(Lists.newArrayList(fieldMap))
-                             .setSchema$(schema)
-                             .build();
-    verifyReadWrite(metadata);
+    metric = Metric
+      .newBuilder()
+      .setMetadata(Metadata
+        .newBuilder()
+        .setMetricTypes(map)
+        .setCanonicalName("schemaCName")
+        .build())
+      .setMetricSchema(schema)
+      .build();
+    verifyReadWrite(metric);
   }
 
-  private void verifyReadWrite(MetricMetadata metadata) throws IOException {
-    LOG.info("Read/Writing instance: " + metadata);
-    String encoded = SchemaUtils.toString(metadata);
-    MetricMetadata out = SchemaUtils.readFromString(encoded, MetricMetadata.getClassSchema());
-    assertEquals(metadata, out);
+  private <T extends SpecificRecordBase> void verifyReadWrite(T record) throws IOException {
+    LOG.info("Read/Writing instance: " + record);
+    String encoded = SchemaUtils.toString(record);
+    T out = SchemaUtils.readFromString(encoded, record.getSchema());
+    assertEquals(record, out);
   }
 
   @Test
@@ -79,10 +103,10 @@ public class TestSchemaUtils {
   }
 
   @Test
-  public void testBuildCustomerName() throws Exception{
+  public void testBuildCustomerName() throws Exception {
     String org = "org1";
-    String ns = SchemaUtils.BASE_CUSTOMER_NAMESPACE + "."+org;
-    String name = ns+".1234";
+    String ns = SchemaUtils.BASE_CUSTOMER_NAMESPACE + "." + org;
+    String name = ns + ".1234";
     assertEquals(name, SchemaUtils.getCustomerSchemaFullName("org1", "1234"));
     assertEquals(name, SchemaUtils.getCustomerSchemaFullName(".org1", ".1234"));
     assertEquals(name, SchemaUtils.getCustomerSchemaFullName("..org1", "..1234"));

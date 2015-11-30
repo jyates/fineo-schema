@@ -39,7 +39,7 @@ public class TestSchemaBuilder {
     Metric metricSchema = verifyGeneratedMetricMetadata(organization, names);
     // verify each field name + alias
     Map<CharSequence, List<CharSequence>> fields =
-      metricSchema.getFields().getCanonicalNamesToAliases();
+      metricSchema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Expected 3 base fields and 2 added", 5, fields.size());
     // verify the fields we added
     assertEquals(Lists.newArrayList("sField"), fields.get(names.get(1)));
@@ -50,7 +50,7 @@ public class TestSchemaBuilder {
 
     // verify the stored fields
     String metricSchemaFullName = SchemaUtils
-      .getCustomerSchemaFullName(orgMetadata.getOrgId(), names.get(2));
+      .getCustomerSchemaFullName(orgMetadata.getCanonicalName(), names.get(2));
     Schema schema =
       SchemaUtils.parseSchema(metricSchema.getMetricSchema(), metricSchemaFullName);
     assertNotNull("Didn't get a schema for name: " + metricSchemaFullName, schema);
@@ -74,7 +74,7 @@ public class TestSchemaBuilder {
   private Metadata verifyGeneratedMetadata(SchemaBuilder.Organization organization,
     List<String> names) {
     Metadata orgMetadata = organization.getMetadata();
-    assertEquals("Wrong org id stored!", ORG_ID, orgMetadata.getOrgId());
+    assertEquals("Wrong org id stored!", ORG_ID, orgMetadata.getCanonicalName());
     Map<CharSequence, List<CharSequence>> fields =
       orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Wrong number of metric type fields", 1, fields.size());
@@ -85,17 +85,18 @@ public class TestSchemaBuilder {
     assertEquals("Wrong number of metric schemas created!", 1, organization.getSchemas().size());
     Metric schema = organization.getSchemas().get(0);
     assertEquals("Org metadata field canonical name does not match name in schema", field,
-      schema.getCanonicalName());
+      schema.getMetadata().getCanonicalName());
     return orgMetadata;
   }
 
   private Metric verifyGeneratedMetricMetadata(SchemaBuilder.Organization org,
     List<String> names) {
     Metric schema = org.getSchemas().get(0);
-    assertEquals(names.get(names.size() - 1), schema.getCanonicalName());
-    assertEquals(1, schema.getFields().getCanonicalNamesToAliases().size());
+    assertEquals(names.get(names.size() - 1), schema.getMetadata().getCanonicalName());
+    assertEquals(1, schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases().size());
     assertEquals(NEW_SCHEMA_DISPLAY_NAME,
-      schema.getFields().getCanonicalNamesToAliases().entrySet().iterator().next());
+      schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases().entrySet().iterator()
+            .next());
     return schema;
   }
 
@@ -113,7 +114,7 @@ public class TestSchemaBuilder {
     // should be able to add a new schema with the same 'name' (but different canonical name)
     organization = addMetricType(builder.updateOrg(organization)).build();
     Metadata metadata = organization.getMetadata();
-    assertEquals(ORG_ID, metadata.getOrgId());
+    assertEquals(ORG_ID, metadata.getCanonicalName());
     Map<CharSequence, List<CharSequence>> types =
       metadata.getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Didn't get expected number of fields!", 2, types.size());

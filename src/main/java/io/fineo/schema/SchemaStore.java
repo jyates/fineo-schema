@@ -1,12 +1,10 @@
 package io.fineo.schema;
 
 import com.google.common.base.Preconditions;
-import io.fineo.internal.customer.metric.MetricMetadata;
-import io.fineo.internal.customer.metric.OrganizationMetadata;
+import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.schemarepo.Repository;
@@ -15,10 +13,12 @@ import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Stores and retrives schema for record instances
+ * Stores and retrieves schema for record instances
  */
 public class SchemaStore {
   private static final Log LOG = LogFactory.getLog(SchemaStore.class);
@@ -30,41 +30,43 @@ public class SchemaStore {
 
   public void createNewOrganization(SchemaBuilder.Organization organization)
     throws IllegalArgumentException, OldSchemaException {
-    OrganizationMetadata meta = organization.getMetadata();
-    Subject orgMetadata = repo.register(String.valueOf(meta.getOrgId()), null);
+    Metadata meta = organization.getMetadata();
+    Subject orgMetadata = repo.register(String.valueOf(meta.getCanonicalName()), null);
     try {
       orgMetadata.registerIfLatest(meta.toString(), null);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException("Already have a schema for the organization", e);
     }
     // register the metrics below the repo
-    for (MetricMetadata metric : organization.getSchemas()) {
-      registerMetricInternal(meta.getOrgId(), metric, null);
+    for (Metric metric : organization.getSchemas()) {
+      registerMetricInternal(meta.getCanonicalName(), metric, null);
     }
   }
 
-  public void registerOrganizationSchema(String orgId, MetricMetadata schema,
-    MetricMetadata previous) throws IllegalArgumentException, OldSchemaException {
-    Subject subject = repo.lookup(orgId);
+  public void registerOrganizationSchema(CharSequence orgId, Metric schema,
+    Metric previous) throws IllegalArgumentException, OldSchemaException {
+    Subject subject = repo.lookup(String.valueOf(orgId));
     Preconditions
       .checkArgument(subject != null, "Organization[%s] was not previously registered!", orgId);
     SchemaEntry entry = subject.latest();
-    OrganizationMetadata metadata = parse(entry, OrganizationMetadata.getClassSchema());
+    Metadata metadata = parse(entry, Metadata.getClassSchema());
     // ensure that the organization metadata has the schema's name as a field
-    registerSchemaWithMetadata(subject, schema, metadata, entry);
+    registerOrgSchemaWithMetadata(subject, schema, metadata, entry);
 
     // register the metric itself
     registerMetricInternal(orgId, schema, previous);
   }
 
-  private void registerMetricInternal(CharSequence orgId, MetricMetadata schema,
-    MetricMetadata previous) throws IllegalArgumentException, OldSchemaException {
-    Subject metricSubject = getMetricSubject(orgId, schema.getCannonicalname());
+  private void registerMetricInternal(CharSequence orgId, Metric schema,
+    Metric previous) throws IllegalArgumentException, OldSchemaException {
+    Subject metricSubject = getMetricSubject(orgId, schema.getMetadata().getCanonicalName());
     if (metricSubject == null) {
-      metricSubject = repo.register(getMetricSubjectName(orgId, schema.getCannonicalname()), null);
+      metricSubject = repo.register(
+        getMetricSubjectName(orgId, String.valueOf(schema.getMetadata().getCanonicalName())),
+        null);
     }
     SchemaEntry latest = metricSubject.latest();
-    MetricMetadata storedPrevious = parse(latest, MetricMetadata.getClassSchema());
+    Metric storedPrevious = parse(latest, Metric.getClassSchema());
     // register because its the latest
     if ((latest == null && previous == null) || storedPrevious.equals(previous)) {
       try {
@@ -85,38 +87,40 @@ public class SchemaStore {
   /**
    * Register a schema instance (a metric type) with the schema repository under the
    * organization's metadata. Does <b>not</b> register the schema itself; to register the schema
-   * itself use {@link #registerMetricInternal(CharSequence, MetricMetadata, MetricMetadata)}
+   * itself use {@link #registerMetricInternal(CharSequence, Metric, Metric)}
    */
-  private void registerSchemaWithMetadata(Subject subject, MetricMetadata schema,
-    OrganizationMetadata metadata, SchemaEntry latest) {
+  private void registerOrgSchemaWithMetadata(Subject subject, Metric schema,
+    Metadata orgMetadata, SchemaEntry latest) {
     // check that the metadata has the schema name. If not, add it and update
-    if (!metadata.getFieldTypes().contains(schema.getCannonicalname())) {
-      List<CharSequence> types = metadata.getFieldTypes();
-      types.add(schema.getCannonicalname());
-      metadata.setFieldTypes(types);
-      try {
-        subject.registerIfLatest(metadata.toString(), latest);
-      } catch (SchemaValidationException e) {
-        latest = subject.latest();
-        LOG.info("Organization was updated, trying again to add " + schema + " to " + latest);
-        registerSchemaWithMetadata(subject, schema, parse(latest, MetricMetadata.getClassSchema()),
-          latest);
-      }
+    Map<CharSequence, List<CharSequence>> metrics =
+      orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
+    if (!metrics.containsKey(schema.getMetadata().getCanonicalName())) {
+      return;
+    }
+    metrics.put(schema.getMetadata().getCanonicalName(), new ArrayList<>(0));
+    try {
+      subject.registerIfLatest(SchemaUtils.toString(orgMetadata), latest);
+    } catch (IOException | SchemaValidationException e) {
+      latest = subject.latest();
+      LOG.info("Organization was updated, trying again to add " + schema + " to " + latest);
+      registerOrgSchemaWithMetadata(subject, schema,
+        parse(latest, Metric.getClassSchema()),
+        latest);
     }
   }
 
-  public OrganizationMetadata getSchemaTypes(CharSequence orgid) {
+  public Metadata getSchemaTypes(CharSequence orgid) {
     Subject subject = repo.lookup(String.valueOf(orgid));
     if (subject == null) {
       return null;
     }
 
-    return parse(subject.latest(), OrganizationMetadata.getClassSchema());
+    return parse(subject.latest(), Metadata.getClassSchema());
   }
 
-  public MetricMetadata getMetricMetadata(CharSequence orgId, String metricName) {
+  public Metric getMetricMetadata(CharSequence orgId, String metricName) {
     Subject subject = getMetricSubject(orgId, metricName);
-    return parse(subject.latest(), MetricMetadata.getClassSchema());
+    return parse(subject.latest(), Metric.getClassSchema());
   }
 
   private Subject getMetricSubject(CharSequence orgId, CharSequence metricName) {

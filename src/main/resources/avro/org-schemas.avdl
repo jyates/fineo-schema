@@ -34,8 +34,8 @@ protocol Organization{
   // parent's metadata), the field map for the actual metric's fields (name -> aliases) and then
   // the schema of the actual metric itself.
   record Metric{
-    string canonicalName;
-    FieldNameMap fields;
+    // its 'a' metadata, but not 'the' metadata
+    Metadata metadata;
     string metricSchema;
   }
 }

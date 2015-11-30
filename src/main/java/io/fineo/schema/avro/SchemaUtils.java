@@ -1,7 +1,6 @@
 package io.fineo.schema.avro;
 
 import com.google.common.base.Joiner;
-import io.fineo.internal.customer.metric.MetricMetadata;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
@@ -70,7 +69,7 @@ public class SchemaUtils {
   }
 
   public static <T> T readFromString(String encoded, Schema schema) throws IOException {
-    Decoder dec = DecoderFactory.get().jsonDecoder(MetricMetadata.getClassSchema(), encoded);
+    Decoder dec = DecoderFactory.get().jsonDecoder(schema, encoded);
     SpecificDatumReader reader = new SpecificDatumReader(schema);
     return (T) reader.read(null, dec);
   }

@@ -1,5 +1,5 @@
 {
-  "namespace" : "io.fineo.cust.123x2g",
+  "namespace" : "io.fineo.cust.a123x2g",
   "type" : "record",
   "name" : "a1",
   "fields" : [

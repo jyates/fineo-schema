@@ -69,11 +69,11 @@ public class SchemaBuilder {
     }
 
     public OrganizationBuilder(String id) {
-      this.org = Metadata.newBuilder().setOrgId(id);
+      this.org = Metadata.newBuilder().setCanonicalName(id);
     }
 
     private OrganizationBuilder addMetadataInternal(Metric metric) {
-      CharSequence id = metric.getCanonicalName();
+      CharSequence id = metric.getMetadata().getCanonicalName();
       Map<CharSequence, List<CharSequence>> names =
         org.getMetricTypes().getCanonicalNamesToAliases();
       Preconditions.checkArgument(!names.containsKey(id), "Already have a field with id %s", id);
@@ -81,15 +81,15 @@ public class SchemaBuilder {
       return this;
     }
 
-    private OrganizationBuilder addMetadata(Metric metadata, List<CharSequence> aliases) {
-      CharSequence id = metadata.getCanonicalName();
+    private OrganizationBuilder addMetadata(Metric metric, List<CharSequence> aliases) {
+      CharSequence id = metric.getMetadata().getCanonicalName();
       Map<CharSequence, List<CharSequence>> names =
         org.getMetricTypes().getCanonicalNamesToAliases();
       if (names.containsKey(id)) {
         throw new IllegalArgumentException("Already have a field with that id!");
       }
       names.put(id, aliases);
-      schemas.add(metadata);
+      schemas.add(metric);
       return this;
     }
 
@@ -99,7 +99,7 @@ public class SchemaBuilder {
 
 
     public MetadataBuilder newSchema() {
-      return new MetadataBuilder((String) org.getOrgId(), this);
+      return new MetadataBuilder((String) org.getCanonicalName(), this);
     }
 
     public MetadataBuilder updateSchema(String canonicalName) {
@@ -138,7 +138,7 @@ public class SchemaBuilder {
 
       // add fields from the base record so we have the name mapping
       final Map<CharSequence, List<CharSequence>> cnameToAliases =
-        metadata.getFields().getCanonicalNamesToAliases();
+        metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
       instance.getBaseFieldNames().stream().forEach(name -> {
           List<CharSequence> aliases = cnameToAliases.get(name);
           if (aliases == null) {
@@ -160,8 +160,8 @@ public class SchemaBuilder {
       Schema recordSchema = instance.build();
 
       // generate the final metadata
-      metadata.setCanonicalName(gen.generateSchemaName())
-              .setMetricSchema(recordSchema.toString());
+      metadata.getMetadata().setCanonicalName(gen.generateSchemaName());
+      metadata.setMetricSchema(recordSchema.toString());
       parent.addMetadata(metadata.build(), names);
       return parent;
     }
@@ -176,8 +176,10 @@ public class SchemaBuilder {
       String cname;
       while (true) {
         cname = gen.generateSchemaName();
-        if (metadata.getFields().getCanonicalNamesToAliases().get(cname) == null) {
-          metadata.getFields().getCanonicalNamesToAliases().put(cname, field.aliases);
+        Map<CharSequence, List<CharSequence>> fields =
+          metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+        if (fields.get(cname) == null) {
+          fields.put(cname, field.aliases);
           break;
         }
       }
