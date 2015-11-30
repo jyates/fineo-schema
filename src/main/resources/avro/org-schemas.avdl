@@ -14,7 +14,7 @@ protocol Organization{
 
   // helper record to map a canonical name to a number of aliases
   record FieldNameMap {
-    map<array<string>> canonicalNamesToAliases;
+    union {null, map<array<string>>} canonicalNamesToAliases;
   }
 
   // Metadata about an organization, specifically:

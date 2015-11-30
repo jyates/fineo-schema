@@ -92,7 +92,7 @@ public class SchemaStore {
   private void registerOrgSchemaWithMetadata(Subject subject, Metric schema,
     Metadata orgMetadata, SchemaEntry latest) {
     // check that the metadata has the schema name. If not, add it and update
-    Map<CharSequence, List<CharSequence>> metrics =
+    Map<String, List<String>> metrics =
       orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
     if (!metrics.containsKey(schema.getMetadata().getCanonicalName())) {
       return;
@@ -109,8 +109,8 @@ public class SchemaStore {
     }
   }
 
-  public Metadata getSchemaTypes(CharSequence orgid) {
-    Subject subject = repo.lookup(String.valueOf(orgid));
+  public Metadata getSchemaTypes(String orgid) {
+    Subject subject = repo.lookup(orgid);
     if (subject == null) {
       return null;
     }

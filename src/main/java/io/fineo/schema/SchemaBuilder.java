@@ -74,16 +74,16 @@ public class SchemaBuilder {
 
     private OrganizationBuilder addMetadataInternal(Metric metric) {
       CharSequence id = metric.getMetadata().getCanonicalName();
-      Map<CharSequence, List<CharSequence>> names =
+      Map<String, List<String>> names =
         org.getMetricTypes().getCanonicalNamesToAliases();
       Preconditions.checkArgument(!names.containsKey(id), "Already have a field with id %s", id);
       schemas.add(metric);
       return this;
     }
 
-    private OrganizationBuilder addMetadata(Metric metric, List<CharSequence> aliases) {
-      CharSequence id = metric.getMetadata().getCanonicalName();
-      Map<CharSequence, List<CharSequence>> names =
+    private OrganizationBuilder addMetadata(Metric metric, List<String> aliases) {
+      String id = metric.getMetadata().getCanonicalName();
+      Map<String, List<String>> names =
         org.getMetricTypes().getCanonicalNamesToAliases();
       if (names.containsKey(id)) {
         throw new IllegalArgumentException("Already have a field with that id!");
@@ -121,7 +121,7 @@ public class SchemaBuilder {
     private final String orgId;
     private final OrganizationBuilder parent;
     private Metric.Builder metadata = Metric.newBuilder();
-    private List<CharSequence> names = new ArrayList<>();
+    private List<String> names = new ArrayList<>();
     private List<FieldBuilder> newFields = new ArrayList<>();
 
     public MetadataBuilder(String orgId, OrganizationBuilder parent) {
@@ -137,10 +137,10 @@ public class SchemaBuilder {
       AvroSchemaInstanceBuilder instance = new AvroSchemaInstanceBuilder(gen);
 
       // add fields from the base record so we have the name mapping
-      final Map<CharSequence, List<CharSequence>> cnameToAliases =
+      final Map<String, List<String>> cnameToAliases =
         metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
       instance.getBaseFieldNames().stream().forEach(name -> {
-          List<CharSequence> aliases = cnameToAliases.get(name);
+          List<String> aliases = cnameToAliases.get(name);
           if (aliases == null) {
             aliases = new ArrayList<>();
             cnameToAliases.put(name, aliases);
@@ -176,7 +176,7 @@ public class SchemaBuilder {
       String cname;
       while (true) {
         cname = gen.generateSchemaName();
-        Map<CharSequence, List<CharSequence>> fields =
+        Map<String, List<String>> fields =
           metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
         if (fields.get(cname) == null) {
           fields.put(cname, field.aliases);
@@ -222,7 +222,7 @@ public class SchemaBuilder {
   public class FieldBuilder {
     private final String type;
     private String canonicalName;
-    private List<CharSequence> aliases;
+    private List<String> aliases;
     MetadataBuilder metadata;
 
     public FieldBuilder(MetadataBuilder fields, String name, String type) {

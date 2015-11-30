@@ -46,7 +46,7 @@ public class TestRecordSchemaInteraction {
     // create a simple record with a field the same name of the metric type we created
     Map<String, Object> fields = new HashMap<>();
     fields.put(SchemaBuilder.ORG_ID_KEY, id);
-    Map<CharSequence, List<CharSequence>> metrics = meta.getMetricTypes().getCanonicalNamesToAliases();
+    Map<String, List<String>> metrics = meta.getMetricTypes().getCanonicalNamesToAliases();
     fields.put(SchemaBuilder.ORG_METRIC_TYPE_KEY, metrics.keySet().iterator().next());
     fields.put(field, "true");
     String unknown = "unknownFieldName";
@@ -60,7 +60,7 @@ public class TestRecordSchemaInteraction {
     String type = record.getStringByField(SchemaBuilder.ORG_METRIC_TYPE_KEY);
     // for each schema name (metric type) load the actual metric information
     Metric metric = null;
-    for (Map.Entry<CharSequence, List<CharSequence>> metricNameAlias : metrics.entrySet()) {
+    for (Map.Entry<String, List<String>> metricNameAlias : metrics.entrySet()) {
       // first alias set that matches
       if(metricNameAlias.getValue().contains(type)){
         metric = store.getMetricMetadata(orgMetadata.getCanonicalName(),

@@ -105,6 +105,7 @@
         </executions>
         <configuration>
           <sourceDirectory>src/main/resources/avro</sourceDirectory>
+          <stringType>String</stringType>
         </configuration>
       </plugin>
       <!-- Copy the dependencies into the output directory. Needed for DynamoDB's SQLlite -->

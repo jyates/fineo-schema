@@ -32,7 +32,7 @@ public class TestSchemaUtils {
   public void testSerDe() throws Exception {
     String schema = "";
 
-    Map<CharSequence, List<CharSequence>> fields = new HashMap<>(1);
+    Map<String, List<String>> fields = new HashMap<>(1);
     fields.put("fieldCName", Lists.newArrayList(" fieldAlias1"));
     FieldNameMap map = FieldNameMap.newBuilder().setCanonicalNamesToAliases(fields).build();
     // read/write the map to ensure we support more than 1 type

@@ -38,7 +38,7 @@ public class TestSchemaBuilder {
     // read the schema out and ensure we get the fields we added
     Metric metricSchema = verifyGeneratedMetricMetadata(organization, names);
     // verify each field name + alias
-    Map<CharSequence, List<CharSequence>> fields =
+    Map<String, List<String>> fields =
       metricSchema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Expected 3 base fields and 2 added", 5, fields.size());
     // verify the fields we added
@@ -75,7 +75,7 @@ public class TestSchemaBuilder {
     List<String> names) {
     Metadata orgMetadata = organization.getMetadata();
     assertEquals("Wrong org id stored!", ORG_ID, orgMetadata.getCanonicalName());
-    Map<CharSequence, List<CharSequence>> fields =
+    Map<String, List<String>> fields =
       orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Wrong number of metric type fields", 1, fields.size());
     CharSequence field = fields.keySet().iterator().next();
@@ -115,7 +115,7 @@ public class TestSchemaBuilder {
     organization = addMetricType(builder.updateOrg(organization)).build();
     Metadata metadata = organization.getMetadata();
     assertEquals(ORG_ID, metadata.getCanonicalName());
-    Map<CharSequence, List<CharSequence>> types =
+    Map<String, List<String>> types =
       metadata.getMetricTypes().getCanonicalNamesToAliases();
     assertEquals("Didn't get expected number of fields!", 2, types.size());
     assertEquals("Didn't get expected canonical names", Sets.newHashSet("n4", "r4"),
