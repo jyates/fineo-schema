@@ -3,6 +3,7 @@ package io.fineo.schema;
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.metric.MetricMetadata;
 import io.fineo.internal.customer.metric.OrganizationMetadata;
+import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -140,9 +141,7 @@ public class SchemaStore {
       return null;
     }
     try {
-      SpecificDatumReader reader = new SpecificDatumReader(schema);
-      return (T) reader.read(null,
-        DecoderFactory.get().jsonDecoder(schema, entry.getSchema()));
+      return SchemaUtils.readFromString(entry.getSchema(), schema);
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to parse organization schema!", e);
     }

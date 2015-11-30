@@ -99,6 +99,7 @@
             <phase>generate-sources</phase>
             <goals>
               <goal>schema</goal>
+              <goal>idl-protocol</goal>
             </goals>
           </execution>
         </executions>

@@ -2,7 +2,6 @@ package io.fineo.schema.avro;
 
 
 import com.google.common.annotations.VisibleForTesting;
-import javafx.util.Pair;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
@@ -30,16 +29,13 @@ public class AvroSchemaInstanceBuilder {
   private final Schema base;
   private String namespace;
   private List<AvroFieldBuilder> fields = new ArrayList<>();
-  private SchemaNameGenerator generator = new SchemaNameGenerator();
+  private SchemaNameGenerator generator;
 
-  public AvroSchemaInstanceBuilder() throws IOException {
+  public AvroSchemaInstanceBuilder(SchemaNameGenerator gen) throws IOException {
     Schema.Parser parser = new Schema.Parser();
     parser.parse(getFile(BASE_SCHEMA_FILE));
     this.base = parser.getTypes().get(BASE_SCHEMA_TYPE);
-  }
-
-  public AvroSchemaInstanceBuilder(Schema base) {
-    this.base = base;
+    this.generator = gen;
   }
 
   private File getFile(String testPath) {

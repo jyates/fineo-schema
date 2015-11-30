@@ -26,7 +26,8 @@ public class TestAvroSchemaBuilder {
     final Schema fromFile = parser.getTypes().get(ns + "." + name);
 
     // then build the schema manually
-    AvroSchemaInstanceBuilder builder = new AvroSchemaInstanceBuilder().withNamespace(customerID);
+    AvroSchemaInstanceBuilder builder =
+      new AvroSchemaInstanceBuilder(new SchemaNameGenerator()).withNamespace(customerID);
 
     // check to make sure we have the expected base fields
     assertEquals(Lists.newArrayList("hidden", "hidden_time", "unknown_fields"),

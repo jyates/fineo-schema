@@ -1,0 +1,41 @@
+// Schemas for managing schemas in an organization
+//
+// The top level protocol is merely a wrapper to use the IDL.
+// The parts we care about are the actual record instances
+//
+// The layering and instance/schema is a bit round about, but allows us to dynamically rename both
+// the metric types and the fields in a metric instance because they are actually stored under a
+// canonical name. We cannot use the Avro alias for records b/c it does not support full string
+// names.
+
+
+@namespace("io.fineo.internal.customer")
+protocol Organization{
+
+  // helper record to map a canonical name to a number of aliases
+  record FieldNameMap {
+    map<array<string>> canonicalNamesToAliases;
+  }
+
+  // Metadata about an organization, specifically:
+  // - the org ID
+  // - the map of the metric cannonical and alias names
+  //
+  // Decoupled from metric instances to allow them to change independently
+  record Metadata {
+    string canonicalName;
+    FieldNameMap metricTypes;
+  }
+
+  // A metric's schema in an organization.
+  //
+  // While this defines a schema, the actual schema of a metric is an _instance_ of this class
+  // It will store the metric's canonical name  (used to look it up in the
+  // parent's metadata), the field map for the actual metric's fields (name -> aliases) and then
+  // the schema of the actual metric itself.
+  record Metric{
+    string canonicalName;
+    FieldNameMap fields;
+    string metricSchema;
+  }
+}

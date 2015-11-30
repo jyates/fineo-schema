@@ -30,15 +30,6 @@ import static org.junit.Assert.fail;
  */
 public class TestRecordSchemaInteraction {
 
-  /**
-   * Seems to have problems when we i/o to the store
-   * @throws Exception
-   */
-  @Test
-  public void testSerDe() throws Exception{
-    fail("not yet implemented");
-  }
-
   @Test
   public void testLoadSchema() throws Exception {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));

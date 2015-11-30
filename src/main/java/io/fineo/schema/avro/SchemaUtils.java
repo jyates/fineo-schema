@@ -1,5 +1,6 @@
 package io.fineo.schema.avro;
 
+import com.google.common.base.Joiner;
 import io.fineo.internal.customer.metric.MetricMetadata;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Decoder;
@@ -10,9 +11,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecordBase;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
@@ -20,21 +19,40 @@ import java.io.IOException;
  */
 public class SchemaUtils {
 
-  public static String BASE_CUSTOMER_NAMESPACE = "io.fineo.cust.";
+  private static final String NS_SEPARATOR = ".";
+  private static final Joiner NS_JOINER = Joiner.on(NS_SEPARATOR);
+  public static String BASE_CUSTOMER_NAMESPACE = "io.fineo.cust";
 
   public static String getCustomerNamespace(String customerid) {
-    customerid = stripLeadingPeriods(customerid);
-    return BASE_CUSTOMER_NAMESPACE + customerid;
+    customerid = cleanNsName(customerid);
+    return NS_JOINER.join(BASE_CUSTOMER_NAMESPACE, customerid);
+  }
+
+  public static String getCustomerSchemaFullName(CharSequence orgId, CharSequence cannonicalname) {
+    String base = getCustomerNamespace(String.valueOf(orgId));
+    return NS_JOINER.join(base, cleanNsName(String.valueOf(cannonicalname)));
+  }
+
+  private static String cleanNsName(String name){
+    name = stripLeadingPeriods(name);
+    return stripTrailingPeriods(name);
+  }
+
+  private static String stripTrailingPeriods(String name) {
+    while (name.endsWith(NS_SEPARATOR)) {
+      name = name.substring(0, name.lastIndexOf(NS_SEPARATOR));
+    }
+    return name;
   }
 
   private static String stripLeadingPeriods(String customerid) {
-    while (customerid.startsWith(".")) {
-      customerid = customerid.replaceFirst("[.]", "");
+    while (customerid.startsWith(NS_SEPARATOR)) {
+      customerid = customerid.replaceFirst("[" + NS_SEPARATOR + "]", "");
     }
     return customerid;
   }
 
-  public static Schema parseSchema(CharSequence schema, CharSequence name){
+  public static Schema parseSchema(CharSequence schema, CharSequence name) {
     Schema.Parser parser = new Schema.Parser();
     parser.parse(String.valueOf(schema));
     return parser.getTypes().get(name);
@@ -47,9 +65,8 @@ public class SchemaUtils {
     Encoder enc = EncoderFactory.get().jsonEncoder(schema, bos);
     userDatumWriter.write(record, enc);
     enc.flush();
-    bos.close();
 
-    return new String(bos.toByteArray());
+    return bos.toString();
   }
 
   public static <T> T readFromString(String encoded, Schema schema) throws IOException {
