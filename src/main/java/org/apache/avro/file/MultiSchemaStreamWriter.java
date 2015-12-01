@@ -8,11 +8,13 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.util.ByteBufferOutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,14 +88,14 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     // append the field map
     MultiContents meta = new MultiContents(this.offsets);
     SpecificDatumWriter<MultiContents> writer = new SpecificDatumWriter<>(MultiContents.class);
-    int start = out.size();
+    int metadataOffset = out.size();
     Encoder enc = EncoderFactory.get().binaryEncoder(out, null);
     writer.write(meta, enc);
     enc.flush();
 
-    DataOutputStream dout = new DataOutputStream(out);
-    dout.writeInt(start);
-    dout.close();
+    ByteBuffer buf = ByteBuffer.allocate(4);
+    buf.putInt(metadataOffset);
+    out.write(buf.array());
     out.close();
     return out.toByteArray();
   }

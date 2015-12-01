@@ -10,6 +10,7 @@ import org.apache.avro.specific.SpecificDatumReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,12 +42,18 @@ public class MultiSchemaReader<D> {
     // seek to the end and read in a integer
     long length = input.length();
     input.seek(length - MultiSchemaData.OFFSET_COUNT_LENGTH);
+
     // read in the offset of the metadata
-    InputStream wis = new WrapperInputStream(input);
-    DataInputStream in = new DataInputStream(wis);
-    int metaOffset = in.readInt();
+    byte[] bytes = new byte[MultiSchemaData.OFFSET_COUNT_LENGTH];
+    input.read(bytes, 0, bytes.length);
+    // bytebuffer is better than DataInputStream here b/c DIS chokes on some lengths when reading
+    // back 4 bytes...yeah, I dunno.
+    ByteBuffer buf = ByteBuffer.wrap(bytes);
+    int metaOffset = buf.getInt();
     input.seek(metaOffset);
+
     // read in the metadata
+    InputStream wis = new WrapperInputStream(input);
     SpecificDatumReader<MultiContents> contents =
       new SpecificDatumReader<>(MultiContents.getClassSchema());
     Decoder dec = DecoderFactory.get().binaryDecoder(wis, null);
@@ -99,7 +106,7 @@ public class MultiSchemaReader<D> {
 
   private void getNextBlock() throws IOException {
     if (currentBlock == null) {
-      if(blocks.size() == 0){
+      if (blocks.size() == 0) {
         return;
       }
       currentBlock = blocks.remove(0);
@@ -143,8 +150,7 @@ public class MultiSchemaReader<D> {
       private final SeekableInput delegate;
       private final long offset;
 
-      public TranslatedSeekableInput(
-        long offset, long length, SeekableInput input) {
+      public TranslatedSeekableInput(long offset, long length, SeekableInput input) {
         this.length = length;
         this.delegate = input;
         this.offset = offset;
