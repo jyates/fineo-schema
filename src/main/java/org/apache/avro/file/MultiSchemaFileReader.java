@@ -2,12 +2,12 @@ package org.apache.avro.file;
 
 import io.fineo.avro.writer.MultiContents;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -16,19 +16,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * The counterpoint to the {@link MultiSchemaStreamWriter}
+ * The counterpoint to the {@link MultiSchemaFileWriter}
  */
-public class MultiSchemaReader<D> {
+public class MultiSchemaFileReader<D> {
+  private static final Log LOG = LogFactory.getLog(MultiSchemaFileReader.class);
   private final SeekableInput input;
-  private final DatumReader<D> datumReader;
+  private final GenericDatumReader<D> datum;
   private List<Block> blocks;
   private Block currentBlock;
 
-  public MultiSchemaReader(SeekableInput input, GenericDatumReader<D> datumReader)
+  public MultiSchemaFileReader(SeekableInput input)
     throws IOException {
     this.input = input;
-    this.datumReader = datumReader;
     initialize(input);
+    this.datum = new GenericDatumReader<>();
   }
 
   private void initialize(SeekableInput input) throws IOException {
@@ -53,29 +54,32 @@ public class MultiSchemaReader<D> {
     input.seek(metaOffset);
 
     // read in the metadata
+    MultiContents meta = readOffsets(input);
+    blocks = new ArrayList<>(meta.getOffsets().size());
+    // first offset skips past the magic
+    long start = magic.length;
+    // first offset skips past the magic
+    for (int i = 0; i < meta.getOffsets().size(); i++) {
+      long offset = meta.getOffsets().get(i);
+      blocks.add(new Block(start, offset));
+      start += offset;
+    }
+    // seek back to the beginning of the file
+    input.seek(magic.length);
+  }
+
+  private MultiContents readOffsets(SeekableInput input) throws IOException {
     InputStream wis = new WrapperInputStream(input);
     SpecificDatumReader<MultiContents> contents =
       new SpecificDatumReader<>(MultiContents.getClassSchema());
     Decoder dec = DecoderFactory.get().binaryDecoder(wis, null);
-    MultiContents offsets = contents.read(null, dec);
-    List<Long> meta = offsets.getOffsets();
-    blocks = new ArrayList<>(meta.size());
-    // first offset skips past the magic
-    long start = magic.length;
-    // first offset skips past the magic
-    for (Long offset : meta) {
-      blocks.add(new Block(start, offset));
-      start += offset;
-    }
-
-    // seek back to the beginning of the file
-    input.seek(magic.length);
+    return contents.read(null, dec);
   }
 
   private class WrapperInputStream extends InputStream {
 
     private final SeekableInput delegate;
-    private byte[] next = new byte[1];
+    private byte[] oneByte = new byte[1];
 
     public WrapperInputStream(SeekableInput input) {
       this.delegate = input;
@@ -83,10 +87,12 @@ public class MultiSchemaReader<D> {
 
     @Override
     public int read() throws IOException {
-      if (delegate.read(next, 0, 1) < 0) {
-        return -1;
+      int n = delegate.read(oneByte, 0, 1);
+      if (n == 1) {
+        return oneByte[0] & 0xff;
+      } else {
+        return n;
       }
-      return next[0];
     }
   }
 
@@ -110,10 +116,11 @@ public class MultiSchemaReader<D> {
         return;
       }
       currentBlock = blocks.remove(0);
+      LOG.info("Moving to next block: " + currentBlock);
       currentBlock.open(input);
     }
 
-    // skip to the next block of this one is exhausted
+    // skip to the oneByte block of this one is exhausted
     if (currentBlock.exhausted()) {
       currentBlock = null;
       getNextBlock();
@@ -133,16 +140,28 @@ public class MultiSchemaReader<D> {
     }
 
     public boolean exhausted() throws IOException {
-      return !this.reader.hasNext();
+      return !reader.hasNext();
     }
 
     public void open(SeekableInput input) throws IOException {
+      // setup a new reader using the same datum reader
       this.limited = new TranslatedSeekableInput(offset, length, input);
-      reader = new DataFileReader<D>(limited, datumReader);
+      // have to remove any assumptions about the expected schema because we are changing schemas
+      datum.setExpected(null);
+      reader = new DataFileReader<D>(limited, datum);
     }
 
-    public D next(D reuse) {
-      return reader.next();
+    public D next(D reuse) throws IOException {
+      D next = reader.next(reuse);
+      return next;
+    }
+
+    @Override
+    public String toString() {
+      return "Block{" +
+             "offset=" + offset +
+             ", length=" + length +
+             '}';
     }
 
     private class TranslatedSeekableInput implements SeekableInput {
@@ -173,7 +192,14 @@ public class MultiSchemaReader<D> {
 
       @Override
       public int read(byte[] b, int off, int len) throws IOException {
-        return delegate.read(b, off, len);
+        // avro tries to be smart and 'compact' the buffer by reading 8192 bytes at once. This
+        // seeks us waaaaay past the end of the delegate, so we have to limit the length of the
+        // read by the length we support out of the buffer
+        long remaining = length - tell();
+        if(remaining == 0){
+          return -1;
+        }
+        return delegate.read(b, off, (int) Math.min((long) len, remaining));
       }
 
       @Override

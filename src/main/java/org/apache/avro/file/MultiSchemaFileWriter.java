@@ -8,11 +8,8 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.avro.util.ByteBufferOutputStream;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -25,7 +22,7 @@ import java.util.Map;
  * in-memory output stream. All data is buffered in memory, so you need to be careful to check
  * the size periodically to make sure you have enough memory.
  */
-public class MultiSchemaStreamWriter<D extends GenericRecord> {
+public class MultiSchemaFileWriter<D extends GenericRecord> {
   private final ByteArrayOutputStream out = new ByteArrayOutputStream();
   private final DatumWriter<D> writer;
   private CodecFactory codec;
@@ -34,11 +31,11 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
   private Map<Schema, Writer> writers = new HashMap<>();
   private List<Long> offsets = new ArrayList<>();
 
-  public MultiSchemaStreamWriter(DatumWriter<D> datumWriter) {
+  public MultiSchemaFileWriter(DatumWriter<D> datumWriter) {
     this.writer = datumWriter;
   }
 
-  public MultiSchemaStreamWriter setCodec(CodecFactory c) {
+  public MultiSchemaFileWriter setCodec(CodecFactory c) {
     assertNotOpen();
     this.codec = c;
     return this;
@@ -48,13 +45,13 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     return bytesCount;
   }
 
-  public MultiSchemaStreamWriter create() throws IOException {
+  public MultiSchemaFileWriter create() throws IOException {
     this.isOpen = true;
     out.write(MultiSchemaData.MAGIC);
     return this;
   }
 
-  public MultiSchemaStreamWriter append(D record) throws IOException {
+  public MultiSchemaFileWriter append(D record) throws IOException {
     assertOpen();
     Schema schema = record.getSchema();
     Writer writer = writers.get(schema);
@@ -83,7 +80,7 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     // close and flush any open data
     for (Writer writer : writers.values()) {
       int length = writer.close(out);
-      addMetadata(length);
+      addMetadata(length, writer.recordCount);
     }
     // append the field map
     MultiContents meta = new MultiContents(this.offsets);
@@ -100,7 +97,7 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     return out.toByteArray();
   }
 
-  private void addMetadata(long length) {
+  private void addMetadata(long length, long recordCount) {
     offsets.add(length);
   }
 
@@ -118,6 +115,7 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     private final Schema schema;
     DataFileWriter<D> writer;
     ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private int recordCount = 0;
 
     public Writer(Schema schema, DataFileWriter<D> writer) throws IOException {
       this.schema = schema;
@@ -133,8 +131,9 @@ public class MultiSchemaStreamWriter<D extends GenericRecord> {
     }
 
     public void append(D record) throws IOException {
+      this.recordCount++;
       // set the schema to write with
-      MultiSchemaStreamWriter.this.writer.setSchema(schema);
+      MultiSchemaFileWriter.this.writer.setSchema(schema);
       writer.append(record);
       //immediately flush
       writer.flush();
