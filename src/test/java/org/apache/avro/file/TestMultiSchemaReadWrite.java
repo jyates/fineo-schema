@@ -13,6 +13,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,34 +32,59 @@ public class TestMultiSchemaReadWrite {
 
   @Test
   public void testSingleSchema() throws Exception {
-    GenericDatumWriter datumWriter = new GenericDatumWriter();
-    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
-    writeAndVerifyRecords(writer, createRandomRecord());
-  }
-
-  @Test
-  public void testSingleSchemaWithCodec() throws Exception {
-    GenericDatumWriter datumWriter = new GenericDatumWriter();
-    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
-    writer.setCodec(CodecFactory.bzip2Codec());
-    writeAndVerifyRecords(writer, createRandomRecord());
+    writeAndVerifyRecordsAndCodec(createRandomRecord());
   }
 
   @Test
   public void testTwoSchemas() throws Exception {
-    GenericDatumWriter datumWriter = new GenericDatumWriter();
-    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
-    writeAndVerifyRecords(writer, createRandomRecord(), createRandomRecord());
+    writeAndVerifyRecordsAndCodec(createRandomRecord(), createRandomRecord());
   }
 
   @Test
   public void testManySchemas() throws Exception {
-    GenericDatumWriter datumWriter = new GenericDatumWriter();
-    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
     GenericRecord[] records = new GenericRecord[5];
     for (int i = 0; i < records.length; i++) {
       records[i] = createRandomRecord();
     }
+    writeAndVerifyRecordsAndCodec(records);
+  }
+
+  /**
+   * Other tests cover just a single record in each schema, we use multiple schemas and multiple
+   * records with each schema.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testSeveralRecordsInEachSchema() throws Exception {
+    List<GenericRecord> records = createRandomRecord(5);
+    records.addAll(createRandomRecord(5));
+    writeAndVerifyRecordsAndCodec(records.toArray(new GenericRecord[0]));
+  }
+
+  /**
+   * List {@link #testSeveralRecordsInEachSchema()}, but the records are randomly sorted to
+   * ensure that we switch between different writers seamlessly.
+   *
+   * @throws Exception on failure
+   */
+  @Test
+  public void testSeveralRecordsInEachSchemaUnsorted() throws Exception {
+    List<GenericRecord> records = createRandomRecord(5);
+    records.addAll(createRandomRecord(5));
+    records.addAll(createRandomRecord(5));
+    Collections.shuffle(records);
+    writeAndVerifyRecordsAndCodec(records.toArray(new GenericRecord[0]));
+  }
+
+  private void writeAndVerifyRecordsAndCodec(GenericRecord... records)
+    throws IOException {
+    GenericDatumWriter datumWriter = new GenericDatumWriter();
+    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
+    writeAndVerifyRecords(writer, records);
+
+    writer = new MultiSchemaFileWriter(datumWriter);
+    writer.setCodec(CodecFactory.bzip2Codec());
     writeAndVerifyRecords(writer, records);
   }
 
@@ -81,10 +108,11 @@ public class TestMultiSchemaReadWrite {
     SeekableByteArrayInput is = new SeekableByteArrayInput(data);
     MultiSchemaFileReader<GenericRecord> reader = new MultiSchemaFileReader(is);
     List<GenericRecord> recordList = Lists.newArrayList(records);
+    LOG.info("Starting with expected records: " + recordList);
     for (int i = 0; i < records.length; i++) {
       GenericRecord record1 = reader.next();
       LOG.info("Got record: " + record1);
-      assertTrue("records list: " + recordList + "\nmissing: " + record1,
+      assertTrue("remaining records: " + recordList + "\nmissing: " + record1,
         recordList.remove(record1));
     }
   }
@@ -96,6 +124,11 @@ public class TestMultiSchemaReadWrite {
    * @throws IOException
    */
   private GenericRecord createRandomRecord() throws IOException {
+    return createRandomRecord(1).get(0);
+  }
+
+  private List<GenericRecord> createRandomRecord(int count) throws IOException {
+    List<GenericRecord> records = new ArrayList<>(count);
     AvroSchemaInstanceBuilder builder = new AvroSchemaInstanceBuilder();
     // create a randomish name
     String name = UUID.randomUUID().toString();
@@ -113,11 +146,14 @@ public class TestMultiSchemaReadWrite {
     Schema schema = builder.build();
 
     // create a record with the schema
-    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
-      .set(SchemaBuilder.UNKNOWN_KEYS_FIELD, new HashMap<>());
-    for (int i = 0; i < fieldCount; i++) {
-      recordBuilder.set("a" + i, true);
+    for (int i = 0; i < count; i++) {
+      GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
+        .set(SchemaBuilder.UNKNOWN_KEYS_FIELD, new HashMap<>());
+      for (int j = 0; j < fieldCount; j++) {
+        recordBuilder.set("a" + j, true);
+      }
+      records.add(recordBuilder.build());
     }
-    return recordBuilder.build();
+    return records;
   }
 }
