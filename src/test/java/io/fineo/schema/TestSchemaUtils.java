@@ -5,7 +5,6 @@ import io.fineo.internal.customer.FieldNameMap;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
-import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificRecordBase;
@@ -66,8 +65,8 @@ public class TestSchemaUtils {
     verifyReadWrite(metric);
 
     // add some 'schema' in the form of sub-record
-    AvroSchemaInstanceBuilder instance = new AvroSchemaInstanceBuilder(new SchemaNameGenerator());
-    instance.withNamespace("ns");
+    AvroSchemaInstanceBuilder instance = new AvroSchemaInstanceBuilder();
+    instance.withNamespace("ns").withName("somename");
     Schema s = instance.build();
     schema = s.toString();
     metric = Metric

@@ -1,0 +1,6 @@
+@namespace("io.fineo.avro.writer")
+protocol Writer{
+  record MultiContents{
+    array<long> offsets;
+  }
+}

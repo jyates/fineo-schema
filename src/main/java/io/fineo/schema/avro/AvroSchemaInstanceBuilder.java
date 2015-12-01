@@ -1,7 +1,8 @@
 package io.fineo.schema.avro;
 
 
-import com.google.common.annotations.VisibleForTesting;
+import io.fineo.internal.customer.BaseRecord;
+import javafx.util.Pair;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
@@ -24,27 +25,41 @@ import java.util.stream.Collectors;
  */
 public class AvroSchemaInstanceBuilder {
 
-  private static final String BASE_SCHEMA_TYPE = "io.fineo.internal.customer.BaseRecord";
-  private final String BASE_SCHEMA_FILE = "avro/base-metric.avsc";
-  private final Schema base;
+  private final Schema baseSchema;
   private String namespace;
+  private String schemaName;
   private List<AvroFieldBuilder> fields = new ArrayList<>();
-  private SchemaNameGenerator generator;
+  private List<String> deletedFields = new ArrayList<>();
 
-  public AvroSchemaInstanceBuilder(SchemaNameGenerator gen) throws IOException {
-    Schema.Parser parser = new Schema.Parser();
-    parser.parse(getFile(BASE_SCHEMA_FILE));
-    this.base = parser.getTypes().get(BASE_SCHEMA_TYPE);
-    this.generator = gen;
+  public AvroSchemaInstanceBuilder() throws IOException {
+    this(null, null, null);
   }
 
-  private File getFile(String testPath) {
-    ClassLoader classLoader = getClass().getClassLoader();
-    return new File(classLoader.getResource(testPath).getFile());
+  public AvroSchemaInstanceBuilder(String metricSchema, String orgId, String name) throws IOException {
+    this.namespace = orgId == null? null: SchemaUtils.getCustomerNamespace(orgId);
+    this.schemaName = name;
+    // get the base-schema regardless of how we name the final record
+    if (metricSchema == null || metricSchema.length() == 0) {
+      this.baseSchema = BaseRecord.getClassSchema();
+    } else {
+      Schema.Parser parser = new Schema.Parser();
+      parser.parse(metricSchema);
+      this.baseSchema = parser.getTypes().get(SchemaUtils.getCustomerSchemaFullName(orgId, name));
+    }
+  }
+
+  public Collection<String> getBaseFieldNames() {
+    return this.baseSchema.getFields().stream().map(field -> field.name())
+                          .collect(Collectors.toList());
   }
 
   public AvroSchemaInstanceBuilder withNamespace(String customerId) {
     this.namespace = SchemaUtils.getCustomerNamespace(customerId);
+    return this;
+  }
+
+  public AvroSchemaInstanceBuilder withName(String recordName) {
+    this.schemaName = recordName;
     return this;
   }
 
@@ -53,16 +68,31 @@ public class AvroSchemaInstanceBuilder {
     return field;
   }
 
+  /**
+   * Does a 'hard delete' of this field. Field will never be found again when reading data using
+   * this schema. Instead, you probably want to 'hide' the field using the schema metadata.
+   *
+   * @param fieldCName name of the field to delete
+   * @return <tt>this</tt>
+   */
+  public AvroSchemaInstanceBuilder deleteField(String fieldCName) {
+    this.deletedFields.add(fieldCName);
+    return this;
+  }
+
   public Schema build() {
-    String schemaName = generator.generateSchemaName();
-    SchemaBuilder.RecordBuilder<Schema> builder = SchemaBuilder.record(schemaName).namespace(
-      namespace);
+    SchemaBuilder.RecordBuilder<Schema> builder =
+      SchemaBuilder.record(schemaName).namespace(namespace);
     final SchemaBuilder.FieldAssembler<Schema> assembler = builder.fields();
-    // add the fields in the base record
-    this.base.getFields().stream()
-             .forEach(field -> {
-               assembler.name(field.name()).type(field.schema()).noDefault();
-             });
+    // add the fields in the baseSchema record
+    this.baseSchema.getFields().stream()
+                   .forEach(field -> {
+                     // we actually want to delete that field, so skip it
+                     if (deletedFields.contains(field.name())) {
+                       return;
+                     }
+                     assembler.name(field.name()).type(field.schema()).noDefault();
+                   });
 
 
     // add each field from the field builder
@@ -72,19 +102,10 @@ public class AvroSchemaInstanceBuilder {
     return assembler.endRecord();
   }
 
-  public Collection<String> getBaseFieldNames() {
-    return this.base.getFields().stream().map(field -> field.name()).collect(Collectors.toList());
-  }
-
-  @VisibleForTesting
-  public void setSchemaNameGeneratorForTesting(SchemaNameGenerator gen) {
-    this.generator = gen;
-  }
-
-  public static class AvroFieldBuilder {
-    private final AvroSchemaInstanceBuilder parent;
-    private String type;
-    private String name;
+  public class AvroFieldBuilder {
+    protected final AvroSchemaInstanceBuilder parent;
+    protected String type;
+    protected String name;
 
     private AvroFieldBuilder(AvroSchemaInstanceBuilder parent) {
       this.parent = parent;
@@ -100,12 +121,12 @@ public class AvroSchemaInstanceBuilder {
       return this;
     }
 
-    public AvroSchemaInstanceBuilder done(){
+    public AvroSchemaInstanceBuilder done() {
       parent.fields.add(this);
       return parent;
     }
 
-    private SchemaBuilder.FieldAssembler<Schema> build(
+    protected SchemaBuilder.FieldAssembler<Schema> build(
       SchemaBuilder.FieldAssembler<Schema> assembler) {
       return assembler.name(name).type(type).noDefault();
     }

@@ -3,9 +3,17 @@
   "type" : "record",
   "name" : "a1",
   "fields" : [
-    {"name" :"hidden", "type" : ["boolean", "null"]},
-    {"name" : "hidden_time", "type" : ["long", "null"]},
-    {"name" : "unknown_fields", "type" : {"type" : "map", "values" : "string"}},
+    {
+      "name" : "unknown_fields",
+      "type" : {
+        "type" : "map",
+        "values" : {
+          "type" : "string",
+          "avro.java.string" : "String"
+        },
+        "avro.java.string" : "String"
+      }
+    },
     {"name" : "somename", "type" : "int"}
   ]
 }

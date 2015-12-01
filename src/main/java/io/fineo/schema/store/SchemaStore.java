@@ -1,8 +1,9 @@
-package io.fineo.schema;
+package io.fineo.schema.store;
 
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
@@ -29,22 +30,22 @@ public class SchemaStore {
   }
 
   public void createNewOrganization(SchemaBuilder.Organization organization)
-    throws IllegalArgumentException, OldSchemaException {
+    throws IllegalArgumentException, OldSchemaException, IOException {
     Metadata meta = organization.getMetadata();
-    Subject orgMetadata = repo.register(String.valueOf(meta.getCanonicalName()), null);
+    Subject orgMetadata = repo.register(meta.getCanonicalName(), null);
     try {
-      orgMetadata.registerIfLatest(meta.toString(), null);
+      orgMetadata.registerIfLatest(SchemaUtils.toString(meta), null);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException("Already have a schema for the organization", e);
     }
     // register the metrics below the repo
-    for (Metric metric : organization.getSchemas()) {
+    for (Metric metric : organization.getSchemas().values()) {
       registerMetricInternal(meta.getCanonicalName(), metric, null);
     }
   }
 
   public void registerOrganizationSchema(CharSequence orgId, Metric schema,
-    Metric previous) throws IllegalArgumentException, OldSchemaException {
+    Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
     Subject subject = repo.lookup(String.valueOf(orgId));
     Preconditions
       .checkArgument(subject != null, "Organization[%s] was not previously registered!", orgId);
@@ -58,12 +59,11 @@ public class SchemaStore {
   }
 
   private void registerMetricInternal(CharSequence orgId, Metric schema,
-    Metric previous) throws IllegalArgumentException, OldSchemaException {
+    Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
     Subject metricSubject = getMetricSubject(orgId, schema.getMetadata().getCanonicalName());
     if (metricSubject == null) {
-      metricSubject = repo.register(
-        getMetricSubjectName(orgId, String.valueOf(schema.getMetadata().getCanonicalName())),
-        null);
+      metricSubject =
+        repo.register(getMetricSubjectName(orgId, schema.getMetadata().getCanonicalName()), null);
     }
     SchemaEntry latest = metricSubject.latest();
     Metric storedPrevious = parse(latest, Metric.getClassSchema());
@@ -72,7 +72,7 @@ public class SchemaStore {
       try {
         // register the schema as long as we are still the latest. Returns null if its changed,
         // in which case we fall through to the oldSchema exception
-        if (metricSubject.registerIfLatest(schema.toString(), latest) != null) {
+        if (metricSubject.registerIfLatest(SchemaUtils.toString(schema), latest) != null) {
           return;
         }
       } catch (SchemaValidationException e) {

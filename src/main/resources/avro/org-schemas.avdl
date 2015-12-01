@@ -36,6 +36,15 @@ protocol Organization{
   record Metric{
     // its 'a' metadata, but not 'the' metadata
     Metadata metadata;
+    // optional map of fieldname -> delete time
+    union{null, map<long>} hidden_time = null;
+    // actual schema
     string metricSchema;
+  }
+
+  // The base record instance that we use to build a metric type schema. In code we add the desired
+  // fields to create the full record
+  record BaseRecord {
+    map<string> unknown_fields;
   }
 }
