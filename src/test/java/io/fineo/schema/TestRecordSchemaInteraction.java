@@ -45,13 +45,11 @@ public class TestRecordSchemaInteraction {
                                                         .withBoolean(field).asField()
                                                         .build();
     SchemaBuilder.Organization organization = metadata.build();
-    Metadata meta = organization.getMetadata();
     store.createNewOrganization(organization);
 
     // create a simple record with a field the same name of the metric type we created
     Map<String, Object> fields = new HashMap<>();
     fields.put(SchemaBuilder.ORG_ID_KEY, id);
-    Map<String, List<String>> metrics = meta.getMetricTypes().getCanonicalNamesToAliases();
     fields.put(SchemaBuilder.ORG_METRIC_TYPE_KEY, metricName);
     fields.put(field, true);
     String unknown = "unknownFieldName";

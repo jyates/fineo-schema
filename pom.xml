@@ -108,12 +108,12 @@
           <stringType>String</stringType>
         </configuration>
       </plugin>
-      <!-- Copy the dependencies into the output directory. Needed for DynamoDB's SQLlite -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <version>${maven.resources.version}</version>
       </plugin>
+      <!-- Copy the dependencies into the output directory. Needed for DynamoDB's SQLlite -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>

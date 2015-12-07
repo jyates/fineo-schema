@@ -29,6 +29,7 @@ public class TestSchemaBuilder {
   private static final String ORG_ID = "orgId";
   public static final String NEW_SCHEMA_DISPLAY_NAME = "newschema";
 
+
   @Test
   public void testNewOrg() throws Exception {
     List<String> names = Lists.newArrayList("n0", "n1", "n2");
@@ -138,13 +139,39 @@ public class TestSchemaBuilder {
 
     organization = builder.updateOrg(organization)
                           .updateSchema(schemaName)
-                            .updateField("n1").softDelete().build()
+                          .updateField("n1").softDelete().build()
                           .build();
     // metadata doesn't change
     verifyGeneratedMetadata(organization, names);
     metricSchema = organization.getSchemas().get(schemaName);
     assertEquals(1, metricSchema.getHiddenTime().size());
     assertEquals(Sets.newHashSet("n1"), metricSchema.getHiddenTime().keySet());
+  }
+
+  @Test
+  public void testCreateMetadataWithNoFields() throws Exception {
+    SchemaBuilder builder = new SchemaBuilder(new SchemaNameGenerator());
+    String id = "123d43";
+    String metricName = "newschema";
+    SchemaBuilder.OrganizationBuilder metadata = builder.newOrg(id)
+                                                        .newSchema().withName(metricName)
+                                                        .build();
+    SchemaBuilder.Organization organization = metadata.build();
+    // verify that we have the org and the correct schema name mapping
+    assertEquals(id, organization.getMetadata().getCanonicalName());
+    Map<String, List<String>> schemaNameMap = organization.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+    assertEquals(1, schemaNameMap.size());
+    assertEquals(Lists.newArrayList(metricName), schemaNameMap.values().iterator().next());
+
+    // look at the actual schema we created
+    Map<String, Metric> schemas = organization.getSchemas();
+    assertEquals(1, schemas.size());
+    Metric schema = schemas.values().iterator().next();
+    assertEquals(schemaNameMap.keySet().iterator().next(), schema.getMetadata().getCanonicalName());
+    Map<String, List<String>> schemaFieldMap = schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+    Map<String, List<String>> expectedFields = new HashMap<>();
+    expectedFields.put("unknown_fields", Lists.newArrayList());
+    assertEquals(expectedFields, schemaFieldMap);
   }
 
   private void verifySchemaHasFields(Metadata metadata, Metric metric,

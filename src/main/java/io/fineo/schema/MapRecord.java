@@ -1,5 +1,7 @@
 package io.fineo.schema;
 
+import io.fineo.schema.Record;
+
 import java.util.Collection;
 import java.util.Map;
 

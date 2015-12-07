@@ -163,49 +163,5 @@ public class MultiSchemaFileReader<D> {
              ", length=" + length +
              '}';
     }
-
-    private class TranslatedSeekableInput implements SeekableInput {
-      private final long length;
-      private final SeekableInput delegate;
-      private final long offset;
-
-      public TranslatedSeekableInput(long offset, long length, SeekableInput input) {
-        this.length = length;
-        this.delegate = input;
-        this.offset = offset;
-      }
-
-      @Override
-      public void seek(long p) throws IOException {
-        delegate.seek(p + offset);
-      }
-
-      @Override
-      public long tell() throws IOException {
-        return delegate.tell() - offset;
-      }
-
-      @Override
-      public long length() throws IOException {
-        return length;
-      }
-
-      @Override
-      public int read(byte[] b, int off, int len) throws IOException {
-        // avro tries to be smart and 'compact' the buffer by reading 8192 bytes at once. This
-        // seeks us waaaaay past the end of the delegate, so we have to limit the length of the
-        // read by the length we support out of the buffer
-        long remaining = length - tell();
-        if(remaining == 0){
-          return -1;
-        }
-        return delegate.read(b, off, (int) Math.min((long) len, remaining));
-      }
-
-      @Override
-      public void close() throws IOException {
-        delegate.close();
-      }
-    }
   }
 }

@@ -16,11 +16,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -76,6 +76,27 @@ public class TestMultiSchemaReadWrite {
     Collections.shuffle(records);
     writeAndVerifyRecordsAndCodec(records.toArray(new GenericRecord[0]));
   }
+
+  @Test
+  public void testLengthChecks() throws Exception {
+    GenericRecord record1 = createRandomRecord();
+    GenericRecord record2 = createRandomRecord();
+    GenericDatumWriter datumWriter = new GenericDatumWriter();
+    MultiSchemaFileWriter writer = new MultiSchemaFileWriter(datumWriter);
+    writer.create();
+    assertEquals(4, writer.getBytesWritten());
+    int record1Len = writer.append(record1).getBytesWritten();
+    int record2Len = writer.append(record2).getBytesWritten();
+    assertTrue("Didn't write more bytes after writing the second record", record2Len > record1Len);
+    // we don't know how much metadata we will need to write for the records, but assume < 10% of
+    // the total length of the byte array
+    int sum = 4 /** magic */ + record2Len + 4 /** end identifier */;
+    byte[] written = writer.close();
+    int upper = (int) (sum * 0.1) + sum;
+    assertTrue("Wrote bytes (" + written.length + ") outside expected range: " + sum + ", " + upper,
+      sum < written.length && written.length <= upper);
+  }
+
 
   private void writeAndVerifyRecordsAndCodec(GenericRecord... records)
     throws IOException {

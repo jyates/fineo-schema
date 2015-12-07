@@ -54,6 +54,9 @@ public class SchemaBuilder {
       return metadata;
     }
 
+    /**
+     * @return map of the canonical name to the metric
+     */
     public Map<String, Metric> getSchemas() {
       return schemas;
     }
@@ -175,7 +178,7 @@ public class SchemaBuilder {
 
       // do any updates we need for the updated records
       updatedFields.forEach(field -> {
-        if(field.delete == null){
+        if (field.delete == null) {
           return;
         }
         switch (field.delete) {
@@ -192,7 +195,7 @@ public class SchemaBuilder {
 
       // add fields from the base record so we have the name mapping
       final Map<String, List<String>> cnameToAliases =
-        metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+        getBuilderMetadata().getMetricTypes().getCanonicalNamesToAliases();
       instance.getBaseFieldNames().stream().forEach(name -> {
           List<String> aliases = cnameToAliases.get(name);
           if (aliases == null) {
@@ -224,7 +227,7 @@ public class SchemaBuilder {
 
     private void hide(FieldBuilder field) {
       Map<String, Long> hiddenTime = this.metadata.getHiddenTime();
-      if(hiddenTime == null){
+      if (hiddenTime == null) {
         hiddenTime = new HashMap<>();
         this.metadata.setHiddenTime(hiddenTime);
       }
@@ -353,7 +356,8 @@ public class SchemaBuilder {
       this.displayName = name;
     }
 
-    private FieldBuilder(MetadataBuilder metadataBuilder, String canonicalName, List<String> aliases,
+    private FieldBuilder(MetadataBuilder metadataBuilder, String canonicalName,
+      List<String> aliases,
       String type) {
       this.type = type;
       this.aliases = aliases;

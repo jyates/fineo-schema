@@ -27,7 +27,6 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
   private final DatumWriter<D> writer;
   private CodecFactory codec;
   private boolean isOpen = false;
-  private int bytesCount = 0;
   private Map<Schema, Writer> writers = new HashMap<>();
   private List<Long> offsets = new ArrayList<>();
 
@@ -42,7 +41,12 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
   }
 
   public int getBytesWritten() {
-    return bytesCount;
+    return out.size() + writers.values()
+                               .stream()
+                               .map(writer -> writer.out)
+                               .filter(stream -> stream != null)
+                               .map(out -> out.size())
+                               .reduce(0, Integer::sum);
   }
 
   public MultiSchemaFileWriter create() throws IOException {
@@ -80,7 +84,7 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
     // close and flush any open data
     for (Writer writer : writers.values()) {
       int length = writer.close(out);
-      addMetadata(length, writer.recordCount);
+      addMetadata(length);
     }
     // append the field map
     MultiContents meta = new MultiContents(this.offsets);
@@ -97,7 +101,7 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
     return out.toByteArray();
   }
 
-  private void addMetadata(long length, long recordCount) {
+  private void addMetadata(long length) {
     offsets.add(length);
   }
 
@@ -115,7 +119,6 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
     private final Schema schema;
     DataFileWriter<D> writer;
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    private int recordCount = 0;
 
     public Writer(Schema schema, DataFileWriter<D> writer) throws IOException {
       this.schema = schema;
@@ -127,11 +130,13 @@ public class MultiSchemaFileWriter<D extends GenericRecord> {
       writer.close();
       out.close();
       destination.write(out.toByteArray());
-      return out.size();
+      int size = out.size();
+      // reset out so we don't double count the size of the array
+      out = null;
+      return size;
     }
 
     public void append(D record) throws IOException {
-      this.recordCount++;
       // set the schema to write with
       MultiSchemaFileWriter.this.writer.setSchema(schema);
       writer.append(record);
