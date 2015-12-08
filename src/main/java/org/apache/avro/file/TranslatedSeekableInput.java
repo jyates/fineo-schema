@@ -15,10 +15,13 @@ public class TranslatedSeekableInput implements SeekableInput {
   /** offset into the delegate record that we start reading */
   private long offset;
 
-  public TranslatedSeekableInput(long offset, long limit, SeekableInput input) {
+  public TranslatedSeekableInput(long offset, long limit, SeekableInput input) throws IOException {
     this.limit = limit;
     this.delegate = input;
     this.offset = offset;
+    // inherently the input cannot start earlier than this point, so we seek back to the
+    // beginning to make it easier to reason about, especially if someone is trying to read directly
+    input.seek(offset);
   }
 
   /**
@@ -32,9 +35,12 @@ public class TranslatedSeekableInput implements SeekableInput {
   public void nextBlock(long length) throws IOException {
     this.offset = this.limit;
     this.limit = Math.min(this.limit + length, delegate.length());
-    this.delegate.seek(offset);
   }
 
+  /**
+   * @return Total remaining bytes in the underlying input stream from the current read point
+   * @throws IOException if there is an error accessing the delegate
+   */
   public long remainingTotal() throws IOException {
     return this.delegate.length() - this.delegate.tell();
   }
@@ -56,14 +62,18 @@ public class TranslatedSeekableInput implements SeekableInput {
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    // avro tries to be smart and 'compact' the buffer by reading 8192 bytes at once. This
-    // seeks us waaaaay past the end of the delegate, so we have to limit the limit of the
-    // read by the limit we support out of the buffer
-    long remaining = limit - tell();
-    if (remaining == 0) {
+    // just incase the input is seeked to before the current offset. Corrects the current
+    // delegate tell location as well to start at the offset, it the input stream is seeked earlier.
+    if (delegate.tell() < offset) {
+      this.delegate.seek(offset);
+    }
+    // ensure we don't read past the current end of the buffer
+    long remaining = this.length() - this.tell();
+    if (remaining <= 0) {
       return -1;
     }
-    return delegate.read(b, off, (int) Math.min((long) len, remaining));
+    int readAmount = (int) Math.min(remaining, len);
+    return delegate.read(b, off, readAmount);
   }
 
   @Override

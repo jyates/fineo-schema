@@ -28,11 +28,11 @@ public class MultiSchemaFileReader<D> {
   public MultiSchemaFileReader(SeekableInput input)
     throws IOException {
     this.input = input;
-    initialize(input);
+    initialize();
     this.datum = new GenericDatumReader<>();
   }
 
-  private void initialize(SeekableInput input) throws IOException {
+  private void initialize() throws IOException {
     // ensure that the magic is the first few bytes
     byte[] magic = new byte[MultiSchemaData.MAGIC.length];
     input.read(magic, 0, magic.length);
@@ -145,7 +145,7 @@ public class MultiSchemaFileReader<D> {
 
     public void open(SeekableInput input) throws IOException {
       // setup a new reader using the same datum reader
-      this.limited = new TranslatedSeekableInput(offset, length, input);
+      this.limited = new TranslatedSeekableInput(offset, length + offset, input);
       // have to remove any assumptions about the expected schema because we are changing schemas
       datum.setExpected(null);
       reader = new DataFileReader<D>(limited, datum);
