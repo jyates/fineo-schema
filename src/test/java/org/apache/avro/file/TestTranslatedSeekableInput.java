@@ -37,7 +37,7 @@ public class TestTranslatedSeekableInput {
     // seek back to beginning
     trans.seek(0);
     // move forward two bytes
-    trans.moveForward(2);
+    trans.nextBlock(2);
     trans.read(bit, 0, 1);
     assertEquals(1, bit[0]);
     assertEquals(126, trans.remainingTotal());

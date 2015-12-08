@@ -1,7 +1,5 @@
 package org.apache.avro.file;
 
-import com.google.common.base.Preconditions;
-
 import java.io.IOException;
 
 /**
@@ -9,27 +7,31 @@ import java.io.IOException;
  * prevent rebuffering the same data) and supports reading from a fixed offset in the input stream
  */
 public class TranslatedSeekableInput implements SeekableInput {
-  private long length;
+  /**
+   * limit inside the delegate record up to which we can read
+   */
+  private long limit;
   private final SeekableInput delegate;
+  /** offset into the delegate record that we start reading */
   private long offset;
 
-  public TranslatedSeekableInput(long offset, long length, SeekableInput input) {
-    this.length = length;
+  public TranslatedSeekableInput(long offset, long limit, SeekableInput input) {
+    this.limit = limit;
     this.delegate = input;
     this.offset = offset;
   }
 
   /**
-   * Move the input forward to the next 'chunk'. Sets the offset (start) to the current length
-   * and sets the length to the specified length. So if the input was [0, 10] of a total 16bytes
+   * Move the input forward to the next 'chunk'. Sets the offset (start) to the current limit
+   * and moves the limit up by to the specified amount. So if the input was [0, 10] of a total 16bytes
    * and then you moved forward by 6, the new range would be [10, 16].
    *
-   * @param length move the read forward to the next length
+   * @param length amount to move up the limit
    * @throws IOException
    */
-  public void moveForward(long length) throws IOException {
-    this.offset = this.length;
-    this.length = Math.min(this.length + length, delegate.length());
+  public void nextBlock(long length) throws IOException {
+    this.offset = this.limit;
+    this.limit = Math.min(this.limit + length, delegate.length());
     this.delegate.seek(offset);
   }
 
@@ -49,15 +51,15 @@ public class TranslatedSeekableInput implements SeekableInput {
 
   @Override
   public long length() throws IOException {
-    return length - offset;
+    return limit - offset;
   }
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
     // avro tries to be smart and 'compact' the buffer by reading 8192 bytes at once. This
-    // seeks us waaaaay past the end of the delegate, so we have to limit the length of the
-    // read by the length we support out of the buffer
-    long remaining = length - tell();
+    // seeks us waaaaay past the end of the delegate, so we have to limit the limit of the
+    // read by the limit we support out of the buffer
+    long remaining = limit - tell();
     if (remaining == 0) {
       return -1;
     }

@@ -6,6 +6,7 @@ import io.fineo.internal.customer.Metric;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.SchemaUtils;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.schemarepo.Repository;

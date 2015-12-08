@@ -1,5 +1,6 @@
 package io.fineo.schema;
 
+import com.google.common.collect.Maps;
 import io.fineo.schema.Record;
 
 import java.util.Collection;
@@ -58,5 +59,10 @@ public class MapRecord implements Record {
   @Override
   public Iterable<Map.Entry<String, Object>> getFields() {
     return map.entrySet();
+  }
+
+  @Override
+  public String toString(){
+    return this.map.toString();
   }
 }

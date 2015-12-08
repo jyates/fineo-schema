@@ -50,28 +50,46 @@ public class AvroSchemaBridge {
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
-      Map<String, String> unknown =
-        ((Map<String, String>) avroRecord.get(SchemaBuilder.UNKNOWN_KEYS_FIELD));
-      if (unknown == null) {
-        unknown = new HashMap<>();
-        avroRecord.put(SchemaBuilder.UNKNOWN_KEYS_FIELD, unknown);
-      }
+      Map<String, String> unknown = getAndSetUnknownFieldsIfEmpty(avroRecord);
       unknown.put(key, String.valueOf(fieldEntry.getValue()));
     }
+
+    // ensure that we filled the 'default' fields
+    getAndSetUnknownFieldsIfEmpty(avroRecord);
     return avroRecord;
   }
 
-  public static AvroSchemaBridge create(Metadata orgMetadata, SchemaStore store, String type){
+  private Map<String, String> getAndSetUnknownFieldsIfEmpty(GenericData.Record avroRecord) {
+    Map<String, String> unknown = getUnknownFields(avroRecord);
+    if (unknown == null) {
+      unknown = new HashMap<>();
+      avroRecord.put(SchemaBuilder.UNKNOWN_KEYS_FIELD, unknown);
+    }
+    return unknown;
+  }
+
+  private Map<String, String> getUnknownFields(GenericData.Record avroRecord) {
+    return
+      ((Map<String, String>) avroRecord.get(SchemaBuilder.UNKNOWN_KEYS_FIELD));
+  }
+
+  public static AvroSchemaBridge create(SchemaStore store, Record record){
+    String orgid = record.getStringByField(SchemaBuilder.ORG_ID_KEY);
+    Metadata orgMetadata = store.getSchemaTypes(orgid);
+    String type = record.getStringByField(SchemaBuilder.ORG_METRIC_TYPE_KEY);
+
     // for each schema name (metric type) load the actual metric information
     Metric metric = null;
-    for (Map.Entry<String, List<String>> metricNameAlias : orgMetadata.getMetricTypes().getCanonicalNamesToAliases().entrySet()) {
+    for (Map.Entry<String, List<String>> metricNameAlias : orgMetadata.getMetricTypes()
+                                                                      .getCanonicalNamesToAliases()
+                                                                      .entrySet()) {
       // first alias set that matches
       if (metricNameAlias.getValue().contains(type)) {
         metric = store.getMetricMetadata(orgMetadata.getCanonicalName(), metricNameAlias.getKey());
         break;
       }
     }
-    if(metric == null){
+    if (metric == null) {
       return null;
     }
     return new AvroSchemaBridge(orgMetadata.getCanonicalName(), metric);
