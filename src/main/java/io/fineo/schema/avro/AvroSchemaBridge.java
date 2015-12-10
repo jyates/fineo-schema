@@ -7,6 +7,8 @@ import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.Map;
  */
 public class AvroSchemaBridge {
 
+  private static final Log LOG = LogFactory.getLog(AvroSchemaBridge.class);
   private final Schema schema;
   // essentially the reverse of the alias map in the metric metadata
   private final Map<String, String> aliasToFieldMap = new HashMap<>();
@@ -73,10 +76,18 @@ public class AvroSchemaBridge {
       ((Map<String, String>) avroRecord.get(SchemaBuilder.UNKNOWN_KEYS_FIELD));
   }
 
-  public static AvroSchemaBridge create(SchemaStore store, Record record){
+  public static AvroSchemaBridge create(SchemaStore store, Record record) {
     String orgid = record.getStringByField(SchemaBuilder.ORG_ID_KEY);
-    Metadata orgMetadata = store.getSchemaTypes(orgid);
     String type = record.getStringByField(SchemaBuilder.ORG_METRIC_TYPE_KEY);
+    if (orgid == null || type == null) {
+      return null;
+    }
+
+    Metadata orgMetadata = store.getSchemaTypes(orgid);
+    if (orgMetadata == null) {
+      LOG.info("No org found for id: " + orgid);
+      return null;
+    }
 
     // for each schema name (metric type) load the actual metric information
     Metric metric = null;
