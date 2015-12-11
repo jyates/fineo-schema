@@ -5,10 +5,8 @@ import io.fineo.internal.customer.FieldNameMap;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
-import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -48,10 +46,10 @@ public class TestAvroSchemaBridge {
     MapRecord record = new MapRecord(content);
     assertNull(AvroSchemaBridge.create(store, record));
 
-    content.put(SchemaBuilder.ORG_ID_KEY, "orgid");
+    content.put(AvroSchemaBridge.ORG_ID_KEY, "orgid");
     assertNull(AvroSchemaBridge.create(store, record));
 
-    content.put(SchemaBuilder.ORG_METRIC_TYPE_KEY, "metricid");
+    content.put(AvroSchemaBridge.ORG_METRIC_TYPE_KEY, "metricid");
     assertNull(
       "Didn't return null when no metadata received from store, even when record had all "
       + "necessary fields",

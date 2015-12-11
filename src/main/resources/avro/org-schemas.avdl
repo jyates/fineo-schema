@@ -42,9 +42,16 @@ protocol Organization{
     string metricSchema;
   }
 
+  // The base fields that are assumed to be in any BaseRecord
+  record BaseFields{
+    string aliasName;
+    long timestamp;
+    map<string> unknown_fields;
+  }
+
   // The base record instance that we use to build a metric type schema. In code we add the desired
   // fields to create the full record
   record BaseRecord {
-    map<string> unknown_fields;
+    BaseFields baseFields;
   }
 }

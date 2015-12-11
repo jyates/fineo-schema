@@ -4,8 +4,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.schema.avro.AvroSchemaBridge;
 import io.fineo.schema.avro.SchemaNameGenerator;
-import io.fineo.schema.avro.SchemaUtils;
+import io.fineo.schema.avro.SchemaNameUtils;
 import io.fineo.schema.store.SchemaBuilder;
 import org.apache.avro.Schema;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class TestSchemaBuilder {
     // verify the fields we added
     assertEquals(Lists.newArrayList("aliasname", "bField"), fields.get(names.get(1)));
     assertEquals(Lists.newArrayList("sField"), fields.get(names.get(2)));
-    assertEquals(new ArrayList<>(), fields.get("unknown_fields"));
+    assertEquals(new ArrayList<>(), fields.get(AvroSchemaBridge.BASE_FIELDS_KEY));
 
     // verify the stored fields
     Map<String, String> fieldNameTypes = new HashMap<>();
@@ -169,17 +170,17 @@ public class TestSchemaBuilder {
     Metric schema = schemas.values().iterator().next();
     assertEquals(schemaNameMap.keySet().iterator().next(), schema.getMetadata().getCanonicalName());
     Map<String, List<String>> schemaFieldMap = schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
-    Map<String, List<String>> expectedFields = new HashMap<>();
-    expectedFields.put("unknown_fields", Lists.newArrayList());
+    Map<String, List<String>> expectedFields = getBaseExpectedAliases();
     assertEquals(expectedFields, schemaFieldMap);
   }
 
   private void verifySchemaHasFields(Metadata metadata, Metric metric,
     Map<String, String> fieldCnameToTypes, int totalFields) {
-    String metricSchemaFullName = SchemaUtils.getCustomerSchemaFullName(metadata.getCanonicalName(),
-      metric.getMetadata().getCanonicalName());
+    String metricSchemaFullName = SchemaNameUtils
+      .getCustomerSchemaFullName(metadata.getCanonicalName(),
+        metric.getMetadata().getCanonicalName());
     Schema schema =
-      SchemaUtils.parseSchema(metric.getMetricSchema(), metricSchemaFullName);
+      SchemaNameUtils.parseSchema(metric.getMetricSchema(), metricSchemaFullName);
     assertNotNull("Didn't get a schema for name: " + metricSchemaFullName, schema);
     assertEquals(totalFields, schema.getFields().size());
     int[] contains = new int[1];
@@ -235,7 +236,7 @@ public class TestSchemaBuilder {
 
   private Map<String, List<String>> getBaseExpectedAliases() {
     Map<String, List<String>> expectedAliases = new HashMap<>();
-    expectedAliases.put(SchemaBuilder.UNKNOWN_KEYS_FIELD, new ArrayList<>());
+    expectedAliases.put(AvroSchemaBridge.BASE_FIELDS_KEY, new ArrayList<>());
     return expectedAliases;
   }
 

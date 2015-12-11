@@ -1,8 +1,6 @@
 package io.fineo.schema;
 
-import com.google.common.collect.Maps;
-import io.fineo.schema.Record;
-
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -42,8 +40,8 @@ public class MapRecord implements Record {
   }
 
   @Override
-  public byte[] getBytesByFieldName(String fieldName) {
-    return (byte[]) map.get(fieldName);
+  public ByteBuffer getBytesByFieldName(String fieldName) {
+    return (ByteBuffer) map.get(fieldName);
   }
 
   @Override
@@ -62,7 +60,12 @@ public class MapRecord implements Record {
   }
 
   @Override
-  public String toString(){
+  public Object getField(String name) {
+    return map.get(name);
+  }
+
+  @Override
+  public String toString() {
     return this.map.toString();
   }
 }

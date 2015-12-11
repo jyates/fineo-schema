@@ -6,7 +6,7 @@ import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
-import io.fineo.schema.avro.SchemaUtils;
+import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 
 import java.io.IOException;
@@ -19,13 +19,6 @@ import java.util.Map;
  *
  */
 public class SchemaBuilder {
-
-  public static final String ORG_ID_KEY = "companykey";
-  public static final String ORG_METRIC_TYPE_KEY = "metrictype";
-  /**
-   * name of the field in the base-schema that stores a map of the unknown fields names -> values
-   */
-  public static final String UNKNOWN_KEYS_FIELD = "unknown_fields";
 
   public SchemaBuilder(SchemaNameGenerator gen) {
     this.gen = gen;
@@ -319,7 +312,7 @@ public class SchemaBuilder {
       Schema.Parser parser = new Schema.Parser();
       parser.parse(sSchema);
       return parser.getTypes().get(
-        SchemaUtils.getCustomerSchemaFullName(orgId, metadata.getMetadata().getCanonicalName()));
+        SchemaNameUtils.getCustomerSchemaFullName(orgId, metadata.getMetadata().getCanonicalName()));
     }
   }
 

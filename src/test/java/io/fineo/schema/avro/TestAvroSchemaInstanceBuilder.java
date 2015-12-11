@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test that we can dynamically create, add and delete fields from the schema
@@ -26,16 +27,23 @@ public class TestAvroSchemaInstanceBuilder {
 
   @Test
   public void testNewType() throws Exception {
-    // read in the avro schema we expect it to be
-    final Schema.Parser parser = new Schema.Parser();
-    parser.parse(getFile("new-type-expected-schema.avsc"));
-    String fullName = SchemaUtils.getCustomerSchemaFullName(customerID, name);
-    final Schema fromFile = parser.getTypes().get(fullName);
-
     AvroSchemaInstanceBuilder builder = buildBasicSchema();
     Schema built = builder.build();
-    assertEquals("Schemas don't match! Expected: \n" + fromFile.toString(true) + "\n --- \n" + built
-      .toString(true), fromFile, built);
+
+    String ns = SchemaNameUtils.getCustomerNamespace(customerID);
+    String fullName = SchemaNameUtils.getCustomerSchemaFullName(customerID, name);
+    assertEquals(ns , built.getNamespace());
+    assertEquals(fullName, built.getFullName());
+    assertEquals(name, built.getName());
+
+    assertEquals(2, built.getFields().size());
+
+    Schema.Field base = built.getField(AvroSchemaBridge.BASE_FIELDS_KEY);
+    assertNotNull("Missing base field!", base);
+
+    Schema.Field added = built.getField(SIMPLE_FIELD_CNAME);
+    assertNotNull("Added the custom field",added);
+    assertEquals(SIMPLE_FIELD_TYPE, added.schema().getType().getName());
   }
 
   private File getFile(String testPath) {
@@ -87,7 +95,7 @@ public class TestAvroSchemaInstanceBuilder {
 
   private Map<String, String> getBaseTypeMap() {
     Map<String, String> map = new HashMap<>();
-    map.put("unknown_fields", "map");
+    map.put(AvroSchemaBridge.BASE_FIELDS_KEY, "record");
     return map;
   }
 
@@ -97,8 +105,8 @@ public class TestAvroSchemaInstanceBuilder {
       .withNamespace(customerID)
       .withName(name);
 
-    // check to make sure we have the expected base fields
-    assertEquals(Lists.newArrayList("unknown_fields"),
+    // check to make sure we have the expected base field
+    assertEquals(Lists.newArrayList(AvroSchemaBridge.BASE_FIELDS_KEY),
       Lists.newArrayList(builder.getBaseFieldNames()));
 
     // add fields
@@ -109,6 +117,6 @@ public class TestAvroSchemaInstanceBuilder {
 
   private AvroSchemaInstanceBuilder getInstance(Schema schema) throws IOException {
     return new AvroSchemaInstanceBuilder(schema.toString(),
-      SchemaUtils.getNameParts(schema.getNamespace()).getValue(), schema.getName());
+      SchemaNameUtils.getNameParts(schema.getNamespace()).getValue(), schema.getName());
   }
 }

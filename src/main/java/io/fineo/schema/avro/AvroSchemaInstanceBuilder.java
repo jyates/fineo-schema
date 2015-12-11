@@ -2,11 +2,9 @@ package io.fineo.schema.avro;
 
 
 import io.fineo.internal.customer.BaseRecord;
-import javafx.util.Pair;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +34,7 @@ public class AvroSchemaInstanceBuilder {
   }
 
   public AvroSchemaInstanceBuilder(String metricSchema, String orgId, String name) throws IOException {
-    this.namespace = orgId == null? null: SchemaUtils.getCustomerNamespace(orgId);
+    this.namespace = orgId == null? null: SchemaNameUtils.getCustomerNamespace(orgId);
     this.schemaName = name;
     // get the base-schema regardless of how we name the final record
     if (metricSchema == null || metricSchema.length() == 0) {
@@ -44,7 +42,7 @@ public class AvroSchemaInstanceBuilder {
     } else {
       Schema.Parser parser = new Schema.Parser();
       parser.parse(metricSchema);
-      this.baseSchema = parser.getTypes().get(SchemaUtils.getCustomerSchemaFullName(orgId, name));
+      this.baseSchema = parser.getTypes().get(SchemaNameUtils.getCustomerSchemaFullName(orgId, name));
     }
   }
 
@@ -54,7 +52,7 @@ public class AvroSchemaInstanceBuilder {
   }
 
   public AvroSchemaInstanceBuilder withNamespace(String customerId) {
-    this.namespace = SchemaUtils.getCustomerNamespace(customerId);
+    this.namespace = SchemaNameUtils.getCustomerNamespace(customerId);
     return this;
   }
 

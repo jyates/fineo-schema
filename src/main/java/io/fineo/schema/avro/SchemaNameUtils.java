@@ -17,7 +17,7 @@ import java.io.IOException;
 /**
  *
  */
-public class SchemaUtils {
+public class SchemaNameUtils {
 
   private static final String NS_SEPARATOR = ".";
   public static final String SEPARATOR_REGEX = "[" + NS_SEPARATOR + "]";
@@ -56,6 +56,10 @@ public class SchemaUtils {
       customerid = customerid.replaceFirst(SEPARATOR_REGEX, "");
     }
     return customerid;
+  }
+
+  public static String getOrgId(String schemaNamespace){
+    return getNameParts(schemaNamespace).getValue();
   }
 
   /**

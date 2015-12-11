@@ -5,7 +5,7 @@ import io.fineo.internal.customer.FieldNameMap;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
-import io.fineo.schema.avro.SchemaUtils;
+import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.logging.Log;
@@ -83,36 +83,36 @@ public class TestSchemaUtils {
 
   private <T extends SpecificRecordBase> void verifyReadWrite(T record) throws IOException {
     LOG.info("Read/Writing instance: " + record);
-    String encoded = SchemaUtils.toString(record);
-    T out = SchemaUtils.readFromString(encoded, record.getSchema());
+    String encoded = SchemaNameUtils.toString(record);
+    T out = SchemaNameUtils.readFromString(encoded, record.getSchema());
     assertEquals(record, out);
   }
 
   @Test
   public void testBuildNamespace() throws Exception {
-    String ns = SchemaUtils.BASE_CUSTOMER_NAMESPACE + ".org1";
-    assertEquals(ns, SchemaUtils.getCustomerNamespace("org1"));
-    assertEquals(ns, SchemaUtils.getCustomerNamespace(".org1"));
-    assertEquals(ns, SchemaUtils.getCustomerNamespace("..org1"));
-    assertEquals(ns, SchemaUtils.getCustomerNamespace(".org1."));
+    String ns = SchemaNameUtils.BASE_CUSTOMER_NAMESPACE + ".org1";
+    assertEquals(ns, SchemaNameUtils.getCustomerNamespace("org1"));
+    assertEquals(ns, SchemaNameUtils.getCustomerNamespace(".org1"));
+    assertEquals(ns, SchemaNameUtils.getCustomerNamespace("..org1"));
+    assertEquals(ns, SchemaNameUtils.getCustomerNamespace(".org1."));
     assertEquals(ns,
-      SchemaUtils.getCustomerNamespace(".org1.."));
+      SchemaNameUtils.getCustomerNamespace(".org1.."));
     assertEquals(ns,
-      SchemaUtils.getCustomerNamespace("..org1.."));
+      SchemaNameUtils.getCustomerNamespace("..org1.."));
   }
 
   @Test
   public void testBuildCustomerName() throws Exception {
     String org = "org1";
-    String ns = SchemaUtils.BASE_CUSTOMER_NAMESPACE + "." + org;
+    String ns = SchemaNameUtils.BASE_CUSTOMER_NAMESPACE + "." + org;
     String name = ns + ".1234";
-    assertEquals(name, SchemaUtils.getCustomerSchemaFullName("org1", "1234"));
-    assertEquals(name, SchemaUtils.getCustomerSchemaFullName(".org1", ".1234"));
-    assertEquals(name, SchemaUtils.getCustomerSchemaFullName("..org1", "..1234"));
-    assertEquals(name, SchemaUtils.getCustomerSchemaFullName(".org1.", ".1234."));
+    assertEquals(name, SchemaNameUtils.getCustomerSchemaFullName("org1", "1234"));
+    assertEquals(name, SchemaNameUtils.getCustomerSchemaFullName(".org1", ".1234"));
+    assertEquals(name, SchemaNameUtils.getCustomerSchemaFullName("..org1", "..1234"));
+    assertEquals(name, SchemaNameUtils.getCustomerSchemaFullName(".org1.", ".1234."));
     assertEquals(name,
-      SchemaUtils.getCustomerSchemaFullName(".org1..", ".1234.."));
+      SchemaNameUtils.getCustomerSchemaFullName(".org1..", ".1234.."));
     assertEquals(name,
-      SchemaUtils.getCustomerSchemaFullName("..org1..", "..1234.."));
+      SchemaNameUtils.getCustomerSchemaFullName("..org1..", "..1234.."));
   }
 }

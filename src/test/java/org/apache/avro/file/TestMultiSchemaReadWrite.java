@@ -1,8 +1,9 @@
 package org.apache.avro.file;
 
 import com.google.common.collect.Lists;
+import io.fineo.internal.customer.BaseFields;
+import io.fineo.schema.avro.AvroSchemaBridge;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
-import io.fineo.schema.store.SchemaBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
@@ -166,8 +167,13 @@ public class TestMultiSchemaReadWrite {
 
     // create a record with the schema
     for (int i = 0; i < count; i++) {
+      BaseFields base = BaseFields.newBuilder()
+                                  .setAliasName("somename_" + i)
+                                  .setTimestamp(System.currentTimeMillis())
+                                  .setUnknownFields(new HashMap<>())
+                                  .build();
       GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
-        .set(SchemaBuilder.UNKNOWN_KEYS_FIELD, new HashMap<>());
+        .set(AvroSchemaBridge.BASE_FIELDS_KEY, base);
       for (int j = 0; j < fieldCount; j++) {
         recordBuilder.set("a" + j, true);
       }

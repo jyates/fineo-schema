@@ -4,9 +4,8 @@ import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.OldSchemaException;
-import io.fineo.schema.avro.SchemaUtils;
+import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.schemarepo.Repository;
@@ -35,7 +34,7 @@ public class SchemaStore {
     Metadata meta = organization.getMetadata();
     Subject orgMetadata = repo.register(meta.getCanonicalName(), null);
     try {
-      orgMetadata.registerIfLatest(SchemaUtils.toString(meta), null);
+      orgMetadata.registerIfLatest(SchemaNameUtils.toString(meta), null);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException("Already have a schema for the organization", e);
     }
@@ -73,7 +72,7 @@ public class SchemaStore {
       try {
         // register the schema as long as we are still the latest. Returns null if its changed,
         // in which case we fall through to the oldSchema exception
-        if (metricSubject.registerIfLatest(SchemaUtils.toString(schema), latest) != null) {
+        if (metricSubject.registerIfLatest(SchemaNameUtils.toString(schema), latest) != null) {
           return;
         }
       } catch (SchemaValidationException e) {
@@ -100,7 +99,7 @@ public class SchemaStore {
     }
     metrics.put(schema.getMetadata().getCanonicalName(), new ArrayList<>(0));
     try {
-      subject.registerIfLatest(SchemaUtils.toString(orgMetadata), latest);
+      subject.registerIfLatest(SchemaNameUtils.toString(orgMetadata), latest);
     } catch (IOException | SchemaValidationException e) {
       latest = subject.latest();
       LOG.info("Organization was updated, trying again to add " + schema + " to " + latest);
@@ -146,7 +145,7 @@ public class SchemaStore {
       return null;
     }
     try {
-      return SchemaUtils.readFromString(entry.getSchema(), schema);
+      return SchemaNameUtils.readFromString(entry.getSchema(), schema);
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to parse organization schema!", e);
     }

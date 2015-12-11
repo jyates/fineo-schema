@@ -1,5 +1,6 @@
 package io.fineo.schema;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.Map;
  */
 public interface Record {
 
-  Boolean getBooleanByField(String fieldName);
+  Object getBooleanByField(String fieldName);
 
   Integer getIntegerByField(String fieldName);
 
@@ -19,11 +20,13 @@ public interface Record {
 
   Double getDoubleByFieldName(String fieldName);
 
-  byte[] getBytesByFieldName(String fieldName);
+  ByteBuffer getBytesByFieldName(String fieldName);
 
   String getStringByField(String fieldName);
 
   Collection<String> getFieldNames();
 
   Iterable<Map.Entry<String, Object>> getFields();
+
+  Object getField(String name);
 }
