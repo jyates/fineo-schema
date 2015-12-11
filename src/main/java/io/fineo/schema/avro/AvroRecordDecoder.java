@@ -24,19 +24,31 @@ public class AvroRecordDecoder {
     String metricCannonicalType;
     Schema metricSchema;
 
-    public RecordMetadata setOrgID(String orgID) {
+    private RecordMetadata setOrgID(String orgID) {
       this.orgID = orgID;
       return this;
     }
 
-    public RecordMetadata setMetricCannonicalType(String metricCannonicalType) {
+    private RecordMetadata setMetricCannonicalType(String metricCannonicalType) {
       this.metricCannonicalType = metricCannonicalType;
       return this;
     }
 
-    public RecordMetadata setMetricSchema(Schema metricSchema) {
+    private RecordMetadata setMetricSchema(Schema metricSchema) {
       this.metricSchema = metricSchema;
       return this;
+    }
+
+    public String getOrgID() {
+      return orgID;
+    }
+
+    public String getMetricCannonicalType() {
+      return metricCannonicalType;
+    }
+
+    public Schema getMetricSchema() {
+      return metricSchema;
     }
   }
 
