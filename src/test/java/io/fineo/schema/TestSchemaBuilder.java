@@ -20,7 +20,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Test that we build logical organization, metric type and field schemas as expected.
@@ -35,7 +34,7 @@ public class TestSchemaBuilder {
   public void testNewOrg() throws Exception {
     List<String> names = Lists.newArrayList("n0", "n1", "n2");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
-    SchemaBuilder builder = new SchemaBuilder(gen);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
     Metadata orgMetadata = verifyGeneratedMetadata(organization, names);
 
@@ -63,13 +62,13 @@ public class TestSchemaBuilder {
   public void testAddMetricTypeToOrg() throws Exception {
     List<String> names = Lists.newArrayList("n0", "n1", "n2");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
-    SchemaBuilder builder = new SchemaBuilder(gen);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
     verifyGeneratedMetadata(organization, names);
 
     names = Lists.newArrayList("r0", "r1", "r2");
     gen = setupMockNameGenerator(names);
-    builder = new SchemaBuilder(gen);
+    builder = SchemaBuilder.createForTesting(gen);
     // should be able to add a new schema with the same 'name' (but different canonical name)
     organization = addMetricType(builder.updateOrg(organization)).build();
     Metadata metadata = organization.getMetadata();
@@ -86,7 +85,7 @@ public class TestSchemaBuilder {
     // build our standard org
     List<String> names = Lists.newArrayList("n0", "n1", "n2", "n3", "n4");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
-    SchemaBuilder builder = new SchemaBuilder(gen);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
     verifyGeneratedMetadata(organization, names);
 
@@ -132,7 +131,7 @@ public class TestSchemaBuilder {
   public void testHideField() throws Exception {
     List<String> names = Lists.newArrayList("n0", "n1", "n2", "n3", "n4");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
-    SchemaBuilder builder = new SchemaBuilder(gen);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
     verifyGeneratedMetadata(organization, names);
     Metric metricSchema = verifyGeneratedMetricMetadata(organization, names);
@@ -151,7 +150,7 @@ public class TestSchemaBuilder {
 
   @Test
   public void testCreateMetadataWithNoFields() throws Exception {
-    SchemaBuilder builder = new SchemaBuilder(new SchemaNameGenerator());
+    SchemaBuilder builder = SchemaBuilder.createForTesting(new SchemaNameGenerator());
     String id = "123d43";
     String metricName = "newschema";
     SchemaBuilder.OrganizationBuilder metadata = builder.newOrg(id)

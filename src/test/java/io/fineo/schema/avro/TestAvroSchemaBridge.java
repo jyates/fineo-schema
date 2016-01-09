@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.fail;
 
 public class TestAvroSchemaBridge {
 
@@ -44,24 +45,34 @@ public class TestAvroSchemaBridge {
     SchemaStore store = Mockito.mock(SchemaStore.class);
     Map<String, Object> content = new HashMap<>();
     MapRecord record = new MapRecord(content);
-    assertNull(AvroSchemaBridge.create(store, record));
+    verifyIllegalCreate(store, record, "when no metric or orgid");
 
     content.put(AvroSchemaBridge.ORG_ID_KEY, "orgid");
-    assertNull(AvroSchemaBridge.create(store, record));
+    verifyIllegalCreate(store, record, "when no orgid, but metricId present");
 
     content.put(AvroSchemaBridge.ORG_METRIC_TYPE_KEY, "metricid");
-    assertNull(
-      "Didn't return null when no metadata received from store, even when record had all "
-      + "necessary fields",
-      AvroSchemaBridge.create(store, record));
+    content.remove(AvroSchemaBridge.ORG_ID_KEY);
+    verifyIllegalCreate(store, record, "when no metricId, but orgId present");
+
+    content.put(AvroSchemaBridge.ORG_ID_KEY, "orgid");
+    verifyIllegalCreate(store, record,
+      "when no metadata received from store, even when record had all necessary fields");
 
     Metadata meta = Mockito.mock(Metadata.class);
     FieldNameMap fields = new FieldNameMap(Collections.emptyMap());
     Mockito.when(store.getSchemaTypes("orgid")).thenReturn(meta);
     Mockito.when(meta.getMetricTypes()).thenReturn(fields);
-    assertNull("Didn't return null when org id exists, but metric type not found",
-      AvroSchemaBridge.create(store, record));
+    verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
     Mockito.verify(meta).getMetricTypes();
     Mockito.verify(store, Mockito.times(2)).getSchemaTypes("orgid");
+  }
+
+  private void verifyIllegalCreate(SchemaStore store, Record record, String when){
+    try {
+      AvroSchemaBridge.create(store, record);
+      fail("Didn't throw illegal argument exception " + when);
+    }catch (IllegalArgumentException e) {
+      //expected
+    }
   }
 }

@@ -1,5 +1,6 @@
 package io.fineo.schema.avro;
 
+import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
@@ -7,7 +8,6 @@ import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -29,7 +29,9 @@ public class AvroSchemaBridge {
   public static final String ORG_ID_KEY = "companykey";
   public static final String ORG_METRIC_TYPE_KEY = "metrictype";
   public static final String TIMESTAMP_KEY = "timestamp";
-  /** name in the base schema that contains the metrics that all records must have */
+  /**
+   * name in the base schema that contains the metrics that all records must have
+   */
   public static final String BASE_FIELDS_KEY = "baseFields";
   public static final String BASE_TIMESTAMP_FIELD_NAME = "timestamp";
 
@@ -58,7 +60,10 @@ public class AvroSchemaBridge {
 
   public GenericData.Record encode(Record record) {
     GenericData.Record avroRecord = new GenericData.Record(schema);
+    // pull out the fields that all records must contain, the 'base' fields
     populateBaseFields(record, avroRecord);
+
+    // copy over all the other fields that the schema knows about
     for (Map.Entry<String, Object> fieldEntry : record.getFields()) {
       String key = fieldEntry.getKey();
       // org ID and canonical name is encoded in the schema
@@ -105,18 +110,20 @@ public class AvroSchemaBridge {
     return unknown;
   }
 
+
   public static AvroSchemaBridge create(SchemaStore store, Record record) {
     String orgid = record.getStringByField(ORG_ID_KEY);
     String type = record.getStringByField(ORG_METRIC_TYPE_KEY);
-    if (orgid == null || type == null) {
-      return null;
-    }
+    return create(store, orgid, type);
+  }
 
-    Metadata orgMetadata = store.getSchemaTypes(orgid);
-    if (orgMetadata == null) {
-      LOG.info("No org found for id: " + orgid);
-      return null;
-    }
+  public static AvroSchemaBridge create(SchemaStore store, String orgId, String metricType) {
+    Preconditions.checkArgument(store != null);
+    Preconditions.checkArgument(orgId != null);
+    Preconditions.checkArgument(metricType != null);
+
+    Metadata orgMetadata = store.getSchemaTypes(orgId);
+    Preconditions.checkArgument(orgMetadata != null);
 
     // for each schema name (metric type) load the actual metric information
     Metric metric = null;
@@ -124,14 +131,12 @@ public class AvroSchemaBridge {
                                                                       .getCanonicalNamesToAliases()
                                                                       .entrySet()) {
       // first alias set that matches
-      if (metricNameAlias.getValue().contains(type)) {
+      if (metricNameAlias.getValue().contains(metricType)) {
         metric = store.getMetricMetadata(orgMetadata.getCanonicalName(), metricNameAlias.getKey());
         break;
       }
     }
-    if (metric == null) {
-      return null;
-    }
+    Preconditions.checkArgument(metric != null);
     return new AvroSchemaBridge(orgMetadata.getCanonicalName(), metric);
   }
 }

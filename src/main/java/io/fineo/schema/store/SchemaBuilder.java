@@ -16,11 +16,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
+ * heirachy. Can also be used to update existing schemas bound to a metric or organization.
  */
 public class SchemaBuilder {
 
-  public SchemaBuilder(SchemaNameGenerator gen) {
+  public static SchemaBuilder create(){
+    return new SchemaBuilder(SchemaNameGenerator.DEFAULT_INSTANCE);
+  }
+
+  public static SchemaBuilder createForTesting(SchemaNameGenerator gen){
+    return new SchemaBuilder(gen);
+  }
+
+  private SchemaBuilder(SchemaNameGenerator gen) {
     this.gen = gen;
   }
 
@@ -312,7 +321,8 @@ public class SchemaBuilder {
       Schema.Parser parser = new Schema.Parser();
       parser.parse(sSchema);
       return parser.getTypes().get(
-        SchemaNameUtils.getCustomerSchemaFullName(orgId, metadata.getMetadata().getCanonicalName()));
+        SchemaNameUtils
+          .getCustomerSchemaFullName(orgId, metadata.getMetadata().getCanonicalName()));
     }
   }
 

@@ -7,6 +7,8 @@ import java.util.UUID;
  */
 public class SchemaNameGenerator {
 
+  public static final SchemaNameGenerator DEFAULT_INSTANCE = new SchemaNameGenerator();
+
   private static final String NAME_PREFIX = "n";
 
   public String generateSchemaName() {
