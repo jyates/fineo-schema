@@ -8,12 +8,12 @@ import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Bridge between the 'logical' schema and the physical schema.
@@ -60,11 +60,8 @@ public class AvroSchemaEncoder {
     for (Map.Entry<String, Object> fieldEntry : record.getFields()) {
       String key = fieldEntry.getKey();
       // org ID and canonical name is encoded in the schema
-      switch (key) {
-        case ORG_ID_KEY:
-        case ORG_METRIC_TYPE_KEY:
-        case TIMESTAMP_KEY:
-          continue;
+      if (IS_BASE_FIELD.test(key)) {
+        continue;
       }
 
       String fieldName = aliasToFieldMap.get(key);
@@ -83,6 +80,20 @@ public class AvroSchemaEncoder {
     getAndSetUnknownFieldsIfEmpty(avroRecord);
     return avroRecord;
   }
+
+  /**
+   * Function to help skip past the base field names in a record's schema. Returns <tt>true</tt>
+   * when a field is a 'base field'.
+   */
+  public static Predicate<String> IS_BASE_FIELD = fieldName -> {
+    switch (fieldName) {
+      case ORG_ID_KEY:
+      case ORG_METRIC_TYPE_KEY:
+      case TIMESTAMP_KEY:
+        return true;
+    }
+    return false;
+  };
 
   private void populateBaseFields(Record record, GenericData.Record avroRecord) {
     BaseFields fields = (BaseFields) avroRecord.get(BASE_FIELDS_KEY);
