@@ -2,7 +2,7 @@ package org.apache.avro.file;
 
 import com.google.common.collect.Lists;
 import io.fineo.internal.customer.BaseFields;
-import io.fineo.schema.avro.AvroSchemaBridge;
+import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -173,7 +173,7 @@ public class TestMultiSchemaReadWrite {
                                   .setUnknownFields(new HashMap<>())
                                   .build();
       GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
-        .set(AvroSchemaBridge.BASE_FIELDS_KEY, base);
+        .set(AvroSchemaEncoder.BASE_FIELDS_KEY, base);
       for (int j = 0; j < fieldCount; j++) {
         recordBuilder.set("a" + j, true);
       }

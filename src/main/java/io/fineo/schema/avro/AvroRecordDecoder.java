@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Decode a record that has been encoded using the {@link AvroSchemaBridge}.
+ * Decode a record that has been encoded using the {@link AvroSchemaEncoder}.
  */
 public class AvroRecordDecoder {
 
@@ -62,7 +62,11 @@ public class AvroRecordDecoder {
   }
 
   public BaseFields getBaseFields() {
-    GenericData.Record rbase = (GenericData.Record) record.get(AvroSchemaBridge.BASE_FIELDS_KEY);
+    Object obj = record.get(AvroSchemaEncoder.BASE_FIELDS_KEY);
+    if(obj instanceof BaseFields){
+      return (BaseFields) obj;
+    }
+    GenericData.Record rbase = (GenericData.Record) obj;
     BaseFields fields = new BaseFields();
     fields.getSchema().getFields()
           .stream()

@@ -1,5 +1,6 @@
 package io.fineo.schema.avro;
 
+import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaBuilder;
@@ -17,8 +18,13 @@ import org.schemarepo.ValidatorFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.zip.Deflater;
 
 import static org.junit.Assert.assertEquals;
@@ -51,36 +57,39 @@ public class SchemaTestUtils {
 
   /**
    * The fields that must be in any <i>inbound record</i> to be considered 'valid'
-   *
-   * @param orgid
-   * @param metricid
-   * @return
    */
-  public static Map<String, Object> getBaseFields(String orgid, String metricid) {
+  public static Map<String, Object> getBaseFields(String orgid, String metricId) {
+    return getBaseFields(orgid, metricId, System.currentTimeMillis());
+  }
+
+  public static Map<String, Object> getBaseFields(String orgid, String metricId, long ts) {
     Map<String, Object> fields = new HashMap<>();
-    fields.put(AvroSchemaBridge.ORG_ID_KEY, orgid);
-    fields.put(AvroSchemaBridge.ORG_METRIC_TYPE_KEY, metricid);
-    fields.put(AvroSchemaBridge.BASE_TIMESTAMP_FIELD_NAME, System.currentTimeMillis());
+    fields.put(AvroSchemaEncoder.ORG_ID_KEY, orgid);
+    fields.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, metricId);
+    fields.put(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME, ts);
     return fields;
   }
 
-  public static AvroSchemaBridge getBridgeForSchema(SchemaStore store, Record record) {
-    AvroSchemaBridge bridge = AvroSchemaBridge.create(store, record);
+  public static AvroSchemaEncoder getBridgeForSchema(SchemaStore store, Record record) {
+    AvroSchemaEncoder bridge = AvroSchemaEncoder.create(store, record);
     assertNotNull("didn't find a matching metric name for record: " + record, bridge);
     return bridge;
   }
 
-  public static GenericRecord readWriteRecord(AvroSchemaBridge bridge, Record record)
+  public static GenericRecord writeReadRecord(AvroSchemaEncoder bridge, Record record)
     throws IOException {
     GenericData.Record outRecord = bridge.encode(record);
-    byte[] data = writeRecord(outRecord);
+    GenericRecord decoded = readWriteData(outRecord);
+    assertEquals(outRecord, decoded);
+    return decoded;
+  }
+
+  private static GenericRecord readWriteData(GenericData.Record record) throws IOException {
+    byte[] data = writeRecord(record);
     GenericDatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
     DataFileReader<GenericRecord> reader =
       new DataFileReader<>(new SeekableByteArrayInput(data), datumReader);
-    GenericRecord decoded = reader.next();
-    assertEquals(outRecord, decoded);
-    return decoded;
-
+    return reader.next();
   }
 
   public static byte[] writeRecord(GenericData.Record outRecord) throws IOException {
@@ -92,5 +101,45 @@ public class SchemaTestUtils {
     fileWriter.append(outRecord);
     fileWriter.close();
     return out.toByteArray();
+  }
+
+  public static List<GenericRecord> createRandomRecord(int count) throws Exception {
+    return createRandomRecord("orgId", "metricType", System.currentTimeMillis(), count);
+  }
+
+  public static List<GenericRecord> createRandomRecord(String orgId, String metricType,
+    long startTs, int recordCount) throws IOException, OldSchemaException {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    // create a semi-random schema
+    int fieldCount = new Random().nextInt(10);
+    String[] fieldNames =
+      IntStream.range(0, fieldCount)
+               .mapToObj(index -> "a" + index)
+               .collect(Collectors.toList())
+               .toArray(new String[0]);
+    SchemaTestUtils.addNewOrg(store, orgId, metricType, fieldNames);
+
+    // create random records with the above schema
+    AvroSchemaEncoder bridge = AvroSchemaEncoder.create(store, orgId, metricType);
+    List<GenericRecord> records = new ArrayList<>(recordCount);
+    for (int i = 0; i < recordCount; i++) {
+      Map<String, Object> fields = SchemaTestUtils.getBaseFields(orgId, metricType, startTs + i);
+      Record record = new MapRecord(fields);
+      for (int j = 0; j < fieldCount; j++) {
+        fields.put("a" + j, true);
+      }
+      records.add(bridge.encode(record));
+    }
+    return records;
+  }
+
+  /**
+   * Create a randomish schema using our schema generation utilities
+   *
+   * @return a record with a unique schema
+   * @throws IOException
+   */
+  public static GenericRecord createRandomRecord() throws Exception {
+    return createRandomRecord(1).get(0);
   }
 }

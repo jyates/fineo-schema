@@ -38,7 +38,7 @@ public class TestAvroSchemaInstanceBuilder {
 
     assertEquals(2, built.getFields().size());
 
-    Schema.Field base = built.getField(AvroSchemaBridge.BASE_FIELDS_KEY);
+    Schema.Field base = built.getField(AvroSchemaEncoder.BASE_FIELDS_KEY);
     assertNotNull("Missing base field!", base);
 
     Schema.Field added = built.getField(SIMPLE_FIELD_CNAME);
@@ -95,7 +95,7 @@ public class TestAvroSchemaInstanceBuilder {
 
   private Map<String, String> getBaseTypeMap() {
     Map<String, String> map = new HashMap<>();
-    map.put(AvroSchemaBridge.BASE_FIELDS_KEY, "record");
+    map.put(AvroSchemaEncoder.BASE_FIELDS_KEY, "record");
     return map;
   }
 
@@ -106,7 +106,7 @@ public class TestAvroSchemaInstanceBuilder {
       .withName(name);
 
     // check to make sure we have the expected base field
-    assertEquals(Lists.newArrayList(AvroSchemaBridge.BASE_FIELDS_KEY),
+    assertEquals(Lists.newArrayList(AvroSchemaEncoder.BASE_FIELDS_KEY),
       Lists.newArrayList(builder.getBaseFieldNames()));
 
     // add fields

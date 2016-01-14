@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.schema.avro.AvroSchemaBridge;
+import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaNameUtils;
 import io.fineo.schema.store.SchemaBuilder;
@@ -47,7 +47,7 @@ public class TestSchemaBuilder {
     // verify the fields we added
     assertEquals(Lists.newArrayList("aliasname", "bField"), fields.get(names.get(1)));
     assertEquals(Lists.newArrayList("sField"), fields.get(names.get(2)));
-    assertEquals(new ArrayList<>(), fields.get(AvroSchemaBridge.BASE_FIELDS_KEY));
+    assertEquals(new ArrayList<>(), fields.get(AvroSchemaEncoder.BASE_FIELDS_KEY));
 
     // verify the stored fields
     Map<String, String> fieldNameTypes = new HashMap<>();
@@ -235,7 +235,7 @@ public class TestSchemaBuilder {
 
   private Map<String, List<String>> getBaseExpectedAliases() {
     Map<String, List<String>> expectedAliases = new HashMap<>();
-    expectedAliases.put(AvroSchemaBridge.BASE_FIELDS_KEY, new ArrayList<>());
+    expectedAliases.put(AvroSchemaEncoder.BASE_FIELDS_KEY, new ArrayList<>());
     return expectedAliases;
   }
 

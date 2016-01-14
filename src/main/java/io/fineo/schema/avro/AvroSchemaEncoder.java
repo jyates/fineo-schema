@@ -18,14 +18,12 @@ import java.util.Map;
 /**
  * Bridge between the 'logical' schema and the physical schema.
  */
-public class AvroSchemaBridge {
+public class AvroSchemaEncoder {
 
   /**
    * Single place that we reference the schema names for the base fields, so we can set/extract
    * them by name properly
    */
-  private static final Log LOG = LogFactory.getLog(AvroSchemaBridge.class);
-
   public static final String ORG_ID_KEY = "companykey";
   public static final String ORG_METRIC_TYPE_KEY = "metrictype";
   public static final String TIMESTAMP_KEY = "timestamp";
@@ -40,7 +38,7 @@ public class AvroSchemaBridge {
   // essentially the reverse of the alias map in the metric metadata
   private final Map<String, String> aliasToFieldMap = new HashMap<>();
 
-  public AvroSchemaBridge(String orgid, Metric metric) {
+  public AvroSchemaEncoder(String orgid, Metric metric) {
     Schema.Parser parser = new Schema.Parser();
     parser.parse(metric.getMetricSchema());
     this.schema = parser.getTypes().get(
@@ -51,11 +49,6 @@ public class AvroSchemaBridge {
         aliasToFieldMap.putIfAbsent(alias, entry.getKey());
       });
     });
-  }
-
-  private void populateBaseFields(BaseFields fields, Record record) {
-    fields.setTimestamp(record.getLongByFieldName(TIMESTAMP_KEY));
-    fields.setAliasName(record.getStringByField(ORG_METRIC_TYPE_KEY));
   }
 
   public GenericData.Record encode(Record record) {
@@ -100,6 +93,11 @@ public class AvroSchemaBridge {
     populateBaseFields(fields, record);
   }
 
+  private void populateBaseFields(BaseFields fields, Record record) {
+    fields.setTimestamp(record.getLongByFieldName(TIMESTAMP_KEY));
+    fields.setAliasName(record.getStringByField(ORG_METRIC_TYPE_KEY));
+  }
+
   private Map<String, String> getAndSetUnknownFieldsIfEmpty(GenericData.Record avroRecord) {
     BaseFields fields = (BaseFields) avroRecord.get(BASE_FIELDS_KEY);
     Map<String, String> unknown = fields.getUnknownFields();
@@ -111,13 +109,13 @@ public class AvroSchemaBridge {
   }
 
 
-  public static AvroSchemaBridge create(SchemaStore store, Record record) {
+  public static AvroSchemaEncoder create(SchemaStore store, Record record) {
     String orgid = record.getStringByField(ORG_ID_KEY);
     String type = record.getStringByField(ORG_METRIC_TYPE_KEY);
     return create(store, orgid, type);
   }
 
-  public static AvroSchemaBridge create(SchemaStore store, String orgId, String metricType) {
+  public static AvroSchemaEncoder create(SchemaStore store, String orgId, String metricType) {
     Preconditions.checkArgument(store != null);
     Preconditions.checkArgument(orgId != null);
     Preconditions.checkArgument(metricType != null);
@@ -137,6 +135,6 @@ public class AvroSchemaBridge {
       }
     }
     Preconditions.checkArgument(metric != null);
-    return new AvroSchemaBridge(orgMetadata.getCanonicalName(), metric);
+    return new AvroSchemaEncoder(orgMetadata.getCanonicalName(), metric);
   }
 }

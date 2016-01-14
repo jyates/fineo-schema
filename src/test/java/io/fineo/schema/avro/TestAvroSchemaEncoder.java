@@ -16,7 +16,7 @@ import java.util.Map;
 import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.fail;
 
-public class TestAvroSchemaBridge {
+public class TestAvroSchemaEncoder {
 
   /**
    * Test what happens when we don't have any unknown fields and then try to write it out
@@ -36,8 +36,8 @@ public class TestAvroSchemaBridge {
     Record record = new MapRecord(fields);
 
     //create a bridge between the record and the avro type
-    AvroSchemaBridge bridge = SchemaTestUtils.getBridgeForSchema(store, record);
-    SchemaTestUtils.readWriteRecord(bridge, record);
+    AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, record);
+    SchemaTestUtils.writeReadRecord(bridge, record);
   }
 
   @Test
@@ -47,14 +47,14 @@ public class TestAvroSchemaBridge {
     MapRecord record = new MapRecord(content);
     verifyIllegalCreate(store, record, "when no metric or orgid");
 
-    content.put(AvroSchemaBridge.ORG_ID_KEY, "orgid");
+    content.put(AvroSchemaEncoder.ORG_ID_KEY, "orgid");
     verifyIllegalCreate(store, record, "when no orgid, but metricId present");
 
-    content.put(AvroSchemaBridge.ORG_METRIC_TYPE_KEY, "metricid");
-    content.remove(AvroSchemaBridge.ORG_ID_KEY);
+    content.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, "metricid");
+    content.remove(AvroSchemaEncoder.ORG_ID_KEY);
     verifyIllegalCreate(store, record, "when no metricId, but orgId present");
 
-    content.put(AvroSchemaBridge.ORG_ID_KEY, "orgid");
+    content.put(AvroSchemaEncoder.ORG_ID_KEY, "orgid");
     verifyIllegalCreate(store, record,
       "when no metadata received from store, even when record had all necessary fields");
 
@@ -69,7 +69,7 @@ public class TestAvroSchemaBridge {
 
   private void verifyIllegalCreate(SchemaStore store, Record record, String when){
     try {
-      AvroSchemaBridge.create(store, record);
+      AvroSchemaEncoder.create(store, record);
       fail("Didn't throw illegal argument exception " + when);
     }catch (IllegalArgumentException e) {
       //expected
