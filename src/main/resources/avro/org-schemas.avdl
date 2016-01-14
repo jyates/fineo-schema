@@ -11,12 +11,6 @@
 
 @namespace("io.fineo.internal.customer")
 protocol Organization{
-
-  // helper record to map a canonical name to a number of aliases
-  record FieldNameMap {
-    union {null, map<array<string>>} canonicalNamesToAliases;
-  }
-
   // Metadata about an organization, specifically:
   // - the org ID
   // - the map of the metric cannonical and alias names
@@ -24,7 +18,8 @@ protocol Organization{
   // Decoupled from metric instances to allow them to change independently
   record Metadata {
     string canonicalName;
-    FieldNameMap metricTypes;
+    // helper record to map a canonical name to a number of aliases
+    union {null, map<array<string>>} canonicalNamesToAliases = null;
   }
 
   // A metric's schema in an organization.

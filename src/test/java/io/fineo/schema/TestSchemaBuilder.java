@@ -42,7 +42,7 @@ public class TestSchemaBuilder {
     Metric metricSchema = verifyGeneratedMetricMetadata(organization, names);
     // verify each field name + alias in the actual schema
     Map<String, List<String>> fields =
-      metricSchema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+      metricSchema.getMetadata().getCanonicalNamesToAliases();
     assertEquals("Expected 1 base fields and 2 added", 3, fields.size());
     // verify the fields we added
     assertEquals(Lists.newArrayList("aliasname", "bField"), fields.get(names.get(1)));
@@ -74,7 +74,7 @@ public class TestSchemaBuilder {
     Metadata metadata = organization.getMetadata();
     assertEquals(ORG_ID, metadata.getCanonicalName());
     Map<String, List<String>> types =
-      metadata.getMetricTypes().getCanonicalNamesToAliases();
+      metadata.getCanonicalNamesToAliases();
     assertEquals("Didn't get expected number of fields!", 2, types.size());
     assertEquals("Didn't get expected canonical names", Sets.newHashSet("n0", "r0"),
       types.keySet());
@@ -108,7 +108,7 @@ public class TestSchemaBuilder {
     assertEquals(1, organization.getSchemas().size());
     Metric metric = organization.getSchemas().get(metricAliasMap.keySet().iterator().next());
     Map<String, List<String>> fieldMap =
-      metric.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+      metric.getMetadata().getCanonicalNamesToAliases();
     Map<String, List<String>> expectedFields = getBaseExpectedAliases();
     expectedFields.put("n1", Lists.newArrayList("aliasname", "bField", "other alias"));
     expectedFields.put("n2", Lists.newArrayList("sField"));
@@ -159,7 +159,7 @@ public class TestSchemaBuilder {
     SchemaBuilder.Organization organization = metadata.build();
     // verify that we have the org and the correct schema name mapping
     assertEquals(id, organization.getMetadata().getCanonicalName());
-    Map<String, List<String>> schemaNameMap = organization.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+    Map<String, List<String>> schemaNameMap = organization.getMetadata().getCanonicalNamesToAliases();
     assertEquals(1, schemaNameMap.size());
     assertEquals(Lists.newArrayList(metricName), schemaNameMap.values().iterator().next());
 
@@ -168,7 +168,7 @@ public class TestSchemaBuilder {
     assertEquals(1, schemas.size());
     Metric schema = schemas.values().iterator().next();
     assertEquals(schemaNameMap.keySet().iterator().next(), schema.getMetadata().getCanonicalName());
-    Map<String, List<String>> schemaFieldMap = schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+    Map<String, List<String>> schemaFieldMap = schema.getMetadata().getCanonicalNamesToAliases();
     Map<String, List<String>> expectedFields = getBaseExpectedAliases();
     assertEquals(expectedFields, schemaFieldMap);
   }
@@ -210,7 +210,7 @@ public class TestSchemaBuilder {
     Metadata orgMetadata = org.getMetadata();
     assertEquals("Wrong org id stored!", ORG_ID, orgMetadata.getCanonicalName());
     Map<String, List<String>> fields =
-      orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
+      orgMetadata.getCanonicalNamesToAliases();
     assertEquals("Wrong number of metric type fields", 1, fields.size());
     CharSequence field = fields.keySet().iterator().next();
     assertEquals("Canonical metric name is not the expected generated name!", metricName, field);
@@ -229,7 +229,7 @@ public class TestSchemaBuilder {
     expectedAliases.put(names.get(1), Lists.newArrayList("aliasname", "bField"));
     expectedAliases.put(names.get(2), Lists.newArrayList("sField"));
     assertEquals("Field -> Alias mapping didn't match", expectedAliases,
-      schema.getMetadata().getMetricTypes().getCanonicalNamesToAliases());
+      schema.getMetadata().getCanonicalNamesToAliases());
     return schema;
   }
 

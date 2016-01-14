@@ -1,7 +1,6 @@
 package io.fineo.schema;
 
 import com.google.common.collect.Lists;
-import io.fineo.internal.customer.FieldNameMap;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
@@ -33,16 +32,10 @@ public class TestSchemaUtils {
 
     Map<String, List<String>> fields = new HashMap<>(1);
     fields.put("fieldCName", Lists.newArrayList(" fieldAlias1"));
-    FieldNameMap map = FieldNameMap.newBuilder().setCanonicalNamesToAliases(fields).build();
-    // read/write the map to ensure we support more than 1 type
-    verifyReadWrite(map);
 
     Metadata metricMetadata = Metadata.newBuilder()
                                       .setCanonicalName("schemaCName")
-                                      .setMetricTypes(FieldNameMap
-                                        .newBuilder()
-                                        .setCanonicalNamesToAliases(null)
-                                        .build())
+                                      .setCanonicalNamesToAliases(null)
                                       .build();
     verifyReadWrite(metricMetadata);
 
@@ -57,7 +50,7 @@ public class TestSchemaUtils {
       .newBuilder()
       .setMetadata(Metadata
         .newBuilder()
-        .setMetricTypes(map)
+        .setCanonicalNamesToAliases(fields)
         .setCanonicalName("schemaCName")
         .build())
       .setMetricSchema(schema)
@@ -73,7 +66,7 @@ public class TestSchemaUtils {
       .newBuilder()
       .setMetadata(Metadata
         .newBuilder()
-        .setMetricTypes(map)
+        .setCanonicalNamesToAliases(fields)
         .setCanonicalName("schemaCName")
         .build())
       .setMetricSchema(schema)

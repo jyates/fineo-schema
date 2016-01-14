@@ -12,7 +12,6 @@ import org.apache.avro.generic.GenericData;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -44,7 +43,7 @@ public class AvroSchemaEncoder {
     this.schema = parser.getTypes().get(
       SchemaNameUtils.getCustomerSchemaFullName(orgid, metric.getMetadata().getCanonicalName()));
     // build a map of the alias names -> schema names
-    metric.getMetadata().getMetricTypes().getCanonicalNamesToAliases().entrySet().forEach(entry -> {
+    metric.getMetadata().getCanonicalNamesToAliases().entrySet().forEach(entry -> {
       entry.getValue().forEach(alias -> {
         aliasToFieldMap.putIfAbsent(alias, entry.getKey());
       });
@@ -136,8 +135,7 @@ public class AvroSchemaEncoder {
 
     // for each schema name (metric type) load the actual metric information
     Metric metric = null;
-    for (Map.Entry<String, List<String>> metricNameAlias : orgMetadata.getMetricTypes()
-                                                                      .getCanonicalNamesToAliases()
+    for (Map.Entry<String, List<String>> metricNameAlias : orgMetadata.getCanonicalNamesToAliases()
                                                                       .entrySet()) {
       // first alias set that matches
       if (metricNameAlias.getValue().contains(metricType)) {

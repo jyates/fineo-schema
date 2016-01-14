@@ -1,7 +1,6 @@
 package io.fineo.schema.store;
 
 import com.google.common.base.Preconditions;
-import io.fineo.internal.customer.FieldNameMap;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
@@ -109,10 +108,10 @@ public class SchemaBuilder {
     }
 
     private Map<String, List<String>> getBuilderMetricTypes() {
-      if (org.getMetricTypes() == null) {
-        org.setMetricTypes(emptyFieldMap());
+      if (org.getCanonicalNamesToAliases()== null) {
+        org.setCanonicalNamesToAliases(new HashMap<>());
       }
-      return org.getMetricTypes().getCanonicalNamesToAliases();
+      return org.getCanonicalNamesToAliases();
     }
 
     public Organization build() {
@@ -197,7 +196,7 @@ public class SchemaBuilder {
 
       // add fields from the base record so we have the name mapping
       final Map<String, List<String>> cnameToAliases =
-        getBuilderMetadata().getMetricTypes().getCanonicalNamesToAliases();
+        getBuilderMetadata().getCanonicalNamesToAliases();
       instance.getBaseFieldNames().stream().forEach(name -> {
           List<String> aliases = cnameToAliases.get(name);
           if (aliases == null) {
@@ -253,7 +252,7 @@ public class SchemaBuilder {
         cname = gen.generateSchemaName();
         // ensure we have some metadata
         Metadata metadata = getBuilderMetadata();
-        Map<String, List<String>> fields = metadata.getMetricTypes().getCanonicalNamesToAliases();
+        Map<String, List<String>> fields = metadata.getCanonicalNamesToAliases();
         if (fields.get(cname) == null) {
           fields.put(cname, field.aliases);
           break;
@@ -303,7 +302,7 @@ public class SchemaBuilder {
 
     public FieldBuilder updateField(String fieldCanonicalName) {
       Map<String, List<String>> fields =
-        this.metadata.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+        this.metadata.getMetadata().getCanonicalNamesToAliases();
       List<String> aliases = fields.get(fieldCanonicalName);
       Preconditions
         .checkArgument(aliases != null, "No field with canonical name: %s",
@@ -333,13 +332,10 @@ public class SchemaBuilder {
   private Metadata emptyMetadata() {
     return Metadata.newBuilder()
                    .setCanonicalName("to-be-replaced")
-                   .setMetricTypes(emptyFieldMap())
+                    .setCanonicalNamesToAliases(new HashMap<>())
                    .build();
   }
 
-  private FieldNameMap emptyFieldMap() {
-    return FieldNameMap.newBuilder().setCanonicalNamesToAliases(new HashMap<>()).build();
-  }
 
   /**
    * Builder for fields that should be tracked in each metric type.

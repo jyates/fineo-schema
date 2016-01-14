@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.OldSchemaException;
+import io.fineo.schema.avro.AvroRecordDecoder;
 import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
@@ -93,7 +94,7 @@ public class SchemaStore {
     Metadata orgMetadata, SchemaEntry latest) {
     // check that the metadata has the schema name. If not, add it and update
     Map<String, List<String>> metrics =
-      orgMetadata.getMetricTypes().getCanonicalNamesToAliases();
+      orgMetadata.getCanonicalNamesToAliases();
     if (!metrics.containsKey(schema.getMetadata().getCanonicalName())) {
       return;
     }
@@ -116,6 +117,10 @@ public class SchemaStore {
     }
 
     return parse(subject.latest(), Metadata.getClassSchema());
+  }
+
+  public Metric getMetricMetadata(AvroRecordDecoder.RecordMetadata meta){
+    return getMetricMetadata(meta.getOrgID(), meta.getMetricCannonicalType());
   }
 
   public Metric getMetricMetadata(CharSequence orgId, String metricName) {

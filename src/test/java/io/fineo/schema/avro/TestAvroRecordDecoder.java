@@ -48,7 +48,7 @@ public class TestAvroRecordDecoder {
     // ensure the canonical name matches what we have in the store
     Metadata schemas = store.getSchemaTypes(orgID);
     Map<String, List<String>> metricAliasMap =
-      schemas.getMetricTypes().getCanonicalNamesToAliases();
+      schemas.getCanonicalNamesToAliases();
     assertEquals(1, metricAliasMap.size());
     assertEquals(metricAliasMap.keySet().iterator().next(), metadata.metricCannonicalType);
     assertEquals(Lists.newArrayList(metricName), metricAliasMap.get(metadata.metricCannonicalType));
@@ -64,7 +64,7 @@ public class TestAvroRecordDecoder {
     Metric metric = store.getMetricMetadata(metadata.orgID, metadata.metricCannonicalType);
     // canonical name has the aliased field name
     Map<String, List<String>> aliases =
-      metric.getMetadata().getMetricTypes().getCanonicalNamesToAliases();
+      metric.getMetadata().getCanonicalNamesToAliases();
     assertEquals(2, aliases.size());
     assertEquals(new ArrayList<>(0), aliases.remove(AvroSchemaEncoder.BASE_FIELDS_KEY));
     String fieldCannonicalName = aliases.keySet().iterator().next();
