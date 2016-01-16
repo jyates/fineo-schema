@@ -1,7 +1,7 @@
 package io.fineo.schema.avro;
 
 import com.google.common.base.Joiner;
-import javafx.util.Pair;
+import io.fineo.schema.Pair;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;

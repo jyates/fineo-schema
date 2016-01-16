@@ -36,10 +36,24 @@ Since schema changes are proliferated through the platform, we can also set them
 
 ## Tests
 
-Tests rely on a local dynamoDB instance to be stood up - this is handled as part of the tests, but relies on maven to copy the SQLlite jars to target/dependencies. Thus, to run tests, do:
+Basic unit tests can be run with:
 
 ```
- $ mvn clean test
+ $ mvn test
 ```
 
-This will also setup the target/ directory so you can run tests from the IDE.
+NOTE: this also the same suite of tests that is run when you do ```mvn install```
+
+However, this will skip the 'local integration' tests that leverage a local dynamoDB instance. To kick off just these integration tests, run
+
+```
+ $ mvn test -DawsTests
+```
+
+This will also setup the target/ directory so you can run tests from the IDE (some work needs to be done to setup Dynamo that maven handles).
+
+Finally, you can run all tests with:
+
+```
+ $ mvn test -DallTests
+```

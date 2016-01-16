@@ -14,6 +14,7 @@
     <aws.dynamodb.local.version>1.10.5.1</aws.dynamodb.local.version>
 
     <avro.version>1.7.7</avro.version>
+    <avro.maven.plugin.version>1.7.7</avro.maven.plugin.version>
 
     <!-- Test dependencies -->
     <junit.version>4.12</junit.version>
@@ -25,9 +26,9 @@
     <!-- Test Running properties -->
     <test.output.to.file>true</test.output.to.file>
     <test.exclude.pattern></test.exclude.pattern>
-    <surefire.s3tests>io.fineo.aws.AwsDependentTests</surefire.s3tests>
+    <surefire.awsTests>io.fineo.aws.AwsDependentTests</surefire.awsTests>
     <surefire.skipSimpleTests>false</surefire.skipSimpleTests>
-    <surefire.skipS3Tests>true</surefire.skipS3Tests>
+    <surefire.skipAwsTests>true</surefire.skipAwsTests>
 
   </properties>
 
@@ -71,18 +72,18 @@
                 <goal>test</goal>
               </goals>
               <configuration>
-                <excludedGroups>${surefire.s3tests}</excludedGroups>
+                <excludedGroups>${surefire.awsTests}</excludedGroups>
                 <skip>${surefire.skipSimpleTests}</skip>
               </configuration>
             </execution>
             <execution>
-              <id>s3tests</id>
+              <id>awsLocalTests</id>
               <goals>
                 <goal>test</goal>
               </goals>
               <configuration>
-                <groups>${surefire.s3tests}</groups>
-                <skip>${surefire.skipS3Tests}</skip>
+                <groups>${surefire.awsTests}</groups>
+                <skip>${surefire.skipAwsTests}</skip>
               </configuration>
             </execution>
           </executions>
@@ -94,6 +95,7 @@
       <plugin>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
+        <version>${avro.maven.plugin.version}</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -237,21 +239,34 @@
   <profiles>
     <!-- Setup the different test phases -->
     <profile>
-      <id>s3Tests</id>
+      <id>allTests</id>
       <activation>
         <property>
-          <name>s3Tests</name>
+          <name>allTests</name>
         </property>
       </activation>
       <properties>
-        <surefire.skipS3Tests>false</surefire.skipS3Tests>
+        <surefire.skipAwsTests>false</surefire.skipAwsTests>
+        <surefire.skipSimpleTests>false</surefire.skipSimpleTests>
       </properties>
     </profile>
     <profile>
-      <id>skipLocalTests</id>
+      <id>awsTests</id>
       <activation>
         <property>
-          <name>skipLocalTests</name>
+          <name>awsTests</name>
+        </property>
+      </activation>
+      <properties>
+        <surefire.skipAwsTests>false</surefire.skipAwsTests>
+        <surefire.skipSimpleTests>true</surefire.skipSimpleTests>
+      </properties>
+    </profile>
+    <profile>
+      <id>skipSimpleTests</id>
+      <activation>
+        <property>
+          <name>skipSimpleTests</name>
         </property>
       </activation>
       <properties>

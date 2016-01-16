@@ -20,7 +20,7 @@ import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
-import javafx.util.Pair;
+import io.fineo.schema.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.schemarepo.AbstractBackendRepository;
@@ -76,11 +76,11 @@ public class DynamoDBRepository extends AbstractBackendRepository {
   private final AmazonDynamoDB client;
   private final DynamoDBMapper mapper;
 
-  public DynamoDBRepository(AmazonDynamoDB dynamodb, String schemaTable,
-    ValidatorFactory validators) {
+  public DynamoDBRepository(ValidatorFactory validators, AmazonDynamoDB dynamoDB,
+    CreateTableRequest schemaTable) {
     super(validators);
-    this.client = dynamodb;
-    this.dynamo = new DynamoDB(dynamodb);
+    this.client = dynamoDB;
+    this.dynamo = new DynamoDB(dynamoDB);
     this.table = getTable(schemaTable);
     DynamoDBMapperConfig.Builder b = new DynamoDBMapperConfig.Builder();
     b.setTableNameOverride(new DynamoDBMapperConfig.TableNameOverride(table.getTableName()));
@@ -89,25 +89,40 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     this.mapper = new DynamoDBMapper(client, b.build());
   }
 
-  private Table getTable(String table) {
+  public static DynamoDBRepository createDynamoForTesting(AmazonDynamoDB dynamodb,
+    String schemaTable, ValidatorFactory validators) {
+    CreateTableRequest create = getBaseTableCreate(schemaTable);
+    create = create.withProvisionedThroughput(new ProvisionedThroughput()
+      .withReadCapacityUnits(10L)
+      .withWriteCapacityUnits(5L));
+    return new DynamoDBRepository(validators, dynamodb, create);
+  }
+
+  /**
+   * @param table name of the schema table
+   * @return the basics of a request to create the schema table. Missing throughout information
+   * to be used to create the schema table
+   */
+  public static CreateTableRequest getBaseTableCreate(String table){
+    Pair<List<KeySchemaElement>, List<AttributeDefinition>> schema = getSchema();
+    CreateTableRequest create = new CreateTableRequest()
+      .withTableName(table)
+      .withKeySchema(schema.getKey())
+      .withAttributeDefinitions(schema.getValue());
+    return create;
+  }
+
+  private Table getTable(CreateTableRequest table) {
     Table t;
     try {
       // table probably exists, so check that first
-      TableUtils.waitUntilExists(client, table, 1000, 100);
-      t = dynamo.getTable(table);
+      String name = table.getTableName();
+      TableUtils.waitUntilExists(client, name, 1000, 100);
+      t = dynamo.getTable(name);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } catch (AmazonClientException e) {
-      // assume the table doesn't exist at this point, so create it
-      Pair<List<KeySchemaElement>, List<AttributeDefinition>> schema = getSchema();
-      CreateTableRequest create = new CreateTableRequest()
-        .withTableName(table)
-        .withKeySchema(schema.getKey())
-        .withProvisionedThroughput(new ProvisionedThroughput()
-          .withReadCapacityUnits(10L)
-          .withWriteCapacityUnits(5L));
-      create.setAttributeDefinitions(schema.getValue());
-      t = dynamo.createTable(create);
+      t = dynamo.createTable(table);
       LOG.info("Created Dynamo table: " + t);
     }
 
