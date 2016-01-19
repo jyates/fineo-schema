@@ -225,7 +225,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
   }
 
   private void waitForTable() {
-    LOG.info("Waiting for " + table + " to become active");
+    LOG.debug("Waiting for " + table + " to become active");
     try {
       table.waitForActive();
     } catch (InterruptedException e) {
