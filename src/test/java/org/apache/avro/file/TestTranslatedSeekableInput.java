@@ -2,22 +2,32 @@ package org.apache.avro.file;
 
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-/**
- *
- */
 public class TestTranslatedSeekableInput {
 
   @Test
-  public void test() throws Exception {
+  public void testSeekableByteArray() throws Exception {
+    test(new SeekableByteArrayInput(data()));
+  }
+
+  @Test
+  public void testSeekableByteBuffer() throws Exception {
+    test(new SeekableByteBufferInput(ByteBuffer.wrap(data())));
+  }
+
+  private byte[] data() {
     byte[] data = new byte[128];
     for (byte i = 0; i < 127; i++) {
       data[i] = i;
     }
+    return data;
+  }
 
-    SeekableByteArrayInput input = new SeekableByteArrayInput(data);
+  private void test(SeekableInput input) throws Exception {
     /** [0*] 1 2 3 4 */
     TranslatedSeekableInput trans = new TranslatedSeekableInput(0, 1, input);
     assertEquals(1, trans.length());
@@ -27,7 +37,8 @@ public class TestTranslatedSeekableInput {
     assertEquals(127, trans.remainingTotal());
 
     trans.seek(2);
-    assertEquals("Seeking past end of limited does not return -1 on read", -1, trans.read(bit, 0, 1));
+    assertEquals("Seeking past end of limited does not return -1 on read", -1,
+      trans.read(bit, 0, 1));
 
     // seek back to beginning
     trans.seek(0);
