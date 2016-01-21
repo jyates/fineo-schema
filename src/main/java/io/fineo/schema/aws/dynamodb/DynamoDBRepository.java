@@ -32,6 +32,7 @@ import org.schemarepo.Subject;
 import org.schemarepo.SubjectConfig;
 import org.schemarepo.ValidatorFactory;
 
+import javax.management.RuntimeErrorException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -124,6 +125,13 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     } catch (AmazonClientException e) {
       t = dynamo.createTable(table);
       LOG.info("Created Dynamo table: " + t);
+      try {
+        LOG.debug("Waiting for table to become active...");
+        TableUtils.waitUntilActive(client, table.getTableName());
+        LOG.debug("Table is ready!");
+      } catch (InterruptedException e1) {
+        throw new RuntimeException(e1);
+      }
     }
 
     return t;
