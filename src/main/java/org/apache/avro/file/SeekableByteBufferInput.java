@@ -33,19 +33,13 @@ public class SeekableByteBufferInput implements SeekableInput {
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    if (buff.remaining() > len) {
-      buff.get(b, off, len);
-      return len;
-    }
-    if (buff.remaining() > 0) {
-      if (buff.remaining() == len) {
-        buff.get(b, off, len);
-      } else if (buff.remaining() < len) {
-        buff.get(b, off, buff.remaining());
-      }
+    if (buff.remaining() == 0) {
+      return -1;
     }
 
-    return -1;
+    int read = Math.min(buff.remaining(), len);
+    buff.get(b, off, read);
+    return read;
   }
 
   @Override

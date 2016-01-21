@@ -74,18 +74,21 @@ public class TestSeekableByteBufferInput {
 
     expected = new byte[]{127};
     byte[] remaining = new byte[1];
-    assertEquals(-1, input.read(remaining, 0, 1));
+    assertEquals(1, input.read(remaining, 0, 1));
     assertArrayEquals(expected, remaining);
+    assertEquals(-1, input.read(remaining, 0, 1));
 
     // rewind and read again
     input.seek(127);
-    assertEquals(-1, input.read(remaining, 0, 1));
+    assertEquals(1, input.read(remaining, 0, 1));
     assertArrayEquals(expected, remaining);
+    assertEquals(-1, input.read(remaining, 0, 1));
 
     // read 'past' the end
     input.seek(127);
-    assertEquals(-1, input.read(remaining, 0, 2));
+    assertEquals(1, input.read(remaining, 0, 2));
     assertArrayEquals(expected, remaining);
+    assertEquals(-1, input.read(remaining, 0, 1));
 
     // and read again, but don't seek, which shouldn't do anything
     remaining = new byte[0];
