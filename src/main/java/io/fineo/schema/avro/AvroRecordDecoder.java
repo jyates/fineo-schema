@@ -1,133 +1,80 @@
 package io.fineo.schema.avro;
 
-import io.fineo.internal.customer.BaseFields;
 import io.fineo.schema.Record;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
+import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.generic.GenericRecord;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Decode a record that has been encoded using the {@link AvroSchemaEncoder}.
  */
 public class AvroRecordDecoder {
 
-  private final RecordMetadata metadata;
+  final RecordMetadata metadata;
   private final GenericRecord record;
+  private final Map<String, String> aliasMap;
 
-  public static class RecordMetadata {
-    String orgID;
-    String metricCannonicalType;
-    Schema metricSchema;
-
-    private RecordMetadata setOrgID(String orgID) {
-      this.orgID = orgID;
-      return this;
-    }
-
-    private RecordMetadata setMetricCannonicalType(String metricCannonicalType) {
-      this.metricCannonicalType = metricCannonicalType;
-      return this;
-    }
-
-    private RecordMetadata setMetricSchema(Schema metricSchema) {
-      this.metricSchema = metricSchema;
-      return this;
-    }
-
-    public String getOrgID() {
-      return orgID;
-    }
-
-    public String getMetricCannonicalType() {
-      return metricCannonicalType;
-    }
-
-    public Schema getMetricSchema() {
-      return metricSchema;
-    }
-  }
-
-  public AvroRecordDecoder(GenericRecord record) {
+  AvroRecordDecoder(GenericRecord record, SchemaStore store) {
     this.record = record;
-    this.metadata = getMetadata(record);
+    this.metadata = RecordMetadata.getMetadata(record);
+    this.aliasMap = AvroSchemaManager.getAliasRemap(store.getMetricMetadata(metadata));
   }
 
   public RecordMetadata getMetadata() {
     return this.metadata;
   }
 
-  public BaseFields getBaseFields() {
-    Object obj = record.get(AvroSchemaEncoder.BASE_FIELDS_KEY);
-    if(obj instanceof BaseFields){
-      return (BaseFields) obj;
-    }
-    GenericData.Record rbase = (GenericData.Record) obj;
-    BaseFields fields = new BaseFields();
-    fields.getSchema().getFields()
-          .stream()
-          .map(Schema.Field::name)
-          .forEach(name -> fields.put(name, rbase.get(name)));
-    return fields;
+  /**
+   * Translate the remaining fields (non-base fields) in the record to the alias name. The
+   * returned record's fields are queryable only by the alias names, not the canonical name
+   */
+  public Record getTranslatedRecord() {
+    return new TranslatedRecord();
   }
 
-  private RecordMetadata getMetadata(GenericRecord record) {
-    Schema schema = record.getSchema();
-    return new RecordMetadata().setMetricSchema(schema)
-                               .setOrgID(SchemaNameUtils.getOrgId(schema.getNamespace()))
-                               .setMetricCannonicalType(schema.getName());
-  }
-
-  private class RecordMap implements Record {
-    private final GenericData.Record base;
-
-    public RecordMap(GenericData.Record base) {
-      this.base = base;
-    }
+  private class TranslatedRecord implements Record {
 
     @Override
     public Boolean getBooleanByField(String fieldName) {
-      return (Boolean) base.get(fieldName);
+      return (Boolean) getField(fieldName);
     }
 
     @Override
     public Integer getIntegerByField(String fieldName) {
-      return (Integer) base.get(fieldName);
+      return (Integer) getField(fieldName);
     }
 
     @Override
     public Long getLongByFieldName(String fieldName) {
-      return (Long) base.get(fieldName);
+      return (Long) getField(fieldName);
     }
 
     @Override
     public Float getFloatByFieldName(String fieldName) {
-      return (Float) base.get(fieldName);
+      return (Float) getField(fieldName);
     }
 
     @Override
     public Double getDoubleByFieldName(String fieldName) {
-      return (Double) base.get(fieldName);
+      return (Double) getField(fieldName);
     }
 
     @Override
     public ByteBuffer getBytesByFieldName(String fieldName) {
-      return (ByteBuffer) base.get(fieldName);
+      return (ByteBuffer) getField(fieldName);
     }
 
     @Override
     public String getStringByField(String fieldName) {
-      return null;
+      return (String) getField(fieldName);
     }
 
     @Override
     public Collection<String> getFieldNames() {
-      return base.getSchema().getFields().stream().map(Schema.Field::name)
-                 .collect(Collectors.toList());
+      return aliasMap.keySet();
     }
 
     @Override
@@ -136,8 +83,9 @@ public class AvroRecordDecoder {
     }
 
     @Override
-    public Object getField(String name) {
-      return base.get(name);
+    public Object getField(String aliasName) {
+      String cname = aliasMap.get(aliasName);
+      return record.get(cname);
     }
   }
 }

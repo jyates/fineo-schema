@@ -1,8 +1,6 @@
 package io.fineo.schema.avro;
 
-import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.BaseFields;
-import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
@@ -10,7 +8,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -32,22 +29,17 @@ public class AvroSchemaEncoder {
   public static final String BASE_FIELDS_KEY = "baseFields";
   public static final String BASE_TIMESTAMP_FIELD_NAME = "timestamp";
 
-
   private final Schema schema;
   // essentially the reverse of the alias map in the metric metadata
-  private final Map<String, String> aliasToFieldMap = new HashMap<>();
+  private final Map<String, String> aliasToFieldMap;
 
-  public AvroSchemaEncoder(String orgid, Metric metric) {
+  AvroSchemaEncoder(String canonicalOrgId, Metric metric) {
     Schema.Parser parser = new Schema.Parser();
     parser.parse(metric.getMetricSchema());
     this.schema = parser.getTypes().get(
-      SchemaNameUtils.getCustomerSchemaFullName(orgid, metric.getMetadata().getCanonicalName()));
-    // build a map of the alias names -> schema names
-    metric.getMetadata().getCanonicalNamesToAliases().entrySet().forEach(entry -> {
-      entry.getValue().forEach(alias -> {
-        aliasToFieldMap.putIfAbsent(alias, entry.getKey());
-      });
-    });
+      SchemaNameUtils
+        .getCustomerSchemaFullName(canonicalOrgId, metric.getMetadata().getCanonicalName()));
+    this.aliasToFieldMap = AvroSchemaManager.getAliasRemap(metric);
   }
 
   public GenericData.Record encode(Record record) {
@@ -118,32 +110,9 @@ public class AvroSchemaEncoder {
     return unknown;
   }
 
-
   public static AvroSchemaEncoder create(SchemaStore store, Record record) {
     String orgid = record.getStringByField(ORG_ID_KEY);
     String type = record.getStringByField(ORG_METRIC_TYPE_KEY);
-    return create(store, orgid, type);
-  }
-
-  public static AvroSchemaEncoder create(SchemaStore store, String orgId, String metricType) {
-    Preconditions.checkArgument(store != null);
-    Preconditions.checkArgument(orgId != null);
-    Preconditions.checkArgument(metricType != null);
-
-    Metadata orgMetadata = store.getSchemaTypes(orgId);
-    Preconditions.checkArgument(orgMetadata != null);
-
-    // for each schema name (metric type) load the actual metric information
-    Metric metric = null;
-    for (Map.Entry<String, List<String>> metricNameAlias : orgMetadata.getCanonicalNamesToAliases()
-                                                                      .entrySet()) {
-      // first alias set that matches
-      if (metricNameAlias.getValue().contains(metricType)) {
-        metric = store.getMetricMetadata(orgMetadata.getCanonicalName(), metricNameAlias.getKey());
-        break;
-      }
-    }
-    Preconditions.checkArgument(metric != null);
-    return new AvroSchemaEncoder(orgMetadata.getCanonicalName(), metric);
+    return new AvroSchemaManager(store, orgid).encode(type);
   }
 }

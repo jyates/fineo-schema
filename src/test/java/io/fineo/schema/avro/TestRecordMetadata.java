@@ -20,11 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Test some standard user flows so they can interact with record and the store correctly +
- * naturally.
- */
-public class TestAvroRecordDecoder {
+public class TestRecordMetadata {
 
   @Test
   public void testSerDe() throws Exception {
@@ -41,8 +37,7 @@ public class TestAvroRecordDecoder {
     //create a bridge between the record and the avro type
     AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, record);
     GenericRecord deserialized = SchemaTestUtils.writeReadRecord(bridge, record);
-    AvroRecordDecoder decoder = new AvroRecordDecoder(deserialized);
-    AvroRecordDecoder.RecordMetadata metadata = decoder.getMetadata();
+    RecordMetadata metadata = RecordMetadata.getMetadata(deserialized);
     assertEquals(orgID, metadata.orgID);
 
     // ensure the canonical name matches what we have in the store
@@ -50,18 +45,18 @@ public class TestAvroRecordDecoder {
     Map<String, List<String>> metricAliasMap =
       schemas.getCanonicalNamesToAliases();
     assertEquals(1, metricAliasMap.size());
-    assertEquals(metricAliasMap.keySet().iterator().next(), metadata.metricCannonicalType);
-    assertEquals(Lists.newArrayList(metricName), metricAliasMap.get(metadata.metricCannonicalType));
+    assertEquals(metricAliasMap.keySet().iterator().next(), metadata.metricCanonicalType);
+    assertEquals(Lists.newArrayList(metricName), metricAliasMap.get(metadata.metricCanonicalType));
 
     // ensure the base fields match as we expect from the record
-    BaseFields baseFields = decoder.getBaseFields();
+    BaseFields baseFields = metadata.getBaseFields();
     // only time outside the schema that we actually reference this by name
     assertEquals(fields.get(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME), baseFields.getTimestamp());
     assertEquals(metricName, baseFields.getAliasName());
     assertEquals(0, baseFields.getUnknownFields().size());
 
     // verify that we have the added boolean field
-    Metric metric = store.getMetricMetadata(metadata.orgID, metadata.metricCannonicalType);
+    Metric metric = store.getMetricMetadata(metadata.orgID, metadata.metricCanonicalType);
     // canonical name has the aliased field name
     Map<String, List<String>> aliases =
       metric.getMetadata().getCanonicalNamesToAliases();
@@ -80,10 +75,11 @@ public class TestAvroRecordDecoder {
   /**
    * Base fields can either be encoded as a GenericRecord or as the typed BaseFields, in which case
    * it deserializes differently, so we have this extra test method to catch that other case
+   *
    * @throws Exception
    */
   @Test
-  public void testDeserializationOfUnserializedRecord() throws Exception{
+  public void testDeserializationOfUnserializedRecord() throws Exception {
     String id = "123d43";
     String metricName = "newschema";
     String field = "bField";
@@ -98,8 +94,8 @@ public class TestAvroRecordDecoder {
     //create a bridge between the record and the avro type
     AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, genRecord);
     GenericData.Record record = bridge.encode(genRecord);
-    AvroRecordDecoder decoder = new AvroRecordDecoder(record);
-    BaseFields fields = decoder.getBaseFields();
+    RecordMetadata metadata = RecordMetadata.getMetadata(record);
+    BaseFields fields = metadata.getBaseFields();
     assertEquals(start, fields.getTimestamp().longValue());
     assertEquals(metricName, fields.getAliasName());
     assertTrue(record.getSchema().getNamespace().endsWith(id));

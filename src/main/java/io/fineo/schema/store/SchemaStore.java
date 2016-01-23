@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.OldSchemaException;
-import io.fineo.schema.avro.AvroRecordDecoder;
+import io.fineo.schema.avro.RecordMetadata;
 import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Stores and retrieves schema for record instances
@@ -119,12 +120,34 @@ public class SchemaStore {
     return parse(subject.latest(), Metadata.getClassSchema());
   }
 
-  public Metric getMetricMetadata(AvroRecordDecoder.RecordMetadata meta){
-    return getMetricMetadata(meta.getOrgID(), meta.getMetricCannonicalType());
+  public Metric getMetricMetadata(RecordMetadata meta) {
+    return getMetricMetadata(meta.getOrgID(), meta.getMetricCanonicalType());
   }
 
-  public Metric getMetricMetadata(CharSequence orgId, String metricName) {
-    Subject subject = getMetricSubject(orgId, metricName);
+  /**
+   * Similar to {@link #getMetricMetadata(CharSequence, String)}, but you specify the an aliased
+   * metric name. The canonical metric name is then looked up from the org ID and then used to
+   * retrieve the metric information via {@link #getMetricMetadata(CharSequence, String)}
+   *
+   * @param aliasMetricName customer visible metric name
+   * @return
+   */
+  public Metric getMetricMetadataFromAlias(Metadata org, String aliasMetricName) {
+    Preconditions.checkNotNull(org);
+    // find the canonical name to match the alias we were given
+    Metric metric = null;
+    Optional<String> canonicalName =
+      org.getCanonicalNamesToAliases().entrySet().stream()
+         .filter(entry -> entry.getValue().contains(aliasMetricName))
+         .map(entry -> entry.getKey())
+         .findFirst();
+    return canonicalName.isPresent() ?
+           this.getMetricMetadata(org.getCanonicalName(), canonicalName.get()) :
+           null;
+  }
+
+  public Metric getMetricMetadata(CharSequence orgId, String canonicalMetricName) {
+    Subject subject = getMetricSubject(orgId, canonicalMetricName);
     return parse(subject.latest(), Metric.getClassSchema());
   }
 

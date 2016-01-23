@@ -126,7 +126,7 @@ public class SchemaTestUtils {
     SchemaTestUtils.addNewOrg(store, orgId, metricType, fieldNames);
 
     // create random records with the above schema
-    AvroSchemaEncoder bridge = AvroSchemaEncoder.create(store, orgId, metricType);
+    AvroSchemaEncoder bridge = new AvroSchemaManager(store, orgId).encode(metricType);
     List<GenericRecord> records = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {
       Map<String, Object> fields = SchemaTestUtils.getBaseFields(orgId, metricType, startTs + i);
