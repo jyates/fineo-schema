@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public interface Record {
 
-  Object getBooleanByField(String fieldName);
+  Boolean getBooleanByField(String fieldName);
 
   Integer getIntegerByField(String fieldName);
 
