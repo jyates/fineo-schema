@@ -25,6 +25,10 @@ public class AvroSchemaManager {
     Preconditions.checkNotNull(orgMetadata);
   }
 
+  public Metric getMetricInfo(String aliasMetricName){
+    return store.getMetricMetadataFromAlias(orgMetadata, aliasMetricName);
+  }
+
   public AvroSchemaEncoder encode(String aliasedMetricType) {
     Preconditions.checkArgument(aliasedMetricType != null);
 
