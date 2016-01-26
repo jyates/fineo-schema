@@ -115,14 +115,18 @@ public class SchemaTestUtils {
 
   public static List<GenericRecord> createRandomRecord(String orgId, String metricType,
     long startTs, int recordCount, int fieldCount) throws IOException, OldSchemaException {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    return createRandomRecord(store, orgId, metricType, startTs, recordCount, fieldCount);
+  }
+
+  public static List<GenericRecord> createRandomRecord(SchemaStore store, String orgId, String metricType,
+    long startTs, int recordCount, int fieldCount) throws IOException, OldSchemaException {
     // create a semi-random schema
     String[] fieldNames =
       IntStream.range(0, fieldCount)
                .mapToObj(index -> "a" + index)
                .collect(Collectors.toList())
                .toArray(new String[0]);
-
-    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaTestUtils.addNewOrg(store, orgId, metricType, fieldNames);
 
     // create random records with the above schema

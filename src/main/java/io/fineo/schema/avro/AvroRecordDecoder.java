@@ -19,7 +19,7 @@ public class AvroRecordDecoder {
 
   AvroRecordDecoder(GenericRecord record, SchemaStore store) {
     this.record = record;
-    this.metadata = RecordMetadata.getMetadata(record);
+    this.metadata = RecordMetadata.get(record);
     this.aliasMap = AvroSchemaManager.getAliasRemap(store.getMetricMetadata(metadata));
   }
 

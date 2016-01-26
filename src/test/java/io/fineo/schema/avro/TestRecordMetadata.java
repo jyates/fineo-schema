@@ -34,13 +34,19 @@ public class TestRecordMetadata {
     fields.put(field, true);
     Record record = new MapRecord(fields);
 
-    //create a bridge between the record and the avro type
+    // encode the record as an avro record
     AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, record);
     GenericRecord deserialized = SchemaTestUtils.writeReadRecord(bridge, record);
-    RecordMetadata metadata = RecordMetadata.getMetadata(deserialized);
-    assertEquals(orgID, metadata.orgID);
+
+    // validate that we parse elements out correctly from the record
+    verifyRecordMetadataMatchesExpectedNaming(deserialized);
+
+    // From here it gets a little bit more complicated as we have to compare what we to the
+    // record fields to vs. the alias names. That means a bit more hoops in terms of looking up
+    // aliases etc. in the Metric/Metadata.
 
     // ensure the canonical name matches what we have in the store
+    RecordMetadata metadata = RecordMetadata.get(deserialized);
     Metadata schemas = store.getSchemaTypes(orgID);
     Map<String, List<String>> metricAliasMap =
       schemas.getCanonicalNamesToAliases();
@@ -51,7 +57,8 @@ public class TestRecordMetadata {
     // ensure the base fields match as we expect from the record
     BaseFields baseFields = metadata.getBaseFields();
     // only time outside the schema that we actually reference this by name
-    assertEquals(fields.get(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME), baseFields.getTimestamp());
+    assertEquals(fields.get(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME),
+      baseFields.getTimestamp());
     assertEquals(metricName, baseFields.getAliasName());
     assertEquals(0, baseFields.getUnknownFields().size());
 
@@ -94,10 +101,22 @@ public class TestRecordMetadata {
     //create a bridge between the record and the avro type
     AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, genRecord);
     GenericData.Record record = bridge.encode(genRecord);
-    RecordMetadata metadata = RecordMetadata.getMetadata(record);
+    RecordMetadata metadata = RecordMetadata.get(record);
     BaseFields fields = metadata.getBaseFields();
     assertEquals(start, fields.getTimestamp().longValue());
     assertEquals(metricName, fields.getAliasName());
     assertTrue(record.getSchema().getNamespace().endsWith(id));
+  }
+
+  public static void verifyRecordMetadataMatchesExpectedNaming(GenericRecord record) {
+    RecordMetadata metadata = RecordMetadata.get(record);
+    String orgId = metadata.getOrgID();
+    String namespace = record.getSchema().getNamespace();
+    assertTrue("Expected schema namespace (" + namespace + ") to end with " + orgId,
+      namespace.endsWith(orgId));
+    String fullName = record.getSchema().getFullName();
+    assertTrue("Expected full name (" + fullName + " to end with canonical "
+               + "name [" + metadata.getMetricCanonicalType(),
+      fullName.endsWith(metadata.getMetricCanonicalType()));
   }
 }

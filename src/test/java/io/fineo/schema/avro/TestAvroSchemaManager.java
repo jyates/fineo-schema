@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -61,6 +62,10 @@ public class TestAvroSchemaManager {
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
     AvroSchemaEncoder encoder = manager.encode(orgMetric);
     GenericRecord avro = encoder.encode(new MapRecord(record));
+
+    // ensure that we encoded it correctly
+    assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
+
     AvroRecordDecoder decoder = manager.decoder(avro);
     RecordMetadata metadata = decoder.getMetadata();
     assertEquals("Decoded metadata orgID doesn't match stored", metadata.getOrgID(), orgId);

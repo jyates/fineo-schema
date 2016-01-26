@@ -58,7 +58,14 @@ public class SchemaNameUtils {
     return customerid;
   }
 
-  public static String getOrgId(String schemaNamespace){
+  /**
+   * Get the orgID from the namespace of the encoded record. Namespace can be obtained from the
+   * id and canonical metric name via {@link #getCustomerSchemaFullName(String, String)}
+   *
+   * @param schemaNamespace
+   * @return
+   */
+  public static String getOrgId(String schemaNamespace) {
     return getNameParts(schemaNamespace).getValue();
   }
 

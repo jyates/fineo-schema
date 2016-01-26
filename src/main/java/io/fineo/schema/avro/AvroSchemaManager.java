@@ -40,6 +40,11 @@ public class AvroSchemaManager {
   }
 
 
+  public static AvroRecordDecoder decoder(SchemaStore store, GenericRecord record){
+    RecordMetadata metadata = RecordMetadata.get(record);
+    return new AvroSchemaManager(store, metadata.getOrgID()).decoder(record);
+  }
+
   public AvroRecordDecoder decoder(GenericRecord record) {
     return new AvroRecordDecoder(record, store);
   }

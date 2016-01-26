@@ -14,7 +14,7 @@ public class RecordMetadata {
   String metricCanonicalType;
   Schema metricSchema;
 
-  public RecordMetadata(GenericRecord record) {
+  private RecordMetadata(GenericRecord record) {
     this.record = record;
   }
 
@@ -45,7 +45,7 @@ public class RecordMetadata {
     return metricSchema;
   }
 
-  public static RecordMetadata getMetadata(GenericRecord record) {
+  public static RecordMetadata get(GenericRecord record) {
     Schema schema = record.getSchema();
     return new RecordMetadata(record).setMetricSchema(schema)
                                .setOrgID(SchemaNameUtils.getOrgId(schema.getNamespace()))
