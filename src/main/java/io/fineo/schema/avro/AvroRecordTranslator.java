@@ -9,15 +9,16 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Decode a record that has been encoded using the {@link AvroSchemaEncoder}.
+ * Translate a record from the canonical names to the aliased names that a user understands. Does
+ * not copy the record, but instead uses the record to get the underlying fields.
  */
-public class AvroRecordDecoder {
+public class AvroRecordTranslator {
 
   final RecordMetadata metadata;
   private final GenericRecord record;
   private final Map<String, String> aliasMap;
 
-  AvroRecordDecoder(GenericRecord record, SchemaStore store) {
+  AvroRecordTranslator(GenericRecord record, SchemaStore store) {
     this.record = record;
     this.metadata = RecordMetadata.get(record);
     this.aliasMap = AvroSchemaManager.getAliasRemap(store.getMetricMetadata(metadata));

@@ -40,13 +40,13 @@ public class AvroSchemaManager {
   }
 
 
-  public static AvroRecordDecoder decoder(SchemaStore store, GenericRecord record){
+  public static AvroRecordTranslator translator(SchemaStore store, GenericRecord record){
     RecordMetadata metadata = RecordMetadata.get(record);
-    return new AvroSchemaManager(store, metadata.getOrgID()).decoder(record);
+    return new AvroSchemaManager(store, metadata.getOrgID()).translator(record);
   }
 
-  public AvroRecordDecoder decoder(GenericRecord record) {
-    return new AvroRecordDecoder(record, store);
+  public AvroRecordTranslator translator(GenericRecord record) {
+    return new AvroRecordTranslator(record, store);
   }
 
   public static Map<String, String> getAliasRemap(Metric metric) {

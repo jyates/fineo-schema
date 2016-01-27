@@ -119,8 +119,9 @@ public class SchemaTestUtils {
     return createRandomRecord(store, orgId, metricType, startTs, recordCount, fieldCount);
   }
 
-  public static List<GenericRecord> createRandomRecord(SchemaStore store, String orgId, String metricType,
-    long startTs, int recordCount, int fieldCount) throws IOException, OldSchemaException {
+  public static List<GenericRecord> createRandomRecord(SchemaStore store, String orgId,
+    String metricType, long startTs, int recordCount, int fieldCount)
+    throws IOException, OldSchemaException {
     // create a semi-random schema
     String[] fieldNames =
       IntStream.range(0, fieldCount)
@@ -130,6 +131,11 @@ public class SchemaTestUtils {
     SchemaTestUtils.addNewOrg(store, orgId, metricType, fieldNames);
 
     // create random records with the above schema
+    return createRandomRecordForSchema(store, orgId, metricType, startTs, recordCount, fieldCount);
+  }
+
+  public static List<GenericRecord> createRandomRecordForSchema(SchemaStore store, String orgId,
+    String metricType, long startTs, int recordCount, int fieldCount){
     AvroSchemaEncoder bridge = new AvroSchemaManager(store, orgId).encode(metricType);
     List<GenericRecord> records = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {

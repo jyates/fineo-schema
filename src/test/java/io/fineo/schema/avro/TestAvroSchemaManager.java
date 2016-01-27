@@ -66,14 +66,14 @@ public class TestAvroSchemaManager {
     // ensure that we encoded it correctly
     assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
 
-    AvroRecordDecoder decoder = manager.decoder(avro);
-    RecordMetadata metadata = decoder.getMetadata();
+    AvroRecordTranslator translator = manager.translator(avro);
+    RecordMetadata metadata = translator.getMetadata();
     assertEquals("Decoded metadata orgID doesn't match stored", metadata.getOrgID(), orgId);
     assertEquals("Schema metric type name doesn't match metric metadata canonical name",
       metric.getMetadata().getCanonicalName(), metadata.getMetricCanonicalType());
     assertNull("Record has a field with alias name!", avro.get(orgFieldName));
     // but this record has translated fields!
-    Record translated = decoder.getTranslatedRecord();
+    Record translated = translator.getTranslatedRecord();
     assertEquals(record.get(orgFieldName), translated.getField(orgFieldName));
   }
 

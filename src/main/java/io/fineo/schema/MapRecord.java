@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- *
+ * Simple {@link Record} that is directly backed by a {@link Map}
  */
 public class MapRecord implements Record {
   private final Map<String, Object> map;
