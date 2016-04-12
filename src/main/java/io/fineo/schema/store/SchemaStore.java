@@ -47,18 +47,43 @@ public class SchemaStore {
     }
   }
 
-  public void registerOrganizationSchema(CharSequence orgId, Metric schema,
+  public void updateOrgMetric(CharSequence orgId, Metric next,
     Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
-    Subject subject = repo.lookup(String.valueOf(orgId));
+    Subject orgSubject = repo.lookup(String.valueOf(orgId));
     Preconditions
-      .checkArgument(subject != null, "Organization[%s] was not previously registered!", orgId);
-    SchemaEntry entry = subject.latest();
+      .checkArgument(orgSubject != null, "Organization[%s] was not previously registered!", orgId);
+    SchemaEntry entry = orgSubject.latest();
     Metadata metadata = parse(entry, Metadata.getClassSchema());
-    // ensure that the organization metadata has the schema's name as a field
-    registerOrgSchemaWithMetadata(subject, schema, metadata, entry);
+    // register the schema's name (if new) or ensure it has the schema name
+    registerOrgSchemaWithMetadata(orgSubject, next, metadata, entry);
 
     // register the metric itself
-    registerMetricInternal(orgId, schema, previous);
+    registerMetricInternal(orgId, next, previous);
+  }
+
+  /**
+   * All the metrics in the {@link SchemaBuilder.Organization} to the org's schema. All the
+   * metrics must be <b>new</b> or the first non-new metric will throw an {@link
+   * OldSchemaException} and no further schemas will be updated.
+   *
+   * @param org to update
+   * @throws IOException        if we have trouble communicating with the schema store
+   * @throws OldSchemaException if one of the metrics already exists
+   */
+  public void addNewMetricsInOrg(SchemaBuilder.Organization org)
+    throws IOException, OldSchemaException {
+    String canonicalName = org.getMetadata().getCanonicalName();
+    for (Map.Entry<String, Metric> metrics : org.getSchemas().entrySet()) {
+      updateOrgMetric(canonicalName, metrics.getValue(), null);
+    }
+  }
+
+  public void updateOrgMetric(SchemaBuilder.Organization org, Metric old)
+    throws IOException, OldSchemaException {
+    // find the metric in the org
+    String metricID = old == null ? null : old.getMetadata().getCanonicalName();
+    Metric updated = org.getSchemas().get(metricID);
+    updateOrgMetric(org.getMetadata().getCanonicalName(), updated, old);
   }
 
   private void registerMetricInternal(CharSequence orgId, Metric schema,
@@ -83,24 +108,26 @@ public class SchemaStore {
       }
     }
 
-    throw new OldSchemaException();
 
+    throw new OldSchemaException(storedPrevious, previous);
   }
 
   /**
-   * Register a schema instance (a metric type) with the schema repository under the
-   * organization's metadata. Does <b>not</b> register the schema itself; to register the schema
-   * itself use {@link #registerMetricInternal(CharSequence, Metric, Metric)}
+   * Register an organization metric type. Does <b>not</b> register the schema itself; to
+   * register the schema itself use {@link #registerMetricInternal(CharSequence, Metric, Metric)}.
+   * <p>
+   * If the organization already has the given schema returns without changing the metadata
+   * </p>
    */
   private void registerOrgSchemaWithMetadata(Subject subject, Metric schema,
     Metadata orgMetadata, SchemaEntry latest) {
     // check that the metadata has the schema name. If not, add it and update
-    Map<String, List<String>> metrics =
-      orgMetadata.getCanonicalNamesToAliases();
-    if (!metrics.containsKey(schema.getMetadata().getCanonicalName())) {
+    Map<String, List<String>> metrics = orgMetadata.getCanonicalNamesToAliases();
+    String metricId = schema.getMetadata().getCanonicalName();
+    if (metrics.containsKey(metricId)) {
+      LOG.debug("Org already has metricID: " + metricId);
       return;
     }
-    metrics.put(schema.getMetadata().getCanonicalName(), new ArrayList<>(0));
     try {
       subject.registerIfLatest(SchemaNameUtils.toString(orgMetadata), latest);
     } catch (IOException | SchemaValidationException e) {
@@ -112,8 +139,12 @@ public class SchemaStore {
     }
   }
 
-  public Metadata getSchemaTypes(String orgid) {
-    Subject subject = repo.lookup(orgid);
+  /**
+   * @param orgId
+   * @return the stored metadata for the org, if its present
+   */
+  public Metadata getOrgMetadata(String orgId) {
+    Subject subject = repo.lookup(orgId);
     if (subject == null) {
       return null;
     }
@@ -121,6 +152,9 @@ public class SchemaStore {
     return parse(subject.latest(), Metadata.getClassSchema());
   }
 
+  /**
+   * Helper method for {@link #getMetricMetadata(CharSequence, String)}
+   */
   public Metric getMetricMetadata(RecordMetadata meta) {
     return getMetricMetadata(meta.getOrgID(), meta.getMetricCanonicalType());
   }
@@ -146,6 +180,11 @@ public class SchemaStore {
            null;
   }
 
+  /**
+   * @param orgId
+   * @param canonicalMetricName
+   * @return metric information for the specific metric name under the organization
+   */
   public Metric getMetricMetadata(CharSequence orgId, String canonicalMetricName) {
     Subject subject = getMetricSubject(orgId, canonicalMetricName);
     return parse(subject.latest(), Metric.getClassSchema());

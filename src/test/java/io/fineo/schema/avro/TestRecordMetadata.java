@@ -47,7 +47,7 @@ public class TestRecordMetadata {
 
     // ensure the canonical name matches what we have in the store
     RecordMetadata metadata = RecordMetadata.get(deserialized);
-    Metadata schemas = store.getSchemaTypes(orgID);
+    Metadata schemas = store.getOrgMetadata(orgID);
     Map<String, List<String>> metricAliasMap =
       schemas.getCanonicalNamesToAliases();
     assertEquals(1, metricAliasMap.size());

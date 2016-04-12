@@ -10,9 +10,13 @@ import org.apache.avro.Schema;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
@@ -20,11 +24,11 @@ import java.util.Map;
  */
 public class SchemaBuilder {
 
-  public static SchemaBuilder create(){
+  public static SchemaBuilder create() {
     return new SchemaBuilder(SchemaNameGenerator.DEFAULT_INSTANCE);
   }
 
-  public static SchemaBuilder createForTesting(SchemaNameGenerator gen){
+  public static SchemaBuilder createForTesting(SchemaNameGenerator gen) {
     return new SchemaBuilder(gen);
   }
 
@@ -38,7 +42,7 @@ public class SchemaBuilder {
     return new OrganizationBuilder(orgID);
   }
 
-  public OrganizationBuilder updateOrg(Organization org) {
+  public OrganizationBuilder updateOrg(Metadata org) {
     return new OrganizationBuilder(org);
   }
 
@@ -70,63 +74,54 @@ public class SchemaBuilder {
     private final Metadata.Builder org;
     private Map<String, Metric> schemas = new HashMap<>();
 
-    public OrganizationBuilder(Organization org) {
-      this.org = Metadata.newBuilder(org.getMetadata());
-      org.getSchemas().entrySet().forEach(entry -> addExistingMetric(entry));
+    private OrganizationBuilder(Metadata org) {
+      this.org = Metadata.newBuilder(org);
     }
 
     public OrganizationBuilder(String id) {
       this.org = Metadata.newBuilder().setCanonicalName(id);
     }
 
-    private OrganizationBuilder addExistingMetric(Map.Entry<String, Metric> metric) {
-      Map<String, List<String>> names = getBuilderMetricTypes();
-      Preconditions.checkArgument(names.containsKey(metric.getKey()),
-        "Don't already have a field with id %s, cannot add an existing metric type for a name we "
-        + "don't know about", metric.getKey());
-      schemas.put(metric.getKey(), metric.getValue());
-      return this;
-    }
-
-    private void addMetadata(Metric metric, List<String> aliases) {
+    private void addMetadata(Metric metric, String displayName, Set<String> aliases) {
       String id = metric.getMetadata().getCanonicalName();
       Map<String, List<String>> names = getBuilderMetricTypes();
-      Preconditions.checkArgument(!names.containsKey(id),
-        "Non-updating metrics must not already have a name!");
-      names.put(id, aliases);
+      Preconditions.checkArgument(!names.containsKey(id), "Already have id: %s" + id);
+      aliases.add(displayName);
+      checkAliasesDoNotAlreadyExist(names, aliases);
+      names.put(id, getAliasNames(Collections.emptyList(), displayName, aliases));
       schemas.put(id, metric);
     }
 
-    private void updateMetadata(Metric metric, List<String> aliases) {
+    private void updateMetadata(Metric metric, String displayName, Set<String> newAliases) {
       String id = metric.getMetadata().getCanonicalName();
       Map<String, List<String>> names = getBuilderMetricTypes();
-      List<String> currentAliases = names.get(id);
-      Preconditions.checkArgument(currentAliases != null,
-        "Must already have id (%s) stored for updating metric", id);
-      currentAliases.addAll(aliases);
+      names.put(id, getAliasNames(checkHasAliases(names, id), displayName, newAliases));
       schemas.put(id, metric);
     }
 
     private Map<String, List<String>> getBuilderMetricTypes() {
-      if (org.getCanonicalNamesToAliases()== null) {
+      if (org.getCanonicalNamesToAliases() == null) {
         org.setCanonicalNamesToAliases(new HashMap<>());
       }
       return org.getCanonicalNamesToAliases();
     }
 
+    public MetricBuilder newSchema() {
+      return new MetricBuilder(this);
+    }
+
+    public MetricBuilder updateSchema(Metric previous) {
+      Map<String, List<String>> names = getBuilderMetricTypes();
+      String schemaName = previous.getMetadata().getCanonicalName();
+      Preconditions.checkArgument(names.containsKey(schemaName),
+        "Don't already have a field with id %s, cannot add an existing metric type for a name we "
+        + "don't know about", schemaName);
+      schemas.put(schemaName, previous);
+      return new MetricBuilder(this, previous);
+    }
+
     public Organization build() {
       return new Organization(org.build(), schemas);
-    }
-
-
-    public MetadataBuilder newSchema() {
-      return new MetadataBuilder(this);
-    }
-
-    public MetadataBuilder updateSchema(String schemaName) {
-      Preconditions.checkArgument(getBuilderMetricTypes().get(schemaName) != null,
-        "Don't have a previous schema '%s'", schemaName);
-      return new MetadataBuilder(this, this.schemas.get(schemaName));
     }
   }
 
@@ -140,17 +135,18 @@ public class SchemaBuilder {
    * </ol>
    * </p>
    */
-  public class MetadataBuilder {
+  public class MetricBuilder {
     private final String orgId;
     private final OrganizationBuilder parent;
     private final Metric.Builder metadata;
     private final boolean update;
-    private List<String> names = new ArrayList<>();
+    private Set<String> newAliases = new HashSet<>();
     private List<FieldBuilder> newFields = new ArrayList<>();
     private List<FieldBuilder> updatedFields = new ArrayList<>();
     private String recordName;
+    private String displayName;
 
-    private MetadataBuilder(OrganizationBuilder parent, Metric.Builder builder, boolean update) {
+    private MetricBuilder(OrganizationBuilder parent, Metric.Builder builder, boolean update) {
       this.parent = parent;
       this.orgId = parent.org.getCanonicalName();
       this.metadata = builder;
@@ -162,16 +158,16 @@ public class SchemaBuilder {
 
     }
 
-    public MetadataBuilder(OrganizationBuilder parent) {
+    public MetricBuilder(OrganizationBuilder parent) {
       this(parent, Metric.newBuilder(), false);
     }
 
-    public MetadataBuilder(OrganizationBuilder parent, Metric previous) {
+    public MetricBuilder(OrganizationBuilder parent, Metric previous) {
       this(parent, Metric.newBuilder(previous), true);
     }
 
     public OrganizationBuilder build() throws IOException {
-      Preconditions.checkArgument(update || names.size() > 0,
+      Preconditions.checkArgument(update || displayName != null,
         "Must have at least one name for the metadata types when not updating a schema");
       // build the schema based on the newFields given
       AvroSchemaInstanceBuilder instance =
@@ -179,16 +175,14 @@ public class SchemaBuilder {
 
       // do any updates we need for the updated records
       updatedFields.forEach(field -> {
-        if (field.delete == null) {
-          return;
-        }
         switch (field.delete) {
           case HARD:
             instance.deleteField(field.canonicalName);
             break;
           case SOFT:
-            MetadataBuilder.this.hide(field);
+            MetricBuilder.this.hide(field);
             break;
+          case NONE:
           default:
             return;
         }
@@ -219,9 +213,9 @@ public class SchemaBuilder {
       metadata.getMetadata().setCanonicalName(recordName);
       metadata.setMetricSchema(recordSchema.toString());
       if (update) {
-        parent.updateMetadata(metadata.build(), names);
+        parent.updateMetadata(metadata.build(), displayName, newAliases);
       } else {
-        parent.addMetadata(metadata.build(), names);
+        parent.addMetadata(metadata.build(), displayName, newAliases);
       }
       return parent;
     }
@@ -236,29 +230,43 @@ public class SchemaBuilder {
       hiddenTime.put(field.canonicalName, System.currentTimeMillis());
     }
 
-    public MetadataBuilder withName(String name) {
-      this.names.add(name);
+    public MetricBuilder withName(String name) {
+      if (!update && displayName == null) {
+        withDisplayName(name);
+      } else {
+        this.newAliases.add(name);
+      }
+      return this;
+    }
+
+    public MetricBuilder withDisplayName(String name) {
+      displayName = name;
       return this;
     }
 
     private void addField(FieldBuilder field) {
+      Metadata metadata = getBuilderMetadata();
+      // field thinks it already exists
       if (field.canonicalName != null) {
+        union(checkHasAliases(metadata.getCanonicalNamesToAliases(), field.canonicalName),
+          field.aliases);
         this.updatedFields.add(field);
         return;
       }
+
+      checkAliasesDoNotAlreadyExist(metadata.getCanonicalNamesToAliases(), field.aliases);
       // find an open canonical name
-      String cname;
+      String fieldName;
       while (true) {
-        cname = gen.generateSchemaName();
+        fieldName = gen.generateSchemaName();
         // ensure we have some metadata
-        Metadata metadata = getBuilderMetadata();
         Map<String, List<String>> fields = metadata.getCanonicalNamesToAliases();
-        if (fields.get(cname) == null) {
-          fields.put(cname, field.aliases);
+        if (fields.get(fieldName) == null) {
+          fields.put(fieldName, field.aliases);
           break;
         }
       }
-      field.canonicalName = cname;
+      field.canonicalName = fieldName;
       this.newFields.add(field);
     }
 
@@ -326,13 +334,13 @@ public class SchemaBuilder {
   }
 
   private enum Delete {
-    HARD, SOFT;
+    NONE, HARD, SOFT;
   }
 
   private Metadata emptyMetadata() {
     return Metadata.newBuilder()
                    .setCanonicalName("to-be-replaced")
-                    .setCanonicalNamesToAliases(new HashMap<>())
+                   .setCanonicalNamesToAliases(new HashMap<>())
                    .build();
   }
 
@@ -344,23 +352,23 @@ public class SchemaBuilder {
     private final String type;
     private String canonicalName;
     private List<String> aliases;
-    private MetadataBuilder metadata;
+    private MetricBuilder metadata;
     private String displayName;
-    public Delete delete;
+    public Delete delete = Delete.NONE;
 
-    private FieldBuilder(MetadataBuilder fields, String name, String type) {
+    private FieldBuilder(MetricBuilder fields, String name, String type) {
       this.metadata = fields;
       this.type = type;
       aliases = new ArrayList<>();
       this.displayName = name;
     }
 
-    private FieldBuilder(MetadataBuilder metadataBuilder, String canonicalName,
+    private FieldBuilder(MetricBuilder metricBuilder, String canonicalName,
       List<String> aliases,
       String type) {
       this.type = type;
       this.aliases = aliases;
-      this.metadata = metadataBuilder;
+      this.metadata = metricBuilder;
       this.canonicalName = canonicalName;
     }
 
@@ -369,13 +377,13 @@ public class SchemaBuilder {
       return this;
     }
 
-    public MetadataBuilder asField() {
-      this.aliases.add(displayName);
+    public MetricBuilder asField() {
+      this.aliases.add(0, displayName);
       metadata.addField(this);
       return this.metadata;
     }
 
-    public MetadataBuilder softDelete() {
+    public MetricBuilder softDelete() {
       this.delete = Delete.SOFT;
       return this.asField();
     }
@@ -387,5 +395,51 @@ public class SchemaBuilder {
       this.displayName = displayName;
       return this;
     }
+  }
+
+  private static List<String> getAliasNames(List<String> existingAliases, String displayName,
+    Set<String> aliases) {
+    if(displayName == null){
+      displayName = existingAliases.get(0);
+    }
+    aliases.addAll(existingAliases);
+    aliases.remove(displayName);
+    List<String> ret = new ArrayList<>(aliases.size() +1);
+    ret.add(displayName);
+    ret.addAll(aliases);
+    return ret;
+  }
+
+  private static <T> void union(List<T> target, List<T> source) {
+    for (T s : source) {
+      if (!target.contains(s)) {
+        target.add(s);
+      }
+    }
+  }
+
+  private static List<String> checkHasAliases(Map<String, List<String>> names, String id) {
+    List<String> currentAliases = names.get(id);
+    Preconditions.checkArgument(currentAliases != null,
+      "Must already have id (%s) stored for updating metric", id);
+    return currentAliases;
+  }
+
+  private static void checkAliasesDoNotAlreadyExist(Map<String, ? extends Collection<String>> idToAliases,
+    Collection<String> aliases) {
+    String existingId = null, existingAlias = null;
+    for (Map.Entry<String,? extends Collection<String>> entry : idToAliases.entrySet()) {
+      for (String alias : aliases) {
+        if (entry.getValue().contains(alias)) {
+          existingId = entry.getKey();
+          existingAlias = alias;
+          break;
+        }
+      }
+    }
+
+    Preconditions
+      .checkArgument(existingId == null, "There is an existing alias [%s] for a the field[%s]!",
+        existingAlias, existingId);
   }
 }

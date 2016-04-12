@@ -45,7 +45,7 @@ public class TestAvroSchemaManager {
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
 
     // Ensure the schema mapping happens as we expect
-    Metadata orgMetadata = store.getSchemaTypes(orgId);
+    Metadata orgMetadata = store.getOrgMetadata(orgId);
     assertEquals("Canonical org name doesn't match client specified org name", orgId,
       orgMetadata.getCanonicalName());
     Metric metric = store.getMetricMetadataFromAlias(orgMetadata, orgMetric);
@@ -117,11 +117,11 @@ public class TestAvroSchemaManager {
       "when no metadata received from store, even when record had all necessary fields");
 
     Metadata meta = Mockito.mock(Metadata.class);
-    Mockito.when(store.getSchemaTypes("orgid")).thenReturn(meta);
+    Mockito.when(store.getOrgMetadata("orgid")).thenReturn(meta);
     Mockito.when(meta.getCanonicalName()).thenReturn("orgid");
     verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
     Mockito.verify(meta).getCanonicalName();
-    Mockito.verify(store, Mockito.times(3)).getSchemaTypes("orgid");
+    Mockito.verify(store, Mockito.times(3)).getOrgMetadata("orgid");
   }
 
   @Test(expected = IllegalStateException.class)
