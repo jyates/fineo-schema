@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
  * heirachy. Can also be used to update existing schemas bound to a metric or organization.
@@ -244,25 +246,28 @@ public class SchemaBuilder {
       return this;
     }
 
+    private void updateField(FieldBuilder field) {
+      Preconditions.checkNotNull(field.canonicalName,
+        "Field wants to be updates, but doesn't have a canonical name!");
+      String id = field.canonicalName;
+      Map<String, List<String>> names = getBuilderMetadata().getCanonicalNamesToAliases();
+      names.put(id, getAliasNames(checkHasAliases(names, id), field.displayName, field.aliases));
+      this.updatedFields.add(field);
+    }
+
     private void addField(FieldBuilder field) {
       Metadata metadata = getBuilderMetadata();
-      // field thinks it already exists
-      if (field.canonicalName != null) {
-        union(checkHasAliases(metadata.getCanonicalNamesToAliases(), field.canonicalName),
-          field.aliases);
-        this.updatedFields.add(field);
-        return;
-      }
-
+      field.aliases.add(field.displayName);
       checkAliasesDoNotAlreadyExist(metadata.getCanonicalNamesToAliases(), field.aliases);
       // find an open canonical name
       String fieldName;
       while (true) {
+        // find an empty name
         fieldName = gen.generateSchemaName();
-        // ensure we have some metadata
         Map<String, List<String>> fields = metadata.getCanonicalNamesToAliases();
         if (fields.get(fieldName) == null) {
-          fields.put(fieldName, field.aliases);
+          fields.put(fieldName,
+            getAliasNames(Collections.EMPTY_LIST, field.displayName, field.aliases));
           break;
         }
       }
@@ -351,7 +356,7 @@ public class SchemaBuilder {
   public class FieldBuilder {
     private final String type;
     private String canonicalName;
-    private List<String> aliases;
+    private Set<String> aliases;
     private MetricBuilder metadata;
     private String displayName;
     public Delete delete = Delete.NONE;
@@ -359,15 +364,15 @@ public class SchemaBuilder {
     private FieldBuilder(MetricBuilder fields, String name, String type) {
       this.metadata = fields;
       this.type = type;
-      aliases = new ArrayList<>();
+      aliases = new HashSet<>();
       this.displayName = name;
     }
 
-    private FieldBuilder(MetricBuilder metricBuilder, String canonicalName,
-      List<String> aliases,
+    private FieldBuilder(MetricBuilder metricBuilder, String canonicalName, List<String> aliases,
       String type) {
       this.type = type;
-      this.aliases = aliases;
+      this.displayName = aliases.get(0);
+      this.aliases = newHashSet(aliases);
       this.metadata = metricBuilder;
       this.canonicalName = canonicalName;
     }
@@ -378,8 +383,11 @@ public class SchemaBuilder {
     }
 
     public MetricBuilder asField() {
-      this.aliases.add(0, displayName);
-      metadata.addField(this);
+      if (this.canonicalName == null) {
+        metadata.addField(this);
+      } else {
+        this.metadata.updateField(this);
+      }
       return this.metadata;
     }
 
@@ -399,23 +407,15 @@ public class SchemaBuilder {
 
   private static List<String> getAliasNames(List<String> existingAliases, String displayName,
     Set<String> aliases) {
-    if(displayName == null){
+    if (displayName == null) {
       displayName = existingAliases.get(0);
     }
     aliases.addAll(existingAliases);
     aliases.remove(displayName);
-    List<String> ret = new ArrayList<>(aliases.size() +1);
+    List<String> ret = new ArrayList<>(aliases.size() + 1);
     ret.add(displayName);
     ret.addAll(aliases);
     return ret;
-  }
-
-  private static <T> void union(List<T> target, List<T> source) {
-    for (T s : source) {
-      if (!target.contains(s)) {
-        target.add(s);
-      }
-    }
   }
 
   private static List<String> checkHasAliases(Map<String, List<String>> names, String id) {
@@ -425,10 +425,11 @@ public class SchemaBuilder {
     return currentAliases;
   }
 
-  private static void checkAliasesDoNotAlreadyExist(Map<String, ? extends Collection<String>> idToAliases,
+  private static void checkAliasesDoNotAlreadyExist(
+    Map<String, ? extends Collection<String>> idToAliases,
     Collection<String> aliases) {
     String existingId = null, existingAlias = null;
-    for (Map.Entry<String,? extends Collection<String>> entry : idToAliases.entrySet()) {
+    for (Map.Entry<String, ? extends Collection<String>> entry : idToAliases.entrySet()) {
       for (String alias : aliases) {
         if (entry.getValue().contains(alias)) {
           existingId = entry.getKey();

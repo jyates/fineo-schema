@@ -47,18 +47,42 @@ public class SchemaStore {
     }
   }
 
-  public void updateOrgMetric(CharSequence orgId, Metric next,
+  public void updateOrgMetric(Metadata orgMetadata, Metric next,
     Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
-    Subject orgSubject = repo.lookup(String.valueOf(orgId));
+    String orgId = orgMetadata.getCanonicalName();
+    Subject orgSubject = repo.lookup(orgId);
     Preconditions
       .checkArgument(orgSubject != null, "Organization[%s] was not previously registered!", orgId);
-    SchemaEntry entry = orgSubject.latest();
-    Metadata metadata = parse(entry, Metadata.getClassSchema());
-    // register the schema's name (if new) or ensure it has the schema name
-    registerOrgSchemaWithMetadata(orgSubject, next, metadata, entry);
-
+    // ensure the metric gets registered
+    registerSchemaIfMetricUnknown(orgSubject, orgMetadata, next);
     // register the metric itself
     registerMetricInternal(orgId, next, previous);
+  }
+
+  /**
+   * Register an organization metric type. Does <b>not</b> register the schema itself; to
+   * register the schema itself use {@link #registerMetricInternal(CharSequence, Metric, Metric)}.
+   * <p>
+   * If the organization already has the given schema returns without changing the metadata
+   * </p>
+   */
+  private void registerSchemaIfMetricUnknown(Subject org, Metadata orgMetadata, Metric next)
+    throws IOException {
+    SchemaEntry entry = org.latest();
+    // check to see if we already know about this org
+    Metadata metadata = parse(entry, Metadata.getClassSchema());
+    String metricId = next.getMetadata().getCanonicalName();
+    if (metadata.getCanonicalNamesToAliases().containsKey(metricId)) {
+      LOG.debug("Org already has metricID: " + metricId);
+      return;
+    }
+    // update the org schema to what we just got sent
+
+    try {
+      org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
+    } catch (SchemaValidationException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   /**
@@ -72,9 +96,8 @@ public class SchemaStore {
    */
   public void addNewMetricsInOrg(SchemaBuilder.Organization org)
     throws IOException, OldSchemaException {
-    String canonicalName = org.getMetadata().getCanonicalName();
     for (Map.Entry<String, Metric> metrics : org.getSchemas().entrySet()) {
-      updateOrgMetric(canonicalName, metrics.getValue(), null);
+      updateOrgMetric(org.getMetadata(), metrics.getValue(), null);
     }
   }
 
@@ -83,7 +106,7 @@ public class SchemaStore {
     // find the metric in the org
     String metricID = old == null ? null : old.getMetadata().getCanonicalName();
     Metric updated = org.getSchemas().get(metricID);
-    updateOrgMetric(org.getMetadata().getCanonicalName(), updated, old);
+    updateOrgMetric(org.getMetadata(), updated, old);
   }
 
   private void registerMetricInternal(CharSequence orgId, Metric schema,
@@ -110,33 +133,6 @@ public class SchemaStore {
 
 
     throw new OldSchemaException(storedPrevious, previous);
-  }
-
-  /**
-   * Register an organization metric type. Does <b>not</b> register the schema itself; to
-   * register the schema itself use {@link #registerMetricInternal(CharSequence, Metric, Metric)}.
-   * <p>
-   * If the organization already has the given schema returns without changing the metadata
-   * </p>
-   */
-  private void registerOrgSchemaWithMetadata(Subject subject, Metric schema,
-    Metadata orgMetadata, SchemaEntry latest) {
-    // check that the metadata has the schema name. If not, add it and update
-    Map<String, List<String>> metrics = orgMetadata.getCanonicalNamesToAliases();
-    String metricId = schema.getMetadata().getCanonicalName();
-    if (metrics.containsKey(metricId)) {
-      LOG.debug("Org already has metricID: " + metricId);
-      return;
-    }
-    try {
-      subject.registerIfLatest(SchemaNameUtils.toString(orgMetadata), latest);
-    } catch (IOException | SchemaValidationException e) {
-      latest = subject.latest();
-      LOG.info("Organization was updated, trying again to add " + schema + " to " + latest);
-      registerOrgSchemaWithMetadata(subject, schema,
-        parse(latest, Metric.getClassSchema()),
-        latest);
-    }
   }
 
   /**

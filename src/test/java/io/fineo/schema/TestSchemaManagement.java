@@ -1,9 +1,7 @@
 package io.fineo.schema;
 
-import com.google.common.collect.Lists;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
 import org.junit.Test;
@@ -11,7 +9,6 @@ import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -20,11 +17,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Managing schema evolution for an organziation with a 'real' {@link SchemaStore}
+ * Managing schema evolution for an organization with a 'real' {@link SchemaStore}.
  */
 public class TestSchemaManagement {
 
-  private static final String DEFAULT_METRIC_ALIAS_NAME = "user-metric-name";
+  private static final String DEFAULT_METRIC_USER_NAME = "user-metric-name";
   private static final String DEFAULT_ORG_ID = "org1";
 
   /**
@@ -89,7 +86,7 @@ public class TestSchemaManagement {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaBuilder.Organization org = createNewOrg();
     store.createNewOrganization(org);
-    Metric metric = store.getMetricMetadataFromAlias(org.getMetadata(), DEFAULT_METRIC_ALIAS_NAME);
+    Metric metric = store.getMetricMetadataFromAlias(org.getMetadata(), DEFAULT_METRIC_USER_NAME);
     assertEquals(org.getSchemas().values().iterator().next(), metric);
   }
 
@@ -100,28 +97,27 @@ public class TestSchemaManagement {
   }
 
   @Test
-  public void testCreateTwoMetricsWithTheSameNameFails() throws Exception {
+  public void testGetNonExistentMetric() throws Exception {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
-    List<String> names = Lists.newArrayList("n0", "n1", "n2");
-    SchemaNameGenerator gen = TestSchemaBuilder.setupMockNameGenerator(names);
-    SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
-    SchemaBuilder.Organization organization = createNewOrg(builder);
-    store.createNewOrganization(organization);
-
-    //TODO figure out how to do alias checking
-  }
-
-  private SchemaBuilder.Organization createNewOrg(SchemaBuilder builder) throws IOException {
-    SchemaBuilder.OrganizationBuilder orgBuilder = builder.newOrg(DEFAULT_ORG_ID);
-    return orgBuilder.newSchema()
-                     .withName(DEFAULT_METRIC_ALIAS_NAME)
-                     .withBoolean("field1").asField()
-                     .build().build();
+    SchemaBuilder builder = SchemaBuilder.create();
+    store.createNewOrganization(builder.newOrg(DEFAULT_ORG_ID)
+                                       .newSchema().withName(DEFAULT_METRIC_USER_NAME).build()
+                                       .build());
+    Metadata metadata = store.getOrgMetadata(DEFAULT_ORG_ID);
+    assertNull(store.getMetricMetadataFromAlias(metadata, "other metric"));
   }
 
   private SchemaBuilder.Organization createNewOrg() throws IOException {
     SchemaBuilder builder = SchemaBuilder.create();
     return createNewOrg(builder);
+  }
+
+  private SchemaBuilder.Organization createNewOrg(SchemaBuilder builder) throws IOException {
+    SchemaBuilder.OrganizationBuilder orgBuilder = builder.newOrg(DEFAULT_ORG_ID);
+    return orgBuilder.newSchema()
+                     .withName(DEFAULT_METRIC_USER_NAME)
+                     .withBoolean("field1").asField()
+                     .build().build();
   }
 
   private SchemaBuilder.MetricBuilder addOtherBooleanField(
