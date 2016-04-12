@@ -43,7 +43,8 @@ public class SchemaTestUtils {
     return store;
   }
 
-  public static void addNewOrg(SchemaStore store, String orgid, String metricId,
+  public static SchemaBuilder.Organization addNewOrg(SchemaStore store, String orgid,
+    String metricId,
     String... fieldNames) throws IOException, OldSchemaException {
     // create an organization and a metric type to populate the store
     SchemaBuilder builder = SchemaBuilder.create();
@@ -53,6 +54,7 @@ public class SchemaTestUtils {
     }
     SchemaBuilder.Organization organization = schema.build().build();
     store.createNewOrganization(organization);
+    return organization;
   }
 
   /**

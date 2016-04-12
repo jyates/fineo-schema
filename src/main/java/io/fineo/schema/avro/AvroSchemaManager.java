@@ -19,7 +19,7 @@ public class AvroSchemaManager {
   private final Metadata orgMetadata;
 
   public AvroSchemaManager(SchemaStore store, String orgId) {
-    Preconditions.checkNotNull(orgId);
+    Preconditions.checkNotNull(orgId, "OrgID can never be null!");
     this.store = store;
     this.orgMetadata = store.getSchemaTypes(orgId);
     Preconditions.checkNotNull(orgMetadata);

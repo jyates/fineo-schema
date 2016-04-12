@@ -32,7 +32,6 @@ import org.schemarepo.Subject;
 import org.schemarepo.SubjectConfig;
 import org.schemarepo.ValidatorFactory;
 
-import javax.management.RuntimeErrorException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -104,7 +103,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
    * @return the basics of a request to create the schema table. Missing throughout information
    * to be used to create the schema table
    */
-  public static CreateTableRequest getBaseTableCreate(String table){
+  public static CreateTableRequest getBaseTableCreate(String table) {
     Pair<List<KeySchemaElement>, List<AttributeDefinition>> schema = getSchema();
     CreateTableRequest create = new CreateTableRequest()
       .withTableName(table)
@@ -118,20 +117,17 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     try {
       // table probably exists, so check that first
       String name = table.getTableName();
+      LOG.debug("Checking to see if " + name + " exists...");
       TableUtils.waitUntilExists(client, name, 1000, 100);
+      LOG.debug("Table [" + name + "] exists! Getting it.");
       t = dynamo.getTable(name);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } catch (AmazonClientException e) {
+      LOG.warn("Got an exception while waiting for table, trying to create it instead ", e);
       t = dynamo.createTable(table);
       LOG.info("Created Dynamo table: " + t);
-      try {
-        LOG.debug("Waiting for table to become active...");
-        TableUtils.waitUntilActive(client, table.getTableName());
-        LOG.debug("Table is ready!");
-      } catch (InterruptedException e1) {
-        throw new RuntimeException(e1);
-      }
+      waitForTable(t);
     }
 
     return t;
@@ -152,7 +148,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
       .setConfigs(RepositoryUtil.safeConfig(config).asMap());
     try {
       mapper.save(schema);
-    }catch(ConditionalCheckFailedException e){
+    } catch (ConditionalCheckFailedException e) {
       LOG.debug("Failed to register subject, it was already present!");
     }
   }
@@ -233,6 +229,11 @@ public class DynamoDBRepository extends AbstractBackendRepository {
   }
 
   private void waitForTable() {
+    waitForTable(this.table);
+  }
+
+
+  private void waitForTable(Table table) {
     LOG.debug("Waiting for " + table + " to become active");
     try {
       table.waitForActive();

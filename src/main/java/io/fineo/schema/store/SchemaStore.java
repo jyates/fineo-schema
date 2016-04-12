@@ -36,7 +36,8 @@ public class SchemaStore {
     Metadata meta = organization.getMetadata();
     Subject orgMetadata = repo.register(meta.getCanonicalName(), null);
     try {
-      orgMetadata.registerIfLatest(SchemaNameUtils.toString(meta), null);
+      SchemaEntry entry = orgMetadata.registerIfLatest(SchemaNameUtils.toString(meta), null);
+      Preconditions.checkState(entry != null, "Have an existing schema for the organization!");
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException("Already have a schema for the organization", e);
     }
@@ -135,7 +136,6 @@ public class SchemaStore {
   public Metric getMetricMetadataFromAlias(Metadata org, String aliasMetricName) {
     Preconditions.checkNotNull(org);
     // find the canonical name to match the alias we were given
-    Metric metric = null;
     Optional<String> canonicalName =
       org.getCanonicalNamesToAliases().entrySet().stream()
          .filter(entry -> entry.getValue().contains(aliasMetricName))

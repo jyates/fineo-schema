@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -123,6 +122,23 @@ public class TestAvroSchemaManager {
     verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
     Mockito.verify(meta).getCanonicalName();
     Mockito.verify(store, Mockito.times(3)).getSchemaTypes("orgid");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testCreateExistingOrg() throws Exception{
+    Map<String, Object> record = new HashMap<>();
+    String orgId = "orgid";
+    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    String orgMetric = "org-visible-metric-name";
+    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10l);
+    String orgFieldName = "org-aliased-key";
+    record.put(orgFieldName, "true");
+
+    // create a schema for the record
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
+    SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
   }
 
   private void verifyIllegalCreate(SchemaStore store, Record record, String when) {
