@@ -44,8 +44,7 @@ public class SchemaTestUtils {
   }
 
   public static SchemaBuilder.Organization addNewOrg(SchemaStore store, String orgid,
-    String metricId,
-    String... fieldNames) throws IOException, OldSchemaException {
+    String metricId, String... fieldNames) throws IOException, OldSchemaException {
     // create an organization and a metric type to populate the store
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.MetricBuilder schema = builder.newOrg(orgid).newSchema().withName(metricId);
