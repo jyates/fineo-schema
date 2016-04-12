@@ -2,6 +2,7 @@ package io.fineo.schema;
 
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.schema.avro.SchemaTestUtils;
 import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
 import org.junit.Test;
@@ -105,6 +106,13 @@ public class TestSchemaManagement {
                                        .build());
     Metadata metadata = store.getOrgMetadata(DEFAULT_ORG_ID);
     assertNull(store.getMetricMetadataFromAlias(metadata, "other metric"));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testDoubleRegisterOrganization() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaTestUtils.addNewOrg(store, DEFAULT_ORG_ID, DEFAULT_METRIC_USER_NAME, "field1");
+    SchemaTestUtils.addNewOrg(store, DEFAULT_ORG_ID, DEFAULT_METRIC_USER_NAME, "field2");
   }
 
   private SchemaBuilder.Organization createNewOrg() throws IOException {
