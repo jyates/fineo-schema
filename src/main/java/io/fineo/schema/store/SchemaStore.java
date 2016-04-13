@@ -74,12 +74,14 @@ public class SchemaStore {
     String metricId = next.getMetadata().getCanonicalName();
     if (metadata.getCanonicalNamesToAliases().containsKey(metricId)) {
       LOG.debug("Org already has metricID: " + metricId);
+      setVersion(metadata, entry);
       return;
     }
     // update the org schema to what we just got sent
 
     try {
-      org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
+      entry = org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
+      setVersion(metadata, entry);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
@@ -123,7 +125,10 @@ public class SchemaStore {
       try {
         // register the schema as long as we are still the latest. Returns null if its changed,
         // in which case we fall through to the oldSchema exception
-        if (metricSubject.registerIfLatest(SchemaNameUtils.toString(schema), latest) != null) {
+        SchemaEntry entry =
+          metricSubject.registerIfLatest(SchemaNameUtils.toString(schema), latest);
+        if (entry != null) {
+          setVersion(schema.getMetadata(), entry);
           return;
         }
       } catch (SchemaValidationException e) {
@@ -133,6 +138,12 @@ public class SchemaStore {
 
 
     throw new OldSchemaException(storedPrevious, previous);
+  }
+
+  private void setVersion(Metadata metadata, SchemaEntry entry) {
+    if (entry != null) {
+      metadata.setVersion(entry.getId());
+    }
   }
 
   /**
@@ -145,7 +156,10 @@ public class SchemaStore {
       return null;
     }
 
-    return parse(subject.latest(), Metadata.getClassSchema());
+    SchemaEntry entry = subject.latest();
+    Metadata metadata = parse(entry, Metadata.getClassSchema());
+    setVersion(metadata, entry);
+    return metadata;
   }
 
   /**
@@ -183,7 +197,10 @@ public class SchemaStore {
    */
   public Metric getMetricMetadata(CharSequence orgId, String canonicalMetricName) {
     Subject subject = getMetricSubject(orgId, canonicalMetricName);
-    return parse(subject.latest(), Metric.getClassSchema());
+    SchemaEntry entry = subject.latest();
+    Metric metric = parse(entry, Metric.getClassSchema());
+    setVersion(metric.getMetadata(), entry);
+    return metric;
   }
 
   private Subject getMetricSubject(CharSequence orgId, CharSequence metricName) {

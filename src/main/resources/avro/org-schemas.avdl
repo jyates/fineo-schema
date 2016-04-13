@@ -17,6 +17,9 @@ protocol Organization{
   //
   // Decoupled from metric instances to allow them to change independently
   record Metadata {
+    // version of this metadata
+    string version = "0";
+    // basically, the id
     string canonicalName;
     // helper record to map a canonical name to a number of aliases
     union {null, map<array<string>>} canonicalNamesToAliases = null;

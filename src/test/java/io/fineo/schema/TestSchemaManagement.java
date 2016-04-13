@@ -115,6 +115,45 @@ public class TestSchemaManagement {
     SchemaTestUtils.addNewOrg(store, DEFAULT_ORG_ID, DEFAULT_METRIC_USER_NAME, "field2");
   }
 
+  @Test
+  public void testOrgVersioning() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaBuilder.Organization org = SchemaTestUtils
+      .addNewOrg(store, DEFAULT_METRIC_USER_NAME, DEFAULT_METRIC_USER_NAME, "field1");
+    assertEquals("Org doesn't have default value on create", "0", org.getMetadata().getVersion());
+    assertEquals("Didn't set org version on retrieval", "0",
+      getOrgMetadata(store, org).getVersion());
+    store.addNewMetricsInOrg(
+      SchemaBuilder.create().updateOrg(org.getMetadata()).newSchema().withName("two").build()
+                   .build());
+    assertEquals("Didn't set org version on retrial", "1", getOrgMetadata(store, org).getVersion());
+  }
+
+  private Metadata getOrgMetadata(SchemaStore store, SchemaBuilder.Organization org) {
+    return store.getOrgMetadata(org.getMetadata().getCanonicalName());
+  }
+
+  @Test
+  public void testMetricVersioning() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaBuilder.Organization org = SchemaTestUtils
+      .addNewOrg(store, DEFAULT_METRIC_USER_NAME, DEFAULT_METRIC_USER_NAME, "field1");
+    Metadata metadata = getOrgMetadata(store, org);
+    Metric metric = store.getMetricMetadataFromAlias(metadata, DEFAULT_METRIC_USER_NAME);
+    assertEquals("Initial org metadata version incorrect", "0", metadata.getVersion());
+    assertEquals("Initial metric metadata version incorrect", "0",
+      metric.getMetadata().getVersion());
+    org = SchemaBuilder.create().updateOrg(metadata)
+                       .updateSchema(metric)
+                       .withBoolean("another boolean").asField()
+                       .build().build();
+    store.updateOrgMetric(org, metric);
+    assertEquals("Org metadata didn't change, but got a schema version change!",
+      "0", getOrgMetadata(store, org).getVersion());
+    assertEquals("1", store.getMetricMetadata(org.getMetadata().getCanonicalName(),
+      metric.getMetadata().getCanonicalName()).getMetadata().getVersion());
+  }
+
   private SchemaBuilder.Organization createNewOrg() throws IOException {
     SchemaBuilder builder = SchemaBuilder.create();
     return createNewOrg(builder);
