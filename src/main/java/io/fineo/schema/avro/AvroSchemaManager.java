@@ -52,14 +52,18 @@ public class AvroSchemaManager {
     return new AvroRecordTranslator(record, store);
   }
 
+  public static Map<String, String> getAliasRemap(Metadata metadata){
+    Map<String, String> aliasToFieldMap = new HashMap<>();
+    metadata.getCanonicalNamesToAliases().entrySet().stream()
+          .forEach(entry ->
+            entry.getValue().forEach(alias -> aliasToFieldMap.putIfAbsent(alias, entry.getKey())));
+    return aliasToFieldMap;
+  }
+
   public static Map<String, String> getAliasRemap(Metric metric) {
     // build a map of the alias names -> schema names (reverse of the canonical -> alias map we
     // keep in the schema)
     // essentially the reverse of the alias map in the metric metadata
-    Map<String, String> aliasToFieldMap = new HashMap<>();
-    metric.getMetadata().getCanonicalNamesToAliases().entrySet().stream()
-          .forEach(entry ->
-            entry.getValue().forEach(alias -> aliasToFieldMap.putIfAbsent(alias, entry.getKey())));
-    return aliasToFieldMap;
+    return getAliasRemap(metric.getMetadata());
   }
 }
