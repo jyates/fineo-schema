@@ -39,6 +39,9 @@ public class AvroSchemaManager {
     return new AvroSchemaEncoder(orgMetadata.getCanonicalName(), metric);
   }
 
+  public Metadata getOrgMetadata(){
+    return this.orgMetadata;
+  }
 
   public static AvroRecordTranslator translator(SchemaStore store, GenericRecord record){
     RecordMetadata metadata = RecordMetadata.get(record);
