@@ -10,7 +10,7 @@
 
 
 @namespace("io.fineo.internal.customer")
-protocol Organization{
+protocol Organization {
   // Metadata about an organization, specifically:
   // - the org ID
   // - the map of the metric cannonical and alias names
@@ -31,7 +31,7 @@ protocol Organization{
   // It will store the metric's canonical name  (used to look it up in the
   // parent's metadata), the field map for the actual metric's fields (name -> aliases) and then
   // the schema of the actual metric itself.
-  record Metric{
+  record Metric {
     // its 'a' metadata, but not 'the' metadata
     Metadata metadata;
     // optional map of fieldname -> delete time
@@ -41,10 +41,21 @@ protocol Organization{
   }
 
   // The base fields that are assumed to be in any BaseRecord
-  record BaseFields{
+  record BaseFields {
+    // user specified name of the metric, which is aliased to an internal canonical name
     string aliasName;
+    // timestamp of the event
     long timestamp;
+    // fields for which we don't have any schema from the user
     map<string> unknown_fields;
+  }
+
+  // Base components of a field. In code we add the actual data type to the instance. This also
+  // saves having a huge record schema with all the different possible data types
+  record FieldInstance {
+    // name the user specified for the field. Maps to an alias name, under a canonical name, in the
+    // Metric's Metadata canonicalNameToAlias map
+    string fieldAliasName;
   }
 
   // The base record instance that we use to build a metric type schema. In code we add the desired

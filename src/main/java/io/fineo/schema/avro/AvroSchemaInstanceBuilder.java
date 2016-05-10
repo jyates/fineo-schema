@@ -2,6 +2,7 @@ package io.fineo.schema.avro;
 
 
 import io.fineo.internal.customer.BaseRecord;
+import io.fineo.internal.customer.FieldInstance;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
@@ -18,7 +19,8 @@ import java.util.stream.Collectors;
  * schema. That is necessary because Avro aliases do not support a full string, but only a subset
  * (see {@link Schema} internals for specifics), so a 'Fineo' schema actually keeps track of all
  * the different aliases for which fields can also be known. Thus, when you rehydrate this
- * 'schema' you actually get back a full fledged record.
+ * 'schema' you actually get back an avro {@link org.apache.avro.generic.GenericData Record}
+ * instance.
  * </p>
  */
 public class AvroSchemaInstanceBuilder {
@@ -33,8 +35,9 @@ public class AvroSchemaInstanceBuilder {
     this(null, null, null);
   }
 
-  public AvroSchemaInstanceBuilder(String metricSchema, String orgId, String name) throws IOException {
-    this.namespace = orgId == null? null: SchemaNameUtils.getCustomerNamespace(orgId);
+  public AvroSchemaInstanceBuilder(String metricSchema, String orgId, String name)
+    throws IOException {
+    this.namespace = orgId == null ? null : SchemaNameUtils.getCustomerNamespace(orgId);
     this.schemaName = name;
     // get the base-schema regardless of how we name the final record
     if (metricSchema == null || metricSchema.length() == 0) {
@@ -42,7 +45,8 @@ public class AvroSchemaInstanceBuilder {
     } else {
       Schema.Parser parser = new Schema.Parser();
       parser.parse(metricSchema);
-      this.baseSchema = parser.getTypes().get(SchemaNameUtils.getCustomerSchemaFullName(orgId, name));
+      this.baseSchema =
+        parser.getTypes().get(SchemaNameUtils.getCustomerSchemaFullName(orgId, name));
     }
   }
 
@@ -92,7 +96,6 @@ public class AvroSchemaInstanceBuilder {
                      assembler.name(field.name()).type(field.schema()).noDefault();
                    });
 
-
     // add each field from the field builder
     for (AvroFieldBuilder field : fields) {
       field.build(assembler);
@@ -126,7 +129,21 @@ public class AvroSchemaInstanceBuilder {
 
     protected SchemaBuilder.FieldAssembler<Schema> build(
       SchemaBuilder.FieldAssembler<Schema> assembler) {
-      return assembler.name(name).type(type).noDefault();
+      return assembler.name(name).type(getTypedField()).noDefault();
+    }
+
+    private Schema getTypedField() {
+      Schema fieldSchema = FieldInstance.getClassSchema();
+      SchemaBuilder.RecordBuilder<Schema> builder =
+        SchemaBuilder.record(name+"_schema")
+                     .namespace(namespace);
+      final SchemaBuilder.FieldAssembler<Schema> assembler = builder.fields();
+      // add all the existing fields that a field instance needs
+      for (Schema.Field field : fieldSchema.getFields()) {
+        assembler.name(field.name()).type(field.schema()).noDefault();
+      }
+      // set the type of the field instance
+      return assembler.name("value").type(type).noDefault().endRecord();
     }
   }
 }

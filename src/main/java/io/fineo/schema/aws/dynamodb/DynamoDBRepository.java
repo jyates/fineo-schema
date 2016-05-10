@@ -232,7 +232,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     waitForTable(this.table);
   }
 
-
   private void waitForTable(Table table) {
     LOG.debug("Waiting for " + table + " to become active");
     try {

@@ -5,6 +5,7 @@ import io.fineo.internal.customer.Metric;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaNameUtils;
+import io.fineo.schema.avro.SchemaTestUtils;
 import io.fineo.schema.store.SchemaBuilder;
 import org.apache.avro.Schema;
 import org.junit.Test;
@@ -341,7 +342,7 @@ public class TestSchemaBuilder {
     schema.getFields().stream().forEach(schemaField -> {
       String type = fieldCnameToTypes.get(schemaField.name());
       if (type != null) {
-        assertEquals(type, schemaField.schema().getType().getName());
+        SchemaTestUtils.verifyFieldType(type, schemaField);
         contains[0]++;
       }
     });

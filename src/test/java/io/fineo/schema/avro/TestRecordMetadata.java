@@ -76,7 +76,7 @@ public class TestRecordMetadata {
     Schema s = metadata.metricSchema;
     Schema.Field f = s.getField(fieldCannonicalName);
     assertNotNull(f);
-    assertEquals("boolean", f.schema().getType().getName());
+    SchemaTestUtils.verifyFieldType("boolean", f);
   }
 
   /**

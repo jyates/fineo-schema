@@ -5,6 +5,7 @@ import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
+import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
@@ -30,9 +31,6 @@ import java.util.zip.Deflater;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- *
- */
 public class SchemaTestUtils {
 
   public static SchemaStore createStoreWithBooleanFields(String orgid, String metricId,
@@ -136,7 +134,7 @@ public class SchemaTestUtils {
   }
 
   public static List<GenericRecord> createRandomRecordForSchema(SchemaStore store, String orgId,
-    String metricType, long startTs, int recordCount, int fieldCount){
+    String metricType, long startTs, int recordCount, int fieldCount) {
     AvroSchemaEncoder bridge = new AvroSchemaManager(store, orgId).encode(metricType);
     List<GenericRecord> records = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {
@@ -158,5 +156,17 @@ public class SchemaTestUtils {
    */
   public static GenericRecord createRandomRecord() throws Exception {
     return createRandomRecord(1).get(0);
+  }
+
+  public static void verifyFieldType(String type, Schema.Field field) {
+    Schema fieldSchema = field.schema();
+    assertEquals("Schema field instance should be a record!", Schema.Type.RECORD,
+      fieldSchema.getType());
+    List<Schema.Field> fields = fieldSchema.getFields();
+    assertEquals("Wrong number of fields in FieldInstance! Got fields " + fields, 2, fields.size());
+    //verify the alias field
+    assertEquals("fieldAliasName", fields.get(0).name());
+    assertEquals("value", fields.get(1).name());
+    assertEquals(type, fields.get(1).schema().getType().getName());
   }
 }

@@ -6,6 +6,7 @@ import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.IndexedRecord;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +60,8 @@ public class AvroSchemaEncoder {
 
       // add to the named field, if we have it
       if (fieldName != null) {
-        avroRecord.put(fieldName, fieldEntry.getValue());
+        avroRecord.put(fieldName,
+          asTypedRecord(avroRecord.getSchema(), fieldName, key, fieldEntry.getValue()));
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
@@ -70,6 +72,15 @@ public class AvroSchemaEncoder {
     // ensure that we filled the 'default' fields
     getAndSetUnknownFieldsIfEmpty(avroRecord);
     return avroRecord;
+  }
+
+  private IndexedRecord asTypedRecord(Schema objectSchema, String canonicalName, String aliasName,
+    Object value) {
+    Schema.Field field = objectSchema.getField(canonicalName);
+    GenericData.Record record = new GenericData.Record(field.schema());
+    record.put("fieldAliasName", aliasName);
+    record.put("value", value);
+    return record;
   }
 
   /**

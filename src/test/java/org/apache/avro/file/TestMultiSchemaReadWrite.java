@@ -5,6 +5,7 @@ import io.fineo.internal.customer.BaseFields;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -157,9 +158,10 @@ public class TestMultiSchemaReadWrite {
     LOG.info("UUID: " + name);
     name = "a" + String.format("%x", new BigInteger(1, name.getBytes()));
     LOG.info("Record name: " + name);
-    builder.withName(name).withNamespace("ns");
+    builder.withName(name).withNamespace("test_namespace");
     int fieldCount = new Random().nextInt(10);
     LOG.info("Field count: " + fieldCount);
+
     for (int i = 0; i < fieldCount; i++) {
       builder.newField().name("a" + i).type("boolean").done();
     }
@@ -175,7 +177,12 @@ public class TestMultiSchemaReadWrite {
       GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema)
         .set(AvroSchemaEncoder.BASE_FIELDS_KEY, base);
       for (int j = 0; j < fieldCount; j++) {
-        recordBuilder.set("a" + j, true);
+        String fieldName = "a" + j;
+        Schema.Field field = schema.getField(fieldName);
+        GenericData.Record fieldInst = new GenericData.Record(field.schema());
+        fieldInst.put("fieldAliasName", fieldName + "_alias");
+        fieldInst.put("value", true);
+        recordBuilder.set(fieldName, fieldInst);
       }
       records.add(recordBuilder.build());
     }
