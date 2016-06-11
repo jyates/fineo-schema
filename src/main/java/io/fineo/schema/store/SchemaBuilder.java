@@ -23,7 +23,9 @@ import static com.google.common.collect.Sets.newHashSet;
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
  * heirachy. Can also be used to update existing schemas bound to a metric or organization.
+ * @deprecated Use {@link SchemaManager} instead
  */
+@Deprecated
 public class SchemaBuilder {
 
   public static SchemaBuilder create() {
@@ -51,13 +53,10 @@ public class SchemaBuilder {
   public class Organization {
     private final Metadata metadata;
     private final Map<String, Metric> schemas;
-    private final Map<String, Boolean> aliasUpdated;
 
-    private Organization(Metadata metadata, Map<String, Metric> schemas,
-      Map<String, Boolean> metricAliasUpdated) {
+    private Organization(Metadata metadata, Map<String, Metric> schemas) {
       this.metadata = metadata;
       this.schemas = schemas;
-      this.aliasUpdated = metricAliasUpdated;
     }
 
     public Metadata getMetadata() {
@@ -70,10 +69,6 @@ public class SchemaBuilder {
     public Map<String, Metric> getSchemas() {
       return schemas;
     }
-
-    public Map<String, Boolean> getAliasUpdated() {
-      return aliasUpdated;
-    }
   }
 
   /**
@@ -81,7 +76,6 @@ public class SchemaBuilder {
    */
   public class OrganizationBuilder {
     private final Metadata.Builder org;
-    private Map<String, Boolean> metricAliasUpdated = new HashMap<>();
     private Map<String, Metric> schemas = new HashMap<>();
 
     private OrganizationBuilder(Metadata org) {
@@ -108,14 +102,6 @@ public class SchemaBuilder {
       List<String> metricNames = names.get(id);
       int count = metricNames == null ? 0 : metricNames.size();
       names.put(id, getAliasNames(checkHasAliases(names, id), displayName, newAliases));
-      Boolean previouslyUpdated = metricAliasUpdated.get(id);
-      if (previouslyUpdated == null) {
-        previouslyUpdated = false;
-      }
-      boolean wasUpdated = count < names.get(id).size();
-      if (!previouslyUpdated && wasUpdated) {
-        metricAliasUpdated.put(id, true);
-      }
       schemas.put(id, metric);
     }
 
@@ -141,7 +127,7 @@ public class SchemaBuilder {
     }
 
     public Organization build() {
-      return new Organization(org.build(), schemas, metricAliasUpdated);
+      return new Organization(org.build(), schemas);
     }
   }
 
@@ -175,7 +161,10 @@ public class SchemaBuilder {
         builder.getMetadata() == null || builder.getMetadata().getCanonicalName() == null ?
         gen.generateSchemaName() :
         builder.getMetadata().getCanonicalName();
+    }
 
+    String getCanonicalName() {
+      return recordName;
     }
 
     public MetricBuilder(OrganizationBuilder parent) {

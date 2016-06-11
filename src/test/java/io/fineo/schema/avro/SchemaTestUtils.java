@@ -4,6 +4,7 @@ import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaBuilder;
+import io.fineo.schema.store.SchemaManager;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -168,5 +169,10 @@ public class SchemaTestUtils {
     assertEquals("fieldAliasName", fields.get(0).name());
     assertEquals("value", fields.get(1).name());
     assertEquals(type, fields.get(1).schema().getType().getName());
+  }
+
+  public static SchemaNameGenerator generateStringNames(List<String> names){
+    int[] index = new int[1];
+    return () -> names.get(index[0]++);
   }
 }

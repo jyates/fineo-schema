@@ -133,7 +133,7 @@ public class TestSchemaBuilder {
 
   @Test
   public void testCreateMetadataWithNoFields() throws Exception {
-    SchemaBuilder builder = SchemaBuilder.createForTesting(new SchemaNameGenerator());
+    SchemaBuilder builder = SchemaBuilder.createForTesting(SchemaNameGenerator.DEFAULT_INSTANCE);
     String id = "123d43";
     String metricName = "newschema";
     SchemaBuilder.OrganizationBuilder metadata = builder.newOrg(id)

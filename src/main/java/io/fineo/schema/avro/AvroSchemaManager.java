@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.store.SchemaStore;
+import io.fineo.schema.store.StoreClerk;
 import org.apache.avro.generic.GenericRecord;
 
 import java.util.HashMap;
@@ -12,7 +13,9 @@ import java.util.Map;
 /**
  * Manage translating to/from an Avro {@link org.apache.avro.generic.GenericRecord} and a simple
  * {@link io.fineo.schema.Record}
+ * @deprecated Use {@link StoreClerk instead}
  */
+@Deprecated
 public class AvroSchemaManager {
 
   private final SchemaStore store;

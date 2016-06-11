@@ -20,8 +20,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 
-public class TestStoreHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(TestStoreHelper.class);
+public class TestStoreClerk {
+  private static final Logger LOG = LoggerFactory.getLogger(TestStoreClerk.class);
 
   @Test
   public void testOneMetric() throws Exception {
@@ -39,8 +39,8 @@ public class TestStoreHelper {
     String orgId = "org1", metric = "metricid", fieldName = "field1";
     SchemaBuilder.Organization organization =
       SchemaTestUtils.addNewOrg(store, orgId, metric, fieldName);
-    StoreHelper helper = new StoreHelper(store, orgId);
-    StoreHelper.Metric sm = helper.getMetrics().get(0);
+    StoreClerk helper = new StoreClerk(store, orgId);
+    StoreClerk.Metric sm = helper.getMetrics().get(0);
     Metric m = organization.getSchemas().values().iterator().next();
     String fieldCname = sm.getCanonicalFieldNames().get(0);
 
@@ -59,9 +59,9 @@ public class TestStoreHelper {
     }
     store.updateOrgMetric(organization, m);
 
-    List<StoreHelper.Metric> metrics = helper.getMetrics();
+    List<StoreClerk.Metric> metrics = helper.getMetrics();
     assertEquals(1, metrics.size());
-    StoreHelper.Metric mh = metrics.get(0);
+    StoreClerk.Metric mh = metrics.get(0);
     assertUserBooleanFields(mh, fieldName);
   }
 
@@ -71,8 +71,8 @@ public class TestStoreHelper {
     String orgId = "org1", metric = "metricid", fieldName = "field1";
     SchemaBuilder.Organization organization =
       SchemaTestUtils.addNewOrg(store, orgId, metric, fieldName);
-    StoreHelper helper = new StoreHelper(store, orgId);
-    StoreHelper.Metric sm = helper.getMetrics().get(0);
+    StoreClerk helper = new StoreClerk(store, orgId);
+    StoreClerk.Metric sm = helper.getMetrics().get(0);
     Metric m = organization.getSchemas().values().iterator().next();
 
     String fieldCname = sm.getCanonicalFieldNames().get(0);
@@ -99,8 +99,8 @@ public class TestStoreHelper {
                           .build().build();
     store.updateOrgMetric(organization, old);
 
-    StoreHelper sh = new StoreHelper(store, orgId);
-    StoreHelper.Metric mh = sh.getMetricForUserFieldName(metricAlias);
+    StoreClerk sh = new StoreClerk(store, orgId);
+    StoreClerk.Metric mh = sh.getMetricForUserFieldName(metricAlias);
     assertEquals(metricAlias, mh.getUserName());
     assertEquals(old.getMetadata().getCanonicalName(), mh.getMetricId());
     assertEquals(orgId, mh.getOrgId());
@@ -111,16 +111,16 @@ public class TestStoreHelper {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaTestUtils.addNewOrg(store, org, metric, fields);
 
-    StoreHelper helper = new StoreHelper(store, org);
-    List<StoreHelper.Metric> metrics = helper.getMetrics();
+    StoreClerk helper = new StoreClerk(store, org);
+    List<StoreClerk.Metric> metrics = helper.getMetrics();
     assertEquals(1, metrics.size());
-    StoreHelper.Metric metricType = metrics.get(0);
+    StoreClerk.Metric metricType = metrics.get(0);
     assertEquals(metric, metricType.getUserName());
 
     assertUserBooleanFields(metricType, fields);
   }
 
-  private void assertUserBooleanFields(StoreHelper.Metric metricType, String... fields) {
+  private void assertUserBooleanFields(StoreClerk.Metric metricType, String... fields) {
     List<Pair<String, Schema.Type>> userFields = metricType.getUserVisibleFields();
     List<Pair<String, Schema.Type>> expected = newArrayList(fields).stream()
                                                                    .map(f -> new Pair<>(f,

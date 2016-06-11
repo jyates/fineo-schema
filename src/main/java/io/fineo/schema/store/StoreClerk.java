@@ -14,15 +14,16 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Set of wrapper utilities to make it easier to manage schemas
+ * Actually do the management of getting things from the {@link SchemaStore} for you and packaging
+ * it in easy to use ways.
  */
-public class StoreHelper {
+public class StoreClerk {
 
   private final SchemaStore store;
   private final String orgId;
   private final Metadata metadata;
 
-  public StoreHelper(SchemaStore store, String orgId) {
+  public StoreClerk(SchemaStore store, String orgId) {
     this.store = store;
     this.orgId = orgId;
     this.metadata = store.getOrgMetadata(orgId);
@@ -86,7 +87,7 @@ public class StoreHelper {
     }
 
     public String getUserFieldNameFromCanonicalName(String fieldCname) {
-      return StoreHelper.this
+      return StoreClerk.this
         .getUserName(this.metric.getMetadata().getCanonicalNamesToAliases().get(fieldCname));
     }
 

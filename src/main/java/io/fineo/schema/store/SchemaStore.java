@@ -88,15 +88,6 @@ public class SchemaStore {
     }
   }
 
-
-  private void updateOrgMetadata(String orgId, SchemaBuilder.Organization org){
-    Subject subject = repo.lookup(orgId);
-    SchemaEntry entry = subject.latest();
-    Metadata metadata = parse(entry, Metadata.getClassSchema());
-    int previousVersion = Integer.parseInt(metadata.getVersion());
-    
-  }
-
   /**
    * All the metrics in the {@link SchemaBuilder.Organization} to the org's schema. All the
    * metrics must be <b>new</b> or the first non-new metric will throw an {@link
@@ -117,10 +108,6 @@ public class SchemaStore {
     throws IOException, OldSchemaException {
     // find the metric in the org
     String metricID = old == null ? null : old.getMetadata().getCanonicalName();
-    Set<String> aliasUpdated = org.getAliasUpdated();
-    if(aliasUpdated.contains(metricID)) {
-
-    }
     Metric updated = org.getSchemas().get(metricID);
     updateOrgMetric(org.getMetadata(), updated, old);
   }
@@ -243,5 +230,20 @@ public class SchemaStore {
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to parse organization schema!", e);
     }
+  }
+
+  /**
+   * Update the organziation for the specified metrics. Expects the previous metadata to not be
+   * <tt>null</tt>, since the org should already exist.
+   *
+   * @param org updated organization to publish
+   * @param updatedMetrics map of metric name and version to update
+   * @param previous       metadata describing the previous organization
+   */
+  public void updateOrg(SchemaBuilder.Organization org, Map<String, Metric> updatedMetrics,
+    Metadata previous) throws IOException, OldSchemaException {
+    Preconditions.checkNotNull(previous, "Don't have any previous metadata for the organization!");
+    Metadata current = org.getMetadata();
+
   }
 }

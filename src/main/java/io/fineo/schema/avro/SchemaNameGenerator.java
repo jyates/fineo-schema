@@ -5,14 +5,11 @@ import java.util.UUID;
 /**
  * Generate a unique name for a schema elemenet
  */
-public class SchemaNameGenerator {
+@FunctionalInterface
+public interface SchemaNameGenerator {
 
-  public static final SchemaNameGenerator DEFAULT_INSTANCE = new SchemaNameGenerator();
+  SchemaNameGenerator DEFAULT_INSTANCE =
+    () -> "n" + Math.abs(UUID.randomUUID().toString().hashCode());
 
-  private static final String NAME_PREFIX = "n";
-
-  public String generateSchemaName() {
-    return NAME_PREFIX +
-           Math.abs(UUID.randomUUID().toString().hashCode());
-  }
+  String generateSchemaName();
 }
