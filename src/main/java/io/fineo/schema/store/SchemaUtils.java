@@ -4,12 +4,8 @@ import io.fineo.internal.customer.Metadata;
 import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.exception.SchemaNotFoundException;
 
-import java.util.List;
 import java.util.Map;
 
-/**
- *
- */
 public class SchemaUtils {
 
   private SchemaUtils() {
@@ -21,9 +17,10 @@ public class SchemaUtils {
   }
 
   public static <T> void checkFound(T canonical, String aliasName,
-    String description) throws SchemaNotFoundException {
+    String fieldDescription) throws SchemaNotFoundException {
     if (canonical == null) {
-      throw new SchemaNotFoundException("No " + description + " found with name: " + aliasName);
+      throw new SchemaNotFoundException(String.format(
+        "No %s found with name: '%s'", fieldDescription, aliasName));
     }
   }
 }

@@ -15,9 +15,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.schema.avro.SchemaTestUtils.generateStringNames;
 import static org.junit.Assert.assertEquals;
 
-/**
- *
- */
 public class TestSchemaManager {
 
   private static final String STRING = "STRING";
@@ -74,7 +71,9 @@ public class TestSchemaManager {
     manager.updateOrg(orgId).updateMetric(metricName).addAliases(metricName2).build().commit();
 
     StoreClerk.Metric metric = getOnlyOneMetric(store, orgId);
-    assertEquals(metricName2, metric.getUserName());
+    assertEquals(metricName, metric.getUserName());
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    assertEquals(metric, clerk.getMetricForUserNameOrAlias(metricName2));
   }
 
 

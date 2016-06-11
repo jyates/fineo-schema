@@ -100,7 +100,7 @@ public class TestStoreClerk {
     store.updateOrgMetric(organization, old);
 
     StoreClerk sh = new StoreClerk(store, orgId);
-    StoreClerk.Metric mh = sh.getMetricForUserFieldName(metricAlias);
+    StoreClerk.Metric mh = sh.getMetricForUserNameOrAlias(metricAlias);
     assertEquals(metricAlias, mh.getUserName());
     assertEquals(old.getMetadata().getCanonicalName(), mh.getMetricId());
     assertEquals(orgId, mh.getOrgId());

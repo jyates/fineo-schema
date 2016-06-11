@@ -4,6 +4,7 @@ import io.fineo.internal.customer.Metadata;
 import io.fineo.schema.Pair;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaManager;
+import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 
 import java.util.List;
@@ -47,10 +48,10 @@ public class StoreClerk {
    * @param metricAliasName an alias of the metric name
    * @return helper to access fields of the metric
    */
-  public Metric getMetricForUserFieldName(String metricAliasName) {
+  public Metric getMetricForUserNameOrAlias(String metricAliasName) throws SchemaNotFoundException {
     io.fineo.internal.customer.Metric metric =
       store.getMetricMetadataFromAlias(metadata, metricAliasName);
-    assert metric != null;
+    SchemaUtils.checkFound(metric, metricAliasName, "metric");
     return new Metric(metricAliasName, metric);
   }
 
