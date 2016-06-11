@@ -6,7 +6,6 @@ import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaManager;
 import org.apache.avro.Schema;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -36,20 +35,32 @@ public class StoreHelper {
   public List<Metric> getMetrics() {
     return collectFieldForUserName(metadata, (metricCname, metricUserName) -> {
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
-      return new Metric(orgId, metricUserName, metric);
+      return new Metric(metricUserName, metric);
     });
+  }
+
+  /**
+   * This just get the metric based on the alias name of the metric. We don't enforce that its
+   * the user 'visible' name and return that metric as the name we specify.
+   *
+   * @param metricAliasName an alias of the metric name
+   * @return helper to access fields of the metric
+   */
+  public Metric getMetricForUserFieldName(String metricAliasName) {
+    io.fineo.internal.customer.Metric metric =
+      store.getMetricMetadataFromAlias(metadata, metricAliasName);
+    assert metric != null;
+    return new Metric(metricAliasName, metric);
   }
 
   public class Metric {
 
     private final String userName;
     private final io.fineo.internal.customer.Metric metric;
-    private final String orgId;
     private Schema schema;
     private Map<String, String> reverseAliases;
 
-    public Metric(String orgId, String userName, io.fineo.internal.customer.Metric metric) {
-      this.orgId = orgId;
+    public Metric(String userName, io.fineo.internal.customer.Metric metric) {
       this.userName = userName;
       this.metric = metric;
     }

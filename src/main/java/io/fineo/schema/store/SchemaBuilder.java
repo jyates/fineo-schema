@@ -51,10 +51,13 @@ public class SchemaBuilder {
   public class Organization {
     private final Metadata metadata;
     private final Map<String, Metric> schemas;
+    private final Map<String, Boolean> aliasUpdated;
 
-    private Organization(Metadata metadata, Map<String, Metric> schemas) {
+    private Organization(Metadata metadata, Map<String, Metric> schemas,
+      Map<String, Boolean> metricAliasUpdated) {
       this.metadata = metadata;
       this.schemas = schemas;
+      this.aliasUpdated = metricAliasUpdated;
     }
 
     public Metadata getMetadata() {
@@ -67,6 +70,10 @@ public class SchemaBuilder {
     public Map<String, Metric> getSchemas() {
       return schemas;
     }
+
+    public Map<String, Boolean> getAliasUpdated() {
+      return aliasUpdated;
+    }
   }
 
   /**
@@ -74,6 +81,7 @@ public class SchemaBuilder {
    */
   public class OrganizationBuilder {
     private final Metadata.Builder org;
+    private Map<String, Boolean> metricAliasUpdated = new HashMap<>();
     private Map<String, Metric> schemas = new HashMap<>();
 
     private OrganizationBuilder(Metadata org) {
@@ -97,7 +105,17 @@ public class SchemaBuilder {
     private void updateMetadata(Metric metric, String displayName, Set<String> newAliases) {
       String id = metric.getMetadata().getCanonicalName();
       Map<String, List<String>> names = getBuilderMetricTypes();
+      List<String> metricNames = names.get(id);
+      int count = metricNames == null ? 0 : metricNames.size();
       names.put(id, getAliasNames(checkHasAliases(names, id), displayName, newAliases));
+      Boolean previouslyUpdated = metricAliasUpdated.get(id);
+      if (previouslyUpdated == null) {
+        previouslyUpdated = false;
+      }
+      boolean wasUpdated = count < names.get(id).size();
+      if (!previouslyUpdated && wasUpdated) {
+        metricAliasUpdated.put(id, true);
+      }
       schemas.put(id, metric);
     }
 
@@ -123,7 +141,7 @@ public class SchemaBuilder {
     }
 
     public Organization build() {
-      return new Organization(org.build(), schemas);
+      return new Organization(org.build(), schemas, metricAliasUpdated);
     }
   }
 

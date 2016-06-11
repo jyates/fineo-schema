@@ -10,10 +10,13 @@ import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -152,6 +155,29 @@ public class TestSchemaManagement {
       "0", getOrgMetadata(store, org).getVersion());
     assertEquals("1", store.getMetricMetadata(org.getMetadata().getCanonicalName(),
       metric.getMetadata().getCanonicalName()).getMetadata().getVersion());
+  }
+
+  @Test
+  public void testChangeMetricAliases() throws Exception {
+    SchemaBuilder builder = SchemaBuilder.create();
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String fieldName = "f1";
+    SchemaBuilder.Organization organization =
+      SchemaTestUtils.addNewOrg(store, DEFAULT_ORG_ID, DEFAULT_METRIC_USER_NAME, fieldName);
+    Metric metric = organization.getSchemas().values().iterator().next();
+    String metricAlias = "metricAlias";
+
+    organization = builder.updateOrg(organization.getMetadata())
+                          .updateSchema(metric)
+                          .withName(metricAlias)
+                          .build().build();
+    store.updateOrgMetric(organization, metric);
+
+    // get the current metadata
+    Metadata updatedMetadata = store.getOrgMetadata(DEFAULT_ORG_ID);
+    assertNotNull(
+      store.getMetricMetadataFromAlias(updatedMetadata, DEFAULT_METRIC_USER_NAME));
+    assertNotNull(store.getMetricMetadataFromAlias(updatedMetadata, metricAlias));
   }
 
   private SchemaBuilder.Organization createNewOrg() throws IOException {

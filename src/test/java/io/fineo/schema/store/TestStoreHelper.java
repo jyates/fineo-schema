@@ -83,6 +83,29 @@ public class TestStoreHelper {
     assertEquals(metric, sm.getUserName());
   }
 
+  @Test
+  public void testAccessMetricByAlias() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String orgId = "org1", metric = "metricid", fieldName = "field1";
+    SchemaBuilder.Organization organization =
+      SchemaTestUtils.addNewOrg(store, orgId, metric, fieldName);
+
+    String metricAlias = "metricAlias";
+    SchemaBuilder builder = SchemaBuilder.create();
+    Metric old = organization.getSchemas().values().iterator().next();
+    organization = builder.updateOrg(organization.getMetadata())
+                          .updateSchema(old)
+                          .withName(metricAlias)
+                          .build().build();
+    store.updateOrgMetric(organization, old);
+
+    StoreHelper sh = new StoreHelper(store, orgId);
+    StoreHelper.Metric mh = sh.getMetricForUserFieldName(metricAlias);
+    assertEquals(metricAlias, mh.getUserName());
+    assertEquals(old.getMetadata().getCanonicalName(), mh.getMetricId());
+    assertEquals(orgId, mh.getOrgId());
+  }
+
   private void verifyFieldsAndMetrics(String org, String metric, String... fields)
     throws IOException, OldSchemaException {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));

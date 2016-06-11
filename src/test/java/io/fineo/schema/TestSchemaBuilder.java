@@ -322,6 +322,23 @@ public class TestSchemaBuilder {
     });
   }
 
+  @Test
+  public void testChangeMetricAliases() throws Exception {
+    SchemaBuilder builder = SchemaBuilder.create();
+    SchemaBuilder.OrganizationBuilder orgBuilder =
+      addBooleanField(builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
+    SchemaBuilder.Organization organization = orgBuilder.build();
+
+    Metric metric = organization.getSchemas().values().iterator().next();
+    orgBuilder = builder.updateOrg(organization.getMetadata());
+    String metricAlias = "metricAlias";
+    SchemaBuilder.Organization org =
+      orgBuilder.updateSchema(metric).withName(metricAlias).build().build();
+    List<String> aliases =
+      org.getMetadata().getCanonicalNamesToAliases().get(metric.getMetadata().getCanonicalName());
+    assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME, metricAlias), aliases);
+  }
+
   private <T> List<T> collectMapListValues(Map<?, List<T>> map) {
     return map.values().stream()
               .sequential()

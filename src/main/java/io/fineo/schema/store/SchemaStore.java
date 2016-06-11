@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Stores and retrieves schema for record instances
@@ -77,14 +78,23 @@ public class SchemaStore {
       setVersion(metadata, entry);
       return;
     }
-    // update the org schema to what we just got sent
 
+    // update the org schema to what we just got sent
     try {
       entry = org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
       setVersion(metadata, entry);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
+  }
+
+
+  private void updateOrgMetadata(String orgId, SchemaBuilder.Organization org){
+    Subject subject = repo.lookup(orgId);
+    SchemaEntry entry = subject.latest();
+    Metadata metadata = parse(entry, Metadata.getClassSchema());
+    int previousVersion = Integer.parseInt(metadata.getVersion());
+    
   }
 
   /**
@@ -107,6 +117,10 @@ public class SchemaStore {
     throws IOException, OldSchemaException {
     // find the metric in the org
     String metricID = old == null ? null : old.getMetadata().getCanonicalName();
+    Set<String> aliasUpdated = org.getAliasUpdated();
+    if(aliasUpdated.contains(metricID)) {
+
+    }
     Metric updated = org.getSchemas().get(metricID);
     updateOrgMetric(org.getMetadata(), updated, old);
   }
