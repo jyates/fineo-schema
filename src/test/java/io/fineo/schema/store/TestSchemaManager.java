@@ -26,7 +26,7 @@ public class TestSchemaManager {
   public void testCreateOrg() throws Exception {
     SchemaStore store = getStore();
     List<String> names = newArrayList("n1", "n2", "n3", "n4");
-    SchemaManager manager = new SchemaManager(generateStringNames(names), store);
+    StoreManager manager = new StoreManager(generateStringNames(names), store);
     String orgId = "org1", metricName = "metricname", fieldName = "f1";
     commitSimpleType(manager, orgId, metricName, of(), p(fieldName, STRING));
 
@@ -51,7 +51,7 @@ public class TestSchemaManager {
   public void testUpdateMetricNameInOrg() throws Exception {
     SchemaStore store = getStore();
     List<String> names = newArrayList("n1", "n2", "n3", "n4");
-    SchemaManager manager = new SchemaManager(generateStringNames(names), store);
+    StoreManager manager = new StoreManager(generateStringNames(names), store);
     String orgId = "org1", metricName = "metricname", fieldName = "f1";
     commitSimpleType(manager, orgId, metricName, of(), p(fieldName, STRING));
 
@@ -66,7 +66,7 @@ public class TestSchemaManager {
   public void testUpdateMetricAliasInOrg() throws Exception {
     SchemaStore store = getStore();
     List<String> names = newArrayList("n1", "n2", "n3", "n4");
-    SchemaManager manager = new SchemaManager(generateStringNames(names), store);
+    StoreManager manager = new StoreManager(generateStringNames(names), store);
     String orgId = "org1", metricName = "metricname", fieldName = "f1";
     commitSimpleType(manager, orgId, metricName, of(), p(fieldName, STRING));
 
@@ -82,7 +82,7 @@ public class TestSchemaManager {
   public void testUpdateFieldAliases() throws Exception {
     SchemaStore store = getStore();
     List<String> names = newArrayList("n1", "n2", "n3", "n4");
-    SchemaManager manager = new SchemaManager(generateStringNames(names), store);
+    StoreManager manager = new StoreManager(generateStringNames(names), store);
     String orgId = "org1", metricName = "metricname", fieldName = "f1";
     commitSimpleType(manager, orgId, metricName, of(), p(fieldName, STRING));
 
@@ -100,11 +100,11 @@ public class TestSchemaManager {
   }
 
 
-  private void commitSimpleType(SchemaManager manager, String orgId, String metricName,
+  private void commitSimpleType(StoreManager manager, String orgId, String metricName,
     List<String> metricAliases, Pair<String, String>... fieldNameAndType)
     throws IOException, OldSchemaException {
-    SchemaManager.OrganizationBuilder builder = manager.newOrg(orgId);
-    SchemaManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
+    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+    StoreManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
     for (String alias : metricAliases) {
       mb.addAliases(alias);
     }

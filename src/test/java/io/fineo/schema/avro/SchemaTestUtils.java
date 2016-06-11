@@ -4,7 +4,6 @@ import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaBuilder;
-import io.fineo.schema.store.SchemaManager;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;

@@ -17,19 +17,41 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Manage and modify schema for an organization or previous.
+ * Easily manage and modify schema for an organization or previous.
+ * <p>
+ * From the end user perspective, the main things we want to do are:
+ * <ol>
+ * <li>Update an Org
+ * <ul><li>addMetric(name, ... aliases)</li></ul>
+ * </li>
+ * <li>Update a Metric
+ * <ul><li>setDisplayName(name)</li>
+ * <li>addAlias(... aliases)</li>
+ * <li>addField(name, type, alias)</li>
+ * </ul>
+ * </li>
+ * <li>Update a field
+ * <ul><li>#addAlias(... aliases)</li></ul></li>
+ * </ol>
+ * This class should make it much easier to do that than the older {@link SchemaBuilder} since we
+ * expose things through the user visible names, rather than managing the canonical names.
+ * <p>
+ * This class should be used in concert with the {@link StoreClerk} to access the changes made by
+ * the managed
+ * </p>
+ * </p>
  */
-public class SchemaManager {
+public class StoreManager {
 
   private final SchemaNameGenerator generator;
   private final SchemaStore store;
 
-  public SchemaManager(SchemaStore store) {
+  public StoreManager(SchemaStore store) {
     this(SchemaNameGenerator.DEFAULT_INSTANCE, store);
   }
 
   @VisibleForTesting
-  SchemaManager(SchemaNameGenerator generator, SchemaStore store) {
+  StoreManager(SchemaNameGenerator generator, SchemaStore store) {
     this.generator = generator;
     this.store = store;
   }

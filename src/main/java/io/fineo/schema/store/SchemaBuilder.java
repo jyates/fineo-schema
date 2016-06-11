@@ -23,7 +23,7 @@ import static com.google.common.collect.Sets.newHashSet;
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
  * heirachy. Can also be used to update existing schemas bound to a metric or organization.
- * @deprecated Use {@link SchemaManager} instead
+ * @deprecated Use {@link StoreManager} instead
  */
 @Deprecated
 public class SchemaBuilder {
