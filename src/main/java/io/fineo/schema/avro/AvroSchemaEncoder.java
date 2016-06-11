@@ -6,7 +6,6 @@ import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.IndexedRecord;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -74,8 +73,8 @@ public class AvroSchemaEncoder {
     return avroRecord;
   }
 
-  private IndexedRecord asTypedRecord(Schema objectSchema, String canonicalName, String aliasName,
-    Object value) {
+  public static GenericData.Record asTypedRecord(Schema objectSchema, String canonicalName,
+    String aliasName, Object value) {
     Schema.Field field = objectSchema.getField(canonicalName);
     GenericData.Record record = new GenericData.Record(field.schema());
     record.put("fieldAliasName", aliasName);

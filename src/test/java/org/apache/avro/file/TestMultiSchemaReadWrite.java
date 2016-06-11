@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import static io.fineo.schema.avro.AvroSchemaEncoder.asTypedRecord;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -178,10 +179,7 @@ public class TestMultiSchemaReadWrite {
         .set(AvroSchemaEncoder.BASE_FIELDS_KEY, base);
       for (int j = 0; j < fieldCount; j++) {
         String fieldName = "a" + j;
-        Schema.Field field = schema.getField(fieldName);
-        GenericData.Record fieldInst = new GenericData.Record(field.schema());
-        fieldInst.put("fieldAliasName", fieldName + "_alias");
-        fieldInst.put("value", true);
+        GenericRecord fieldInst = asTypedRecord(schema, fieldName, fieldName + "_alias", true);
         recordBuilder.set(fieldName, fieldInst);
       }
       records.add(recordBuilder.build());
