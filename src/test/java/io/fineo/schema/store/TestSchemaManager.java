@@ -35,7 +35,7 @@ public class TestSchemaManager {
     assertEquals(metricName, metric.getUserName());
     // verify field info
     assertEquals(newArrayList(names.get(1)), metric.getCanonicalFieldNames());
-    assertEquals(newArrayList(p(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
     assertEquals(fieldName, metric.getUserFieldNameFromCanonicalName(names.get(1)));
   }
 
@@ -94,7 +94,8 @@ public class TestSchemaManager {
     StoreClerk.Metric metric = getOnlyOneMetric(store, orgId);
     String canonicalFieldName = names.get(1);
     assertEquals(newArrayList(canonicalFieldName), metric.getCanonicalFieldNames());
-    assertEquals(newArrayList(p(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, newArrayList(fieldAlias))),
+      metric.getUserVisibleFields());
     assertEquals(canonicalFieldName, metric.getCanonicalNameFromUserFieldName(fieldAlias));
   }
 
@@ -118,7 +119,7 @@ public class TestSchemaManager {
     assertEquals(2, metrics.size());
     // first metric
     StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
-    assertEquals(newArrayList(p(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
     // second, added metric
     StoreClerk.Metric metric2 = clerk.getMetricForUserNameOrAlias(metric2name);
     assertNotEquals("Didn't find added metric: " + metric2name, metric2);
@@ -150,7 +151,7 @@ public class TestSchemaManager {
     assertEquals(2, metrics.size());
     // first metric
     StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
-    Pair<String, Schema.Type> typedField = p(fieldName, Schema.Type.STRING);
+    StoreClerk.Field typedField = f(fieldName, Schema.Type.STRING);
     assertEquals(newArrayList(typedField), metric.getUserVisibleFields());
     // second, added metric
     StoreClerk.Metric metric2 = clerk.getMetricForUserNameOrAlias(metric2name);
@@ -179,7 +180,14 @@ public class TestSchemaManager {
         .build();
     }
     mb.build().commit();
+  }
 
+  public StoreClerk.Field f(String username, Schema.Type type) {
+    return f(username, type, newArrayList());
+  }
+
+  public StoreClerk.Field f(String username, Schema.Type type, List<String> aliases) {
+    return new StoreClerk.Field(username, type, aliases);
   }
 
   private SchemaStore getStore() {
