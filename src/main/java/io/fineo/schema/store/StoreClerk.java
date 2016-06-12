@@ -106,6 +106,24 @@ public class StoreClerk {
     public String getMetricId() {
       return this.metric.getMetadata().getCanonicalName();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (!(o instanceof Metric))
+        return false;
+
+      Metric metric1 = (Metric) o;
+
+      return metric != null ? metric.equals(metric1.metric) : metric1.metric == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+      return metric != null ? metric.hashCode() : 0;
+    }
   }
 
   private String getUserVisibleName(Metadata meta, String cname) {

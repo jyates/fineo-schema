@@ -73,7 +73,6 @@ public class StoreManager {
 
   public class OrganizationBuilder {
     private final Metadata previous;
-    ;
     private final SchemaBuilder.OrganizationBuilder orgBuilder;
     private Map<String, Metric> updatedMetrics = new HashMap<>();
 

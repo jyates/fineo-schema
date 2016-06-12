@@ -15,11 +15,8 @@ import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Stores and retrieves schema for record instances
@@ -86,6 +83,18 @@ public class SchemaStore {
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
+  }
+
+  private void updateOrganization(Metadata next) throws IOException {
+    String orgId = next.getCanonicalName();
+    Subject orgSubject = repo.lookup(orgId);
+    SchemaEntry latestEntry = orgSubject.latest();
+    try {
+      latestEntry = orgSubject.registerIfLatest(SchemaNameUtils.toString(next), latestEntry);
+    } catch (SchemaValidationException e) {
+      throw new IllegalArgumentException(e);
+    }
+    setVersion(next, latestEntry);
   }
 
   /**
@@ -236,7 +245,7 @@ public class SchemaStore {
    * Update the organziation for the specified metrics. Expects the previous metadata to not be
    * <tt>null</tt>, since the org should already exist.
    *
-   * @param org updated organization to publish
+   * @param org            updated organization to publish
    * @param updatedMetrics map of metric name and version to update
    * @param previous       metadata describing the previous organization
    */
@@ -244,6 +253,14 @@ public class SchemaStore {
     Metadata previous) throws IOException, OldSchemaException {
     Preconditions.checkNotNull(previous, "Don't have any previous metadata for the organization!");
     Metadata current = org.getMetadata();
-
+    // update the parent org metadata. Only time we don't want to do this is if we aren't
+    // updating the map of the metrics AND we are not updating the alias names of the metric.
+    // For right now, its just easier to update it, rather than trying to be smart about when it is
+    // correct or not to do the lookup #startup
+    updateOrganization(current);
+    for (Map.Entry<String, Metric> previousMetric : updatedMetrics.entrySet()) {
+      Metric next = org.getSchemas().get(previousMetric.getKey());
+      registerMetricInternal(current.getCanonicalName(), next, previousMetric.getValue());
+    }
   }
 }
