@@ -3,6 +3,7 @@ package io.fineo.schema.store;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Pair;
 import io.fineo.schema.avro.SchemaNameGenerator;
+import io.fineo.schema.exception.SchemaTypeNotFoundException;
 import org.apache.avro.Schema;
 import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
@@ -159,6 +160,32 @@ public class TestSchemaManager {
     assertNotEquals(metric, metric2);
     assertEquals(metric2, clerk.getMetricForUserNameOrAlias(metric2Alias));
     assertEquals(newArrayList(typedField), metric2.getUserVisibleFields());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testFieldMustHaveNameOrExceptionOnBuild() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    String org = "org1", metricName = "metricname";
+    manager.newOrg(org).newMetric().setDisplayName(metricName).newField().withType(STRING).build();
+  }
+
+
+  @Test(expected = NullPointerException.class)
+  public void testFieldMustHaveTypeOrExceptionOnBuild() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    String org = "org1", metricName = "metricname", name = "f1";
+    manager.newOrg(org).newMetric().setDisplayName(metricName).newField().withName(name).build();
+  }
+
+  @Test(expected = SchemaTypeNotFoundException.class)
+  public void testFieldMustHaveValidTypeOrExceptionOnBuild() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    String org = "org1", metricName = "metricname", name = "f1";
+    manager.newOrg(org).newMetric().setDisplayName(metricName)
+           .newField().withName(name).withType("NOT_A_TYPE").build();
   }
 
   private static <K, V> Pair<K, V> p(K k, V v) {

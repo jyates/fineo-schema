@@ -1,6 +1,7 @@
 package io.fineo.schema.store;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
@@ -188,6 +189,7 @@ public class StoreManager {
     }
 
     public MetricBuilder build() throws SchemaTypeNotFoundException {
+      Preconditions.checkNotNull(this.name, "No name specified when building field!");
       Function<String, SchemaBuilder.FieldBuilder> func = getBuilderFunctionForType(type);
       SchemaBuilder.FieldBuilder fielder = func.apply(this.name);
       for (String alias : this.aliases) {
