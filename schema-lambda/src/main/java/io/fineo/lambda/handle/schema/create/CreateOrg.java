@@ -1,11 +1,11 @@
 package io.fineo.lambda.handle.schema.create;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Module;
-import io.fineo.lambda.handle.schema.field.UpdateFieldRequest;
-import io.fineo.lambda.handle.schema.field.UpdateFieldResponse;
-
+import io.fineo.lambda.configure.util.PropertiesLoaderUtil;
 import io.fineo.lambda.handle.LambdaResponseWrapper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,16 +25,17 @@ public class CreateOrg extends
     super(CreateOrgHandler.class, modules);
   }
 
-  @Override
-  public UpdateFieldResponse handle(UpdateFieldRequest event) throws IOException {
-    return getInstance().handle(event);
-  }
-
   @VisibleForTesting
   public static List<Module> getModules(Properties props) {
     List<Module> modules = new ArrayList<>();
     addBasicProperties(modules, props);
     // add more Guice modules here
     return modules;
+  }
+
+  @Override
+  public CreateOrgResponse handle(CreateOrgRequest createOrgRequest, Context context)
+    throws IOException {
+    return getInstance().handleRequest(createOrgRequest, context);
   }
 }
