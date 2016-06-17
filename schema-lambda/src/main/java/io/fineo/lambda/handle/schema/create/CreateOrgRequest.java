@@ -1,16 +1,9 @@
 package io.fineo.lambda.handle.schema.create;
 
+import io.fineo.lambda.handle.schema.OrgRequest;
+
 /**
  *
  */
-public class CreateOrgRequest {
-  private String orgId;
-
-  public String getOrgId() {
-    return orgId;
-  }
-
-  public void setOrgId(String orgId) {
-    this.orgId = orgId;
-  }
+public class CreateOrgRequest extends OrgRequest{
 }

@@ -18,11 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
  * heirachy. Can also be used to update existing schemas bound to a metric or organization.
+ *
  * @deprecated Use {@link StoreManager} instead
  */
 @Deprecated
@@ -89,7 +92,7 @@ public class SchemaBuilder {
     private void addMetadata(Metric metric, String displayName, Set<String> aliases) {
       String id = metric.getMetadata().getCanonicalName();
       Map<String, List<String>> names = getBuilderMetricTypes();
-      Preconditions.checkArgument(!names.containsKey(id), "Already have id: %s" + id);
+      checkArgument(!names.containsKey(id), "Already have id: %s" + id);
       aliases.add(displayName);
       checkAliasesDoNotAlreadyExist(names, aliases);
       names.put(id, getAliasNames(Collections.emptyList(), displayName, aliases));
@@ -99,8 +102,6 @@ public class SchemaBuilder {
     private void updateMetadata(Metric metric, String displayName, Set<String> newAliases) {
       String id = metric.getMetadata().getCanonicalName();
       Map<String, List<String>> names = getBuilderMetricTypes();
-      List<String> metricNames = names.get(id);
-      int count = metricNames == null ? 0 : metricNames.size();
       names.put(id, getAliasNames(checkHasAliases(names, id), displayName, newAliases));
       schemas.put(id, metric);
     }
@@ -119,11 +120,25 @@ public class SchemaBuilder {
     public MetricBuilder updateSchema(Metric previous) {
       Map<String, List<String>> names = getBuilderMetricTypes();
       String schemaName = previous.getMetadata().getCanonicalName();
-      Preconditions.checkArgument(names.containsKey(schemaName),
+      checkArgument(names.containsKey(schemaName),
         "Don't already have a field with id %s, cannot add an existing metric type for a name we "
         + "don't know about", schemaName);
       schemas.put(schemaName, previous);
       return new MetricBuilder(this, previous);
+    }
+
+    /**
+     * Actually doesn't delete the metric. Instead, we just remove any possible name mappings for
+     * the metric, but otherwise keeps the mapping. Ensures that we don't have duplicate cnames and
+     * makes the update logic simpler
+     * @param metric to "delete"
+     * @return
+     */
+    public OrganizationBuilder deleteMetric(Metric metric) {
+      String name = metric.getMetadata().getCanonicalName();
+      // remove the canonical name mapping -> so no aliases exist to support this metric.
+      org.getCanonicalNamesToAliases().put(name, newArrayList());
+      return this;
     }
 
     public Organization build() {
@@ -176,7 +191,7 @@ public class SchemaBuilder {
     }
 
     public OrganizationBuilder build() throws IOException {
-      Preconditions.checkArgument(update || displayName != null,
+      checkArgument(update || displayName != null,
         "Must have at least one name for the metadata types when not updating a schema");
       // build the schema based on the newFields given
       AvroSchemaInstanceBuilder instance =
@@ -219,14 +234,21 @@ public class SchemaBuilder {
       Schema recordSchema = instance.build();
 
       // generate the final metadata
-      metadata.getMetadata().setCanonicalName(recordName);
       metadata.setMetricSchema(recordSchema.toString());
+      metadata.getMetadata().setCanonicalName(recordName);
       if (update) {
+        metadata.getMetadata().setVersion(inc(metadata.getMetadata()));
         parent.updateMetadata(metadata.build(), displayName, newAliases);
       } else {
         parent.addMetadata(metadata.build(), displayName, newAliases);
       }
       return parent;
+    }
+
+    private String inc(Metadata meta) {
+      String version = meta.getVersion();
+      int i = Integer.parseInt(version);
+      return Integer.toString(++i);
     }
 
     private void hide(FieldBuilder field) {
@@ -324,9 +346,8 @@ public class SchemaBuilder {
       Map<String, List<String>> fields =
         this.metadata.getMetadata().getCanonicalNamesToAliases();
       List<String> aliases = fields.get(fieldCanonicalName);
-      Preconditions
-        .checkArgument(aliases != null, "No field with canonical name: %s",
-          fieldCanonicalName);
+      checkArgument(aliases != null, "No field with canonical name: %s",
+        fieldCanonicalName);
 
       // get the properties of the known field from the schema
       Schema record = getRecordSchema();
@@ -427,7 +448,7 @@ public class SchemaBuilder {
 
   private static List<String> checkHasAliases(Map<String, List<String>> names, String id) {
     List<String> currentAliases = names.get(id);
-    Preconditions.checkArgument(currentAliases != null,
+    checkArgument(currentAliases != null,
       "Must already have id (%s) stored for updating metric", id);
     return currentAliases;
   }
@@ -446,8 +467,6 @@ public class SchemaBuilder {
       }
     }
 
-    Preconditions
-      .checkArgument(existingId == null, "There is an existing alias [%s] for a the field[%s]!",
-        existingAlias, existingId);
+    checkArgument(existingId == null, "[%s] already exists!", existingAlias);
   }
 }

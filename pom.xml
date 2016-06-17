@@ -148,5 +148,13 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  <dependencies>
+    <!-- Ensure that we have the supported test groupings -->
+    <dependency>
+      <groupId>io.fineo.aws</groupId>
+      <artifactId>aws-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
 </project>

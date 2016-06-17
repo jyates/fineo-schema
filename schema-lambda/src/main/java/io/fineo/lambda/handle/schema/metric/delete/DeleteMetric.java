@@ -1,4 +1,4 @@
-package io.fineo.lambda.handle.schema.field;
+package io.fineo.lambda.handle.schema.metric.delete;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Module;
@@ -13,19 +13,20 @@ import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
 /**
  * Wrapper to instantiate the raw stage
  */
-public class UpdateField extends
-                         LambdaResponseWrapper<UpdateFieldRequest, UpdateFieldResponse, UpdateFieldHandler> {
+public class DeleteMetric extends
+                          LambdaResponseWrapper<DeleteMetricRequest, DeleteMetricResponse,
+                            DeleteMetricHandler> {
 
-  public UpdateField() throws IOException {
+  public DeleteMetric() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
   }
 
-  public UpdateField(List<Module> modules) {
-    super(UpdateFieldHandler.class, modules);
+  public DeleteMetric(List<Module> modules) {
+    super(DeleteMetricHandler.class, modules);
   }
 
   @Override
-  public UpdateFieldResponse handle(UpdateFieldRequest input, Context context)
+  public DeleteMetricResponse handle(DeleteMetricRequest input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

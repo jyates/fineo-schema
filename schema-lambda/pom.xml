@@ -18,9 +18,19 @@
 
   <dependencies>
     <dependency>
+    <groupId>io.fineo.lambda</groupId>
+    <artifactId>lambda-core</artifactId>
+    <version>${fineo-lambda.version}</version>
+  </dependency>
+    <dependency>
       <groupId>io.fineo.lambda</groupId>
-      <artifactId>lambda-core</artifactId>
+      <artifactId>lambda-dynamo</artifactId>
       <version>${fineo-lambda.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.fineo.schema</groupId>
+      <artifactId>schema-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- Test Dependencies -->

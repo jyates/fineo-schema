@@ -1,4 +1,4 @@
-package io.fineo.lambda.handle.schema.metric.update;
+package io.fineo.lambda.handle.schema.metric.create;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.common.annotations.VisibleForTesting;
@@ -16,19 +16,20 @@ import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
 /**
  * Wrapper to instantiate the raw stage
  */
-public class UpdateMetric extends
-                          LambdaResponseWrapper<UpdateMetricRequest, UpdateMetricResponse, UpdateMetricHandler> {
+public class CreateMetric extends
+                          LambdaResponseWrapper<CreateMetricRequest, CreateMetricResponse,
+                            CreateMetricHandler> {
 
-  public UpdateMetric() throws IOException {
+  public CreateMetric() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
   }
 
-  public UpdateMetric(List<Module> modules) {
-    super(UpdateMetricHandler.class, modules);
+  public CreateMetric(List<Module> modules) {
+    super(CreateMetricHandler.class, modules);
   }
 
   @Override
-  public UpdateMetricResponse handle(UpdateMetricRequest input, Context context)
+  public CreateMetricResponse handle(CreateMetricRequest input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

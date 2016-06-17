@@ -59,6 +59,7 @@ public class StoreManager {
 
   public OrganizationBuilder updateOrg(String orgId) {
     Metadata org = store.getOrgMetadata(orgId);
+    Preconditions.checkArgument(org != null, "No information present for tenant: '%s'", orgId);
     SchemaBuilder builder = SchemaBuilder.createForTesting(generator);
     return new OrganizationBuilder(org, builder.updateOrg(org));
   }
@@ -88,10 +89,28 @@ public class StoreManager {
     }
 
     public MetricBuilder updateMetric(String userName) throws SchemaNotFoundException {
-      Metric metric = store.getMetricMetadataFromAlias(previous, userName);
-      SchemaUtils.checkFound(metric, userName, "metric");
+      Metric metric = getMetric(userName);
       SchemaBuilder.MetricBuilder metricBuilder = orgBuilder.updateSchema(metric);
       return new MetricBuilder(metric, this, orgBuilder, metricBuilder);
+    }
+
+
+    public OrganizationBuilder deleteMetric(String userName) {
+      Metric metric;
+      try {
+        metric = getMetric(userName);
+      } catch (SchemaNotFoundException e) {
+        // done! metric doesn't exist
+        return this;
+      }
+      orgBuilder.deleteMetric(metric);
+      return this;
+    }
+
+    private Metric getMetric(String name) throws SchemaNotFoundException {
+      Metric metric = store.getMetricMetadataFromAlias(previous, name);
+      SchemaUtils.checkFound(metric, name, "metric");
+      return metric;
     }
 
     private void addMetric(String cname, Metric previous) {
@@ -124,8 +143,10 @@ public class StoreManager {
     }
 
     public MetricBuilder addAliases(String... aliases) {
-      for (String alias : aliases) {
-        this.metricBuilder.withName(alias);
+      if (aliases != null) {
+        for (String alias : aliases) {
+          this.metricBuilder.withName(alias);
+        }
       }
       return this;
     }

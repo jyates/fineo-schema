@@ -8,7 +8,7 @@ import io.fineo.internal.customer.Metric;
 public class OldSchemaException extends Exception {
 
   public OldSchemaException(Metric storedPrevious, Metric expectedPrevious) {
-    super("Have non-matching previous metric: " + storedPrevious + " vs. expected previous: " +
+    super("Have non-matching previous metric!\nStored:   " + storedPrevious + " \nvs.\nExpected: " +
     expectedPrevious);
   }
 }

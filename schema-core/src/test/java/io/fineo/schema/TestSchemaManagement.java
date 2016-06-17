@@ -149,7 +149,14 @@ public class TestSchemaManagement {
                        .updateSchema(metric)
                        .withBoolean("another boolean").asField()
                        .build().build();
+    Metric next = org.getSchemas().values().iterator().next();
+    assertEquals("Wrong updated metric version", Integer.toString(1),
+      next.getMetadata().getVersion());
+
+    // do the update
     store.updateOrgMetric(org, metric);
+
+    // check that the stored metadata changes as expected
     assertEquals("Org metadata didn't change, but got a schema version change!",
       "0", getOrgMetadata(store, org).getVersion());
     assertEquals("1", store.getMetricMetadata(org.getMetadata().getCanonicalName(),

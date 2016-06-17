@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaManager;
@@ -189,6 +190,10 @@ public class StoreClerk {
 
   private static <T> List<T> collectElementsForFields(Metadata meta,
     FieldInstanceVisitor<T> func) {
+    // new org, nothing created yet
+    if(meta.getCanonicalNamesToAliases() == null){
+      return ImmutableList.of();
+    }
     return meta.getCanonicalNamesToAliases().keySet()
                .stream()
                .map(cname -> {

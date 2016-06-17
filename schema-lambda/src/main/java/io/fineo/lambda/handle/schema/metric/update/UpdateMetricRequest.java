@@ -1,27 +1,11 @@
 package io.fineo.lambda.handle.schema.metric.update;
 
-public class UpdateMetricRequest {
+import io.fineo.lambda.handle.schema.MetricRequest;
 
-  private String orgId;
-  private String userMetricName;
+public class UpdateMetricRequest extends MetricRequest{
+
   private String newDisplayName;
   private String[] aliases;
-
-  public String getOrgId() {
-    return orgId;
-  }
-
-  public void setOrgId(String orgId) {
-    this.orgId = orgId;
-  }
-
-  public String getUserMetricName() {
-    return userMetricName;
-  }
-
-  public void setUserMetricName(String userMetricName) {
-    this.userMetricName = userMetricName;
-  }
 
   public String getNewDisplayName() {
     return newDisplayName;
