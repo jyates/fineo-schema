@@ -1,4 +1,4 @@
-package io.fineo.lambda.handle.schema.field;
+package io.fineo.lambda.handle.schema.field.update;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Module;

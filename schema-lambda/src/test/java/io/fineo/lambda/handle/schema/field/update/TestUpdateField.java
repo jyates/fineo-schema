@@ -1,4 +1,4 @@
-package io.fineo.lambda.handle.schema.field;
+package io.fineo.lambda.handle.schema.field.update;
 
 import com.google.inject.Provider;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;

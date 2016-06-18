@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.OldSchemaException;
+import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.exception.SchemaExistsException;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -178,6 +179,18 @@ public class StoreManager {
       this.metricBuilder.build();
       this.parent.addMetric(cname, previous);
       return this.parent;
+    }
+
+    public MetricBuilder deleteField(String userFieldName) {
+      Map<String, String> aliasToCaname = AvroSchemaManager.getAliasRemap(this.previous);
+      String cname = aliasToCaname.get(userFieldName);
+      // field doesn't exist! We are done.
+      if (cname == null) {
+        return this;
+      }
+
+      this.metricBuilder.updateField(cname).hardDelete();
+      return this;
     }
   }
 

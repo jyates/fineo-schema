@@ -131,6 +131,7 @@ public class SchemaBuilder {
      * Actually doesn't delete the metric. Instead, we just remove any possible name mappings for
      * the metric, but otherwise keeps the mapping. Ensures that we don't have duplicate cnames and
      * makes the update logic simpler
+     *
      * @param metric to "delete"
      * @return
      */
@@ -202,9 +203,10 @@ public class SchemaBuilder {
         switch (field.delete) {
           case HARD:
             instance.deleteField(field.canonicalName);
+            metadata.getMetadata().getCanonicalNamesToAliases().remove(field.canonicalName);
             break;
           case SOFT:
-            MetricBuilder.this.hide(field);
+            hide(field);
             break;
           case NONE:
           default:
@@ -421,6 +423,11 @@ public class SchemaBuilder {
 
     public MetricBuilder softDelete() {
       this.delete = Delete.SOFT;
+      return this.asField();
+    }
+
+    public MetricBuilder hardDelete() {
+      this.delete = Delete.HARD;
       return this.asField();
     }
 
