@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -8,33 +9,32 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>schema-lambda</artifactId>
-  <name>schema-lambda</name>
+  <artifactId>schema-lambda-e2e</artifactId>
+  <description>Build a 'deployable' test jar for end-to-end testing</description>
 
   <dependencies>
     <dependency>
-      <groupId>io.fineo.lambda</groupId>
-      <artifactId>lambda-core</artifactId>
-      <version>${fineo-lambda.version}</version>
+      <groupId>io.fineo.schema</groupId>
+      <artifactId>schema-lambda</artifactId>
+      <version>${project.version}</version>
+      <classifier>aws</classifier>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
+      <version>1.48</version>
     </dependency>
     <dependency>
       <groupId>io.fineo.lambda</groupId>
       <artifactId>lambda-dynamo</artifactId>
-      <version>${fineo-lambda.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.fineo.schema</groupId>
-      <artifactId>schema-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- Test Dependencies -->
-    <dependency>
-      <groupId>io.fineo.lambda</groupId>
-      <artifactId>lambda-core</artifactId>
-      <version>${fineo-lambda.version}</version>
       <classifier>tests</classifier>
-      <scope>test</scope>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
@@ -65,13 +65,11 @@
                 <configuration>
                   <shadedClassifierName>aws</shadedClassifierName>
                   <artifactSet>
-                    <excludes>
-                      <!-- Test jars -->
-                      <exclude>junit:junit</exclude>
-                      <exclude>org.mockito:mockito-all</exclude>
-                      <exclude>com.amazonaws:DynamoDBLocal</exclude>
-                      <exclude>io.fineo.aws:aws-common</exclude>
-                    </excludes>
+                    <includes>
+                      <include>io.fineo.schema:schema-lambda:aws</include>
+                      <include>com.beust:jcommander</include>
+                      <include>io.fineo.lambda:lambda-dynamo:tests</include>
+                    </includes>
                   </artifactSet>
                   <filters>
                     <filter>
@@ -91,13 +89,6 @@
                        implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                       <resource>fineo-lambda.properties</resource>
                       <file>config/fineo-lambda.properties</file>
-                    </transformer>
-                    <transformer
-                       implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                      <manifestEntries>
-                        <X-Compile-Source-JDK>${java.version}</X-Compile-Source-JDK>
-                        <X-Compile-Target-JDK>${java.version}</X-Compile-Target-JDK>
-                      </manifestEntries>
                     </transformer>
                   </transformers>
                 </configuration>

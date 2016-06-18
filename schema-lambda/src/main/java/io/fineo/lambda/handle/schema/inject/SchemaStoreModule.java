@@ -29,19 +29,19 @@ public class SchemaStoreModule extends AbstractModule implements Serializable {
 
   @Override
   protected void configure() {
-    bind(UpdateRetryer.class);
   }
 
   @Provides
   @Singleton
-  public ValidatorFactory getSchemaValidation(){
+  public ValidatorFactory getSchemaValidation() {
     return ValidatorFactory.EMPTY;
   }
 
   @Provides
   @Inject
   @Singleton
-  public SchemaStore getSchemaStore(ValidatorFactory factory, CreateTableRequest create, AmazonDynamoDBAsyncClient dynamo) {
+  public SchemaStore getSchemaStore(ValidatorFactory factory, CreateTableRequest create,
+    AmazonDynamoDBAsyncClient dynamo) {
     DynamoDBRepository repo =
       new DynamoDBRepository(factory, dynamo, create);
     return new SchemaStore(repo);
@@ -63,7 +63,7 @@ public class SchemaStoreModule extends AbstractModule implements Serializable {
   @Provides
   @Inject
   @Singleton
-  public StoreManager getStoreManager(SchemaStore store){
+  public StoreManager getStoreManager(SchemaStore store) {
     return new StoreManager(store);
   }
 }

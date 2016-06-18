@@ -11,7 +11,7 @@ import java.util.List;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
 
 /**
- * Wrapper to instantiate the raw stage
+ * Wrapper to instantiate support the "create org" api endpoint
  */
 public class CreateOrg extends
                        LambdaResponseWrapper<CreateOrgRequest, CreateOrgResponse, CreateOrgHandler>{

@@ -1,5 +1,6 @@
 package io.fineo.lambda.handle.schema.inject;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Module;
 import io.fineo.lambda.configure.dynamo.DynamoModule;
@@ -18,10 +19,17 @@ public class SchemaModulesUtil {
   private SchemaModulesUtil() {
   }
 
-  public static void addSchemaModules(List<Module> modules) {
+  @VisibleForTesting
+  public static void addBaseSchemaModules(List<Module> modules) {
     modules.add(new DynamoModule());
-    modules.add(new DynamoRegionConfigurator());
     modules.add(new SchemaStoreModule());
+  }
+
+  public static void addSchemaModules(List<Module> modules) {
+    addBaseSchemaModules(modules);
+
+    // production specific so we can connect to a 'real' instance
+    modules.add(new DynamoRegionConfigurator());
   }
 
   public static List<Module> getModules(Properties props) {

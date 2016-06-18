@@ -12,20 +12,26 @@
   <modules>
     <module>schema-core</module>
     <module>schema-lambda</module>
+    <module>schema-lambda-e2e</module>
   </modules>
 
   <properties>
     <aws.java.sdk.version>1.10.48</aws.java.sdk.version>
+    <fineo-lambda.version>1.0-SNAPSHOT</fineo-lambda.version>
 
+    <!-- Avro -->
     <avro.version>1.7.7</avro.version>
-    <avro.maven.plugin.version>1.7.7</avro.maven.plugin.version>
+    <avro.maven.plugin.version>${avro.version}</avro.maven.plugin.version>
+
+    <!-- Plugins -->
+    <maven.shade.version>2.3</maven.shade.version>
+    <maven.dependency.version>2.10</maven.dependency.version>
+    <maven.resources.version>2.7</maven.resources.version>
 
     <!-- Test dependencies -->
     <junit.version>4.12</junit.version>
     <surefire.version>2.19</surefire.version>
     <fineo.aws.common.version>1.0-SNAPSHOT</fineo.aws.common.version>
-    <maven.dependency.version>2.10</maven.dependency.version>
-    <maven.resources.version>2.7</maven.resources.version>
 
     <!-- Test Running properties -->
     <test.output.to.file>true</test.output.to.file>

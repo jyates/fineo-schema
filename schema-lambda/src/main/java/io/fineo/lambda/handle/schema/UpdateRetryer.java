@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Run the attempts to update the schema a configurable number of times. Ignores
+ * {@link OldSchemaException} and attempts to re-run because the update may have nothing to do
+ * with the old schema. Other exceptions are immediately propagated
  */
 public class UpdateRetryer {
 
@@ -16,7 +18,7 @@ public class UpdateRetryer {
     this.retries = retries;
   }
 
-  public <T> T run(ThrowingSupplier<T> run) throws Exception{
+  public <T> T run(ThrowingSupplier<T> run) throws Exception {
     OldSchemaException ex = null;
     for (int i = 0; i < retries; i++) {
       try {
