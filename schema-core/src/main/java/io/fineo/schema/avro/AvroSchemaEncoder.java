@@ -48,8 +48,8 @@ public class AvroSchemaEncoder {
     populateBaseFields(record, avroRecord);
 
     // copy over all the other fields that the schema knows about
-    for (Map.Entry<String, Object> fieldEntry : record.getFields()) {
-      String key = fieldEntry.getKey();
+    for (Map.Entry<String, Object> entry : record.getFields()) {
+      String key = entry.getKey();
       // org ID and canonical name is encoded in the schema
       if (IS_BASE_FIELD.test(key)) {
         continue;
@@ -59,13 +59,13 @@ public class AvroSchemaEncoder {
 
       // add to the named field, if we have it
       if (fieldName != null) {
-        avroRecord.put(fieldName,
-          asTypedRecord(avroRecord.getSchema(), fieldName, key, fieldEntry.getValue()));
+        avroRecord
+          .put(fieldName, asTypedRecord(avroRecord.getSchema(), fieldName, key, entry.getValue()));
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
       Map<String, String> unknown = getAndSetUnknownFieldsIfEmpty(avroRecord);
-      unknown.put(key, String.valueOf(fieldEntry.getValue()));
+      unknown.put(key, String.valueOf(entry.getValue()));
     }
 
     // ensure that we filled the 'default' fields
@@ -106,8 +106,20 @@ public class AvroSchemaEncoder {
   }
 
   private void populateBaseFields(BaseFields fields, Record record) {
-    fields.setTimestamp(record.getLongByFieldName(TIMESTAMP_KEY));
+    fields.setTimestamp(getTimestamp(record));
     fields.setAliasName(record.getStringByField(ORG_METRIC_TYPE_KEY));
+  }
+
+  // handle special case management of the timestamp
+  private Long getTimestamp(Record record) {
+    try {
+      return record.getLongByFieldName(TIMESTAMP_KEY);
+    } catch (ClassCastException e) {
+      if (e.getMessage().contains("java.lang.Integer cannot be cast to java.lang.Long")) {
+        return (long) record.getIntegerByField(TIMESTAMP_KEY);
+      }
+      throw e;
+    }
   }
 
   private Map<String, String> getAndSetUnknownFieldsIfEmpty(GenericData.Record avroRecord) {

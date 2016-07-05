@@ -141,6 +141,30 @@ public class TestAvroSchemaManager {
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
   }
 
+  @Test
+  public void testIntegerTimestamp() throws Exception {
+    // start with a simple record that uses customer defined fields
+    Map<String, Object> record = new HashMap<>();
+    String orgId = "orgid";
+    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    String orgMetric = "org-visible-metric-name";
+    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10);
+    String orgFieldName = "org-aliased-key";
+    record.put(orgFieldName, "true");
+
+    // create a schema for the record
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
+
+    AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
+    AvroSchemaEncoder encoder = manager.encode(orgMetric);
+    GenericRecord avro = encoder.encode(new MapRecord(record));
+    AvroRecordTranslator translator = manager.translator(avro);
+    RecordMetadata metadata = translator.getMetadata();
+    assertEquals(10L, (long)metadata.getBaseFields().getTimestamp());
+  }
+
   private void verifyIllegalCreate(SchemaStore store, Record record, String when) {
     try {
       AvroSchemaEncoder.create(store, record);
