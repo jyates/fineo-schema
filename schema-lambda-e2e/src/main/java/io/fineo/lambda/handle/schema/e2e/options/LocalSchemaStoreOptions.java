@@ -12,4 +12,7 @@ public class LocalSchemaStoreOptions {
 
   @Parameter(names = "--host", description = "Hostname where dynamo is running")
   public String host;
+
+  @Parameter(names = "--schema-table", description = "Table where schema information is stored")
+  public String table;
 }
