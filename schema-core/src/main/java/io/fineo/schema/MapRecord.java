@@ -16,27 +16,47 @@ public class MapRecord implements Record {
 
   @Override
   public Boolean getBooleanByField(String fieldName) {
-    return (Boolean) map.get(fieldName);
+    Object o = map.get(fieldName);
+    if (o instanceof String) {
+      return Boolean.valueOf((String) o);
+    }
+    return (Boolean) o;
   }
 
   @Override
   public Integer getIntegerByField(String fieldName) {
-    return (Integer) map.get(fieldName);
+    Object o = map.get(fieldName);
+    if (o instanceof String) {
+      return Integer.valueOf((String) o);
+    }
+    return (Integer) o;
   }
 
   @Override
   public Long getLongByFieldName(String fieldName) {
-    return (Long) map.get(fieldName);
+    Object o = map.get(fieldName);
+    if (o instanceof String) {
+      return Long.valueOf((String) o);
+    }
+    return (Long) o;
   }
 
   @Override
   public Float getFloatByFieldName(String fieldName) {
-    return (Float) map.get(fieldName);
+    Object o = map.get(fieldName);
+    if (o instanceof String) {
+      return Float.valueOf((String) o);
+    }
+    return (Float) o;
   }
 
   @Override
   public Double getDoubleByFieldName(String fieldName) {
-    return (Double) map.get(fieldName);
+    Object o = map.get(fieldName);
+    if (o instanceof String) {
+      return Double.valueOf((String) o);
+    }
+    return (Double) o;
   }
 
   @Override
