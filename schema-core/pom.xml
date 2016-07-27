@@ -18,6 +18,14 @@
 
   <build>
     <plugins>
+      <!-- Test Jar -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+      <!-- Copy the dependencies into the output directory. Needed for DynamoDB's SQLlite -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
       <!-- Process the 'static' schema files in src/main/resources/avro -->
       <plugin>
         <groupId>org.apache.avro</groupId>
@@ -41,27 +49,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <version>${maven.resources.version}</version>
-      </plugin>
-      <!-- Copy the dependencies into the output directory. Needed for DynamoDB's SQLlite -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>${maven.dependency.version}</version>
-        <executions>
-          <execution>
-            <!--<id>copy-dependencies</id>-->
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
-              <overWriteReleases>false</overWriteReleases>
-              <overWriteSnapshots>false</overWriteSnapshots>
-              <overWriteIfNewer>true</overWriteIfNewer>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <!-- Add the test/avro file to the resources so we can reference it in the tests -->
       <plugin>
