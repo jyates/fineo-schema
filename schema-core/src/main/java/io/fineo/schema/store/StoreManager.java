@@ -222,7 +222,7 @@ public class StoreManager {
       return this;
     }
 
-    public NewFieldBuilder withType(Type t){
+    public NewFieldBuilder withType(Type t) {
       this.type = t.name();
       return this;
     }
@@ -242,11 +242,12 @@ public class StoreManager {
       throws SchemaTypeNotFoundException {
       String name = type.toUpperCase();
       name = name.replace(" ", "_");
-      Type t = Type.valueOf(name);
-      if (t == null) {
+      try {
+        Type t = Type.valueOf(name);
+        return t.func.apply(this.builder);
+      } catch (IllegalArgumentException e) {
         throw new SchemaTypeNotFoundException("Type: " + type + " not a supported type!");
       }
-      return t.func.apply(this.builder);
     }
   }
 
