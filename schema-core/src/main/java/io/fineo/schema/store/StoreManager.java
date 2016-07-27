@@ -218,7 +218,12 @@ public class StoreManager {
     }
 
     public NewFieldBuilder withType(String typeName) {
-      this.type = typeName.toUpperCase();
+      this.type = typeName;
+      return this;
+    }
+
+    public NewFieldBuilder withType(Type t){
+      this.type = t.name();
       return this;
     }
 
@@ -235,29 +240,50 @@ public class StoreManager {
 
     private Function<String, SchemaBuilder.FieldBuilder> getBuilderFunctionForType(String type)
       throws SchemaTypeNotFoundException {
-      switch (type) {
-        case "STRING":
-        case "VARCHAR":
-          return this.builder::withString;
-        case "BOOLEAN":
-          return this.builder::withBoolean;
-        case "INTEGER":
-        case "INT":
-        case "SMALLINT":
-          return this.builder::withInt;
-        case "LONG":
-        case "BIGINT":
-          return this.builder::withLong;
-        case "FLOAT":
-          return this.builder::withFloat;
-        case "DOUBLE":
-        case "DOUBLE PRECISION":
-          return this.builder::withDouble;
-        case "BINARY":
-        case "BYTES":
-          return this.builder::withBytes;
+      String name = type.toUpperCase();
+      name = name.replace(" ", "_");
+      Type t = Type.valueOf(name);
+      if (t == null) {
+        throw new SchemaTypeNotFoundException("Type: " + type + " not a supported type!");
       }
-      throw new SchemaTypeNotFoundException("Type: " + type + " not a supported type!");
+      return t.func.apply(this.builder);
     }
   }
+
+  public enum Type {
+    STRING(string), VARCHAR(string),
+    BOOLEAN(b -> b::withBoolean),
+    INTEGER(integer), INT(integer), SMALLINT(integer),
+    LONG(longs), BIGINT(longs),
+    FLOAT(b -> b::withFloat),
+    DOUBLE(doubles), DOUBLE_PRECISION(doubles),
+    BINARY(binary), BYTES(binary);
+
+    private Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder.FieldBuilder>>
+      func;
+
+    Type(Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder.FieldBuilder>> func) {
+      this.func = func;
+    }
+  }
+
+  private static final Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder
+    .FieldBuilder>>
+    string = b -> b::withString;
+
+  private static final Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder
+    .FieldBuilder>>
+    integer = b -> b::withInt;
+
+  private static final Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder
+    .FieldBuilder>>
+    longs = b -> b::withLong;
+
+  private static final Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder
+    .FieldBuilder>>
+    binary = b -> b::withBytes;
+
+  private static final Function<SchemaBuilder.MetricBuilder, Function<String, SchemaBuilder
+    .FieldBuilder>>
+    doubles = b -> b::withDouble;
 }

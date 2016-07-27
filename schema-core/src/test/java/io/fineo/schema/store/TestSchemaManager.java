@@ -144,7 +144,7 @@ public class TestSchemaManager {
            .setDisplayName(metric2name)
            .addAliases(metric2Alias)
            // add a single field
-           .newField().withName(fieldName).withType(STRING).build()
+           .newField().withName(fieldName).withType(StoreManager.Type.STRING).build()
            .build().commit();
 
     StoreClerk clerk = new StoreClerk(store, orgId);
