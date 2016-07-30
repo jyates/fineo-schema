@@ -36,7 +36,9 @@ public class TestSchemaManager {
     assertEquals(metricName, metric.getUserName());
     // verify field info
     assertEquals(newArrayList(names.get(1)), metric.getCanonicalFieldNames());
-    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, of(), names.get(1))), metric
+      .getUserVisibleFields
+      ());
     assertEquals(fieldName, metric.getUserFieldNameFromCanonicalName(names.get(1)));
   }
 
@@ -95,7 +97,8 @@ public class TestSchemaManager {
     StoreClerk.Metric metric = getOnlyOneMetric(store, orgId);
     String canonicalFieldName = names.get(1);
     assertEquals(newArrayList(canonicalFieldName), metric.getCanonicalFieldNames());
-    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, newArrayList(fieldAlias))),
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, newArrayList(fieldAlias), names
+      .get(1))),
       metric.getUserVisibleFields());
     assertEquals(canonicalFieldName, metric.getCanonicalNameFromUserFieldName(fieldAlias));
   }
@@ -120,7 +123,8 @@ public class TestSchemaManager {
     assertEquals(2, metrics.size());
     // first metric
     StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
-    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING)), metric.getUserVisibleFields());
+    assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, of(), names.get(1))), metric
+      .getUserVisibleFields());
     // second, added metric
     StoreClerk.Metric metric2 = clerk.getMetricForUserNameOrAlias(metric2name);
     assertNotEquals("Didn't find added metric: " + metric2name, metric2);
@@ -152,14 +156,15 @@ public class TestSchemaManager {
     assertEquals(2, metrics.size());
     // first metric
     StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
-    StoreClerk.Field typedField = f(fieldName, Schema.Type.STRING);
+    StoreClerk.Field typedField = f(fieldName, Schema.Type.STRING, names.get(1));
     assertEquals(newArrayList(typedField), metric.getUserVisibleFields());
     // second, added metric
     StoreClerk.Metric metric2 = clerk.getMetricForUserNameOrAlias(metric2name);
     assertNotEquals("Didn't find added metric: " + metric2name, metric2);
     assertNotEquals(metric, metric2);
     assertEquals(metric2, clerk.getMetricForUserNameOrAlias(metric2Alias));
-    assertEquals(newArrayList(typedField), metric2.getUserVisibleFields());
+    StoreClerk.Field typedField2 = f(fieldName, Schema.Type.STRING, names.get(3));
+    assertEquals(newArrayList(typedField2), metric2.getUserVisibleFields());
   }
 
   @Test(expected = NullPointerException.class)
@@ -209,12 +214,12 @@ public class TestSchemaManager {
     mb.build().commit();
   }
 
-  public StoreClerk.Field f(String username, Schema.Type type) {
-    return f(username, type, newArrayList());
+  public StoreClerk.Field f(String username, Schema.Type type, String cname) {
+    return f(username, type, of(), cname);
   }
 
-  public StoreClerk.Field f(String username, Schema.Type type, List<String> aliases) {
-    return new StoreClerk.Field(username, type, aliases);
+  public StoreClerk.Field f(String username, Schema.Type type, List<String> aliases, String cname) {
+    return new StoreClerk.Field(username, type, aliases, cname);
   }
 
   private SchemaStore getStore() {

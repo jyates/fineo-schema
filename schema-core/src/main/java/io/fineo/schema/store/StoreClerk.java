@@ -76,7 +76,7 @@ public class StoreClerk {
       return collectElementsForFields(metric.getMetadata(), (cname, userName, aliases) -> {
         Schema.Field field = schema.getField(cname);
         Schema.Type type = field.schema().getField("value").schema().getType();
-        return new Field(userName, type, aliases);
+        return new Field(userName, type, aliases, cname);
       });
     }
 
@@ -135,11 +135,13 @@ public class StoreClerk {
     private final String name;
     private final Schema.Type type;
     private final List<String> aliases;
+    private final String cname;
 
-    public Field(String name, Schema.Type type, List<String> aliases) {
+    public Field(String name, Schema.Type type, List<String> aliases, String cname) {
       this.name = name;
       this.type = type;
       this.aliases = aliases;
+      this.cname = cname;
     }
 
     public String getName() {
@@ -152,6 +154,10 @@ public class StoreClerk {
 
     public List<String> getAliases() {
       return aliases;
+    }
+
+    public String getCname() {
+      return cname;
     }
 
     @Override
@@ -167,7 +173,9 @@ public class StoreClerk {
         return false;
       if (getType() != field.getType())
         return false;
-      return getAliases().equals(field.getAliases());
+      if (!getAliases().equals(field.getAliases()))
+        return false;
+      return getCname().equals(field.getCname());
 
     }
 
@@ -176,7 +184,18 @@ public class StoreClerk {
       int result = getName().hashCode();
       result = 31 * result + getType().hashCode();
       result = 31 * result + getAliases().hashCode();
+      result = 31 * result + getCname().hashCode();
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return "Field{" +
+             "name='" + name + '\'' +
+             ", type=" + type +
+             ", aliases=" + aliases +
+             ", cname='" + cname + '\'' +
+             '}';
     }
   }
 
