@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.avro.SchemaNameGenerator;
@@ -45,6 +46,7 @@ import java.util.function.Function;
  */
 public class StoreManager {
 
+  private final FineoStopWords stop = new FineoStopWords();
   private final SchemaNameGenerator generator;
   private final SchemaStore store;
 
@@ -82,6 +84,7 @@ public class StoreManager {
     public OrganizationBuilder(Metadata previous, SchemaBuilder.OrganizationBuilder builder) {
       this.previous = previous;
       this.orgBuilder = builder;
+      stop.recordStart();
     }
 
     public MetricBuilder newMetric() {
@@ -119,6 +122,7 @@ public class StoreManager {
     }
 
     public void commit() throws IOException, OldSchemaException {
+      stop.endRecord();
       SchemaBuilder.Organization org = this.orgBuilder.build();
       if (previous == null) {
         store.createNewOrganization(org);
@@ -147,12 +151,14 @@ public class StoreManager {
       if (aliases != null) {
         for (String alias : aliases) {
           this.metricBuilder.withName(alias);
+          stop.withField(alias);
         }
       }
       return this;
     }
 
     public MetricBuilder setDisplayName(String name) {
+      stop.withField(name);
       this.metricBuilder.withDisplayName(name);
       return this;
     }
@@ -167,6 +173,7 @@ public class StoreManager {
       SchemaUtils.checkFound(canonical, fieldName, "field (or alias)");
       SchemaBuilder.FieldBuilder fb = this.metricBuilder.updateField(canonical);
       for (String alias : aliases) {
+        stop.withField(alias);
         fb.withAlias(alias);
       }
       fb.asField();
@@ -209,6 +216,7 @@ public class StoreManager {
 
     public NewFieldBuilder withName(String name) {
       this.name = name;
+      stop.withField(name);
       return this;
     }
 
@@ -233,6 +241,7 @@ public class StoreManager {
       SchemaBuilder.FieldBuilder fielder = func.apply(this.name);
       for (String alias : this.aliases) {
         fielder.withAlias(alias);
+        stop.withField(alias);
       }
       fielder.asField();
       return parent;

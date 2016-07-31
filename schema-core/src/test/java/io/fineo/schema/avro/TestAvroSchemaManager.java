@@ -6,9 +6,12 @@ import io.fineo.internal.customer.Metric;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
+import io.fineo.schema.store.TestSchemaManager;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
@@ -27,6 +30,9 @@ import static org.junit.Assert.fail;
  * Encoding/Decoding of metrics is consistent using the manager
  */
 public class TestAvroSchemaManager {
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testSimpleSchemaMapping() throws Exception {
@@ -125,7 +131,7 @@ public class TestAvroSchemaManager {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testCreateExistingOrg() throws Exception{
+  public void testCreateExistingOrg() throws Exception {
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";
     record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
@@ -162,7 +168,32 @@ public class TestAvroSchemaManager {
     GenericRecord avro = encoder.encode(new MapRecord(record));
     AvroRecordTranslator translator = manager.translator(avro);
     RecordMetadata metadata = translator.getMetadata();
-    assertEquals(10L, (long)metadata.getBaseFields().getTimestamp());
+    assertEquals(10L, (long) metadata.getBaseFields().getTimestamp());
+  }
+
+  @Test
+  public void testInvalidFieldNames() throws Exception {
+    Map<String, Object> record = new HashMap<>();
+    String orgId = "orgid";
+    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    String orgMetric = "org-visible-metric-name";
+    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10);
+    String orgFieldName = "org-aliased-key";
+    record.put(orgFieldName, "true");
+    // unknown fields that have invalid names
+    for (String bad : TestSchemaManager.BAD_FIELD_NAMES) {
+      record.put(bad, true);
+    }
+
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
+    AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
+    AvroSchemaEncoder encoder = manager.encode(orgMetric);
+
+    thrown.expect(RuntimeException.class);
+    thrown.expect(TestSchemaManager.expectFailedFields(TestSchemaManager.BAD_FIELD_NAMES));
+    encoder.encode(new MapRecord(record));
   }
 
   private void verifyIllegalCreate(SchemaStore store, Record record, String when) {

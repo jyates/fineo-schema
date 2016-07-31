@@ -10,6 +10,8 @@ import org.apache.avro.generic.GenericRecord;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Manage translating to/from an Avro {@link org.apache.avro.generic.GenericRecord} and a simple
  * {@link io.fineo.schema.Record}
@@ -22,10 +24,9 @@ public class AvroSchemaManager {
   private final Metadata orgMetadata;
 
   public AvroSchemaManager(SchemaStore store, String orgId) {
-    Preconditions.checkNotNull(orgId, "OrgID can never be null!");
     this.store = store;
-    this.orgMetadata = store.getOrgMetadata(orgId);
-    Preconditions.checkNotNull(orgMetadata);
+    this.orgMetadata =
+      checkNotNull(store.getOrgMetadata(checkNotNull(orgId, "OrgID can never be null!")));
   }
 
   public Metric getMetricInfo(String aliasMetricName){

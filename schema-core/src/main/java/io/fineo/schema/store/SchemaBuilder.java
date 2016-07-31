@@ -24,7 +24,11 @@ import static com.google.common.collect.Sets.newHashSet;
 
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
- * heirachy. Can also be used to update existing schemas bound to a metric or organization.
+ * hierarchy. Can also be used to update existing schemas bound to a metric or organization.
+ * <p>
+ * This does <b>not support use of STOP WORDS</b> that - like all new dev - is incorporatd in
+ * {@link StoreManager}
+ * </p>
  *
  * @deprecated Use {@link StoreManager} instead
  */

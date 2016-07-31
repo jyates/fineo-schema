@@ -2,6 +2,7 @@ package io.fineo.schema.avro;
 
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.internal.customer.Metric;
+import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.Schema;
@@ -13,9 +14,12 @@ import java.util.function.Predicate;
 
 /**
  * Bridge between the 'logical' schema and the physical schema.
+ * <p>
+ * Not thread-safe.
  */
 public class AvroSchemaEncoder {
 
+  private final FineoStopWords STOP = new FineoStopWords();
   /**
    * Single place that we reference the schema names for the base fields, so we can set/extract
    * them by name properly
@@ -48,6 +52,7 @@ public class AvroSchemaEncoder {
     populateBaseFields(record, avroRecord);
 
     // copy over all the other fields that the schema knows about
+    STOP.recordStart();
     for (Map.Entry<String, Object> entry : record.getFields()) {
       String key = entry.getKey();
       // org ID and canonical name is encoded in the schema
@@ -55,6 +60,7 @@ public class AvroSchemaEncoder {
         continue;
       }
 
+      STOP.withField(key);
       String fieldName = aliasToFieldMap.get(key);
 
       // add to the named field, if we have it
@@ -68,6 +74,7 @@ public class AvroSchemaEncoder {
       unknown.put(key, String.valueOf(entry.getValue()));
     }
 
+    STOP.endRecord();
     // ensure that we filled the 'default' fields
     getAndSetUnknownFieldsIfEmpty(avroRecord);
     return avroRecord;

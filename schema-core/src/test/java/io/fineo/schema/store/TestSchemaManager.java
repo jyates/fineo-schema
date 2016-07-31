@@ -1,26 +1,41 @@
 package io.fineo.schema.store;
 
+import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Pair;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.exception.SchemaTypeNotFoundException;
 import org.apache.avro.Schema;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.schema.avro.SchemaTestUtils.generateStringNames;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 public class TestSchemaManager {
 
   private static final String STRING = "STRING";
+  public static final String[] BAD_FIELD_NAMES =
+    new String[]{"_f", "_f1", "_fd", "T0" + FineoStopWords.PREFIX_DELIMITER};
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testCreateOrg() throws Exception {
@@ -38,7 +53,7 @@ public class TestSchemaManager {
     assertEquals(newArrayList(names.get(1)), metric.getCanonicalFieldNames());
     assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, of(), names.get(1))), metric
       .getUserVisibleFields
-      ());
+        ());
     assertEquals(fieldName, metric.getUserFieldNameFromCanonicalName(names.get(1)));
   }
 
@@ -98,7 +113,7 @@ public class TestSchemaManager {
     String canonicalFieldName = names.get(1);
     assertEquals(newArrayList(canonicalFieldName), metric.getCanonicalFieldNames());
     assertEquals(newArrayList(f(fieldName, Schema.Type.STRING, newArrayList(fieldAlias), names
-      .get(1))),
+        .get(1))),
       metric.getUserVisibleFields());
     assertEquals(canonicalFieldName, metric.getCanonicalNameFromUserFieldName(fieldAlias));
   }
@@ -191,6 +206,84 @@ public class TestSchemaManager {
     String org = "org1", metricName = "metricname", name = "f1";
     manager.newOrg(org).newMetric().setDisplayName(metricName)
            .newField().withName(name).withType("NOT_A_TYPE").build();
+  }
+
+  @Test
+  public void testBadFieldNames() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1", metricName = "metricname";
+    expectAllBadFields();
+    List<Pair<String, String>> fields =
+      newArrayList(BAD_FIELD_NAMES).stream().map(f -> p(f, STRING)).collect(Collectors.toList());
+    commitSimpleType(manager, orgId, metricName, of(), fields.toArray(new Pair[0]));
+  }
+
+  @Test
+  public void testFailBadFieldAlias() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1", metricName = "metricname";
+    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+    StoreManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
+    mb.newField()
+      .withName("field")
+      .withType(STRING)
+      .withAliases(asList(BAD_FIELD_NAMES)).build();
+    expectAllBadFields();
+    mb.build().commit();
+  }
+
+  @Test
+  public void testBadMetricNames() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1";
+    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+    for (String name : BAD_FIELD_NAMES) {
+      builder.newMetric().setDisplayName(name).build();
+    }
+    expectAllBadFields();
+    builder.commit();
+  }
+
+  @Test
+  public void testBadMetricAliases() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1", metricName = "metricname";
+    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+    StoreManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
+    expectAllBadFields();
+    mb.addAliases(BAD_FIELD_NAMES).build().commit();
+  }
+
+  private void expectAllBadFields(){
+    thrown.expect(RuntimeException.class);
+    thrown.expect(expectFailedFields(BAD_FIELD_NAMES));
+  }
+
+  public static Matcher<String> expectFailedFields(String... fields) {
+    return new BaseMatcher<String>() {
+      private String msg;
+      private List<String> error = new ArrayList<>();
+
+      @Override
+      public boolean matches(Object item) {
+        msg = ((RuntimeException) item).getMessage();
+        for (String field : fields) {
+          if (!msg.contains(field)) {
+            this.error.add(field);
+          }
+        }
+        return this.error.isEmpty();
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("fail for fields: " + asList(fields));
+      }
+    };
   }
 
   private static <K, V> Pair<K, V> p(K k, V v) {
