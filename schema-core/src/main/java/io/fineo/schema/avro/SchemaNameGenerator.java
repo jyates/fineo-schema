@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface SchemaNameGenerator {
 
   SchemaNameGenerator DEFAULT_INSTANCE =
-    () -> "n" + Math.abs(UUID.randomUUID().toString().hashCode());
+    () -> "_ff" + Math.abs(UUID.randomUUID().toString().hashCode());
 
   String generateSchemaName();
 }
