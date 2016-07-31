@@ -13,10 +13,11 @@ import java.util.stream.Collectors;
 public class FineoStopWords {
   private static final Joiner ERROR_MSG_SEPARATOR = Joiner.on("\n");
   public static final String FIELD_PREFIX = "_f";
-  private static final Pattern _f_PATTERN = Pattern.compile(FIELD_PREFIX + ".*");
+  private static final String ANYTHING = ".*";
+  private static final Pattern _f_PATTERN = Pattern.compile(FIELD_PREFIX + ANYTHING);
   public final static String PREFIX_DELIMITER = "\u00a6\u00a6";
   public static final Pattern
-    DRILL_STAR_PREFIX_PATTERN = Pattern.compile("T[0-9]+" + PREFIX_DELIMITER);
+    DRILL_STAR_PREFIX_PATTERN = Pattern.compile("T[0-9]+" + PREFIX_DELIMITER + ANYTHING);
 
   private ErrorTracker tracker;
 

@@ -32,7 +32,9 @@ public class TestSchemaManager {
 
   private static final String STRING = "STRING";
   public static final String[] BAD_FIELD_NAMES =
-    new String[]{"_f", "_f1", "_fd", "T0" + FineoStopWords.PREFIX_DELIMITER};
+    new String[]{"_f", "_f1", "_fd",
+      "T0" + FineoStopWords.PREFIX_DELIMITER,
+      "T0" + FineoStopWords.PREFIX_DELIMITER + "field"};
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -266,14 +268,14 @@ public class TestSchemaManager {
   public static Matcher<String> expectFailedFields(String... fields) {
     return new BaseMatcher<String>() {
       private String msg;
-      private List<String> error = new ArrayList<>();
+      private List<String> error = newArrayList(fields);
 
       @Override
       public boolean matches(Object item) {
         msg = ((RuntimeException) item).getMessage();
         for (String field : fields) {
-          if (!msg.contains(field)) {
-            this.error.add(field);
+          if (msg.contains(field)) {
+            this.error.remove(field);
           }
         }
         return this.error.isEmpty();
@@ -281,7 +283,7 @@ public class TestSchemaManager {
 
       @Override
       public void describeTo(Description description) {
-        description.appendText("fail for fields: " + asList(fields));
+        description.appendText("failures for fields").appendValue(asList(fields));
       }
     };
   }
