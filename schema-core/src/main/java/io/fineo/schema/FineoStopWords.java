@@ -15,7 +15,8 @@ public class FineoStopWords {
   public static final String FIELD_PREFIX = "_f";
   private static final Pattern _f_PATTERN = Pattern.compile(FIELD_PREFIX + ".*");
   public final static String PREFIX_DELIMITER = "\u00a6\u00a6";
-  public static final Pattern DRILL_STAR_PREFIX = Pattern.compile("T[0-9]+" + PREFIX_DELIMITER);
+  public static final Pattern
+    DRILL_STAR_PREFIX_PATTERN = Pattern.compile("T[0-9]+" + PREFIX_DELIMITER);
 
   private ErrorTracker tracker;
 
@@ -26,7 +27,7 @@ public class FineoStopWords {
   public void withField(String columnName) {
     if (_f_PATTERN.matcher(columnName).matches()) {
       tracker.add(columnName, "Column starts with _f!");
-    } else if (DRILL_STAR_PREFIX.matcher(columnName).matches()) {
+    } else if (DRILL_STAR_PREFIX_PATTERN.matcher(columnName).matches()) {
       tracker.add(columnName, "Column starts with T<n>" + PREFIX_DELIMITER + "!");
     }
   }
