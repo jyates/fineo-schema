@@ -1,5 +1,7 @@
 package io.fineo.schema.avro;
 
+import io.fineo.schema.FineoStopWords;
+
 import java.util.UUID;
 
 /**
@@ -9,7 +11,7 @@ import java.util.UUID;
 public interface SchemaNameGenerator {
 
   SchemaNameGenerator DEFAULT_INSTANCE =
-    () -> "_ff" + Math.abs(UUID.randomUUID().toString().hashCode());
+    () -> FineoStopWords.FIELD_PREFIX + "f" + Math.abs(UUID.randomUUID().toString().hashCode());
 
   String generateSchemaName();
 }

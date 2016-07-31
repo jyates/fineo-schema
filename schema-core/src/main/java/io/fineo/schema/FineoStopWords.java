@@ -12,7 +12,8 @@ import java.util.stream.Collectors;
  */
 public class FineoStopWords {
   private static final Joiner ERROR_MSG_SEPARATOR = Joiner.on("\n");
-  private static final Pattern _f_PATTERN = Pattern.compile("_f.*");
+  public static final String FIELD_PREFIX = "_f";
+  private static final Pattern _f_PATTERN = Pattern.compile(FIELD_PREFIX + ".*");
   public final static String PREFIX_DELIMITER = "\u00a6\u00a6";
   public static final Pattern DRILL_STAR_PREFIX = Pattern.compile("T[0-9]+" + PREFIX_DELIMITER);
 
