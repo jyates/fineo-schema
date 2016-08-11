@@ -172,6 +172,11 @@ public class TestAvroSchemaManager {
   }
 
   @Test
+  public void testWrongTypedRecordField() throws Exception {
+
+  }
+
+  @Test
   public void testInvalidFieldNames() throws Exception {
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";

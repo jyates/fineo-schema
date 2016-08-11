@@ -292,7 +292,7 @@ public class TestSchemaManager {
     return new Pair<>(k, v);
   }
 
-  private void commitSimpleType(StoreManager manager, String orgId, String metricName,
+  public static void commitSimpleType(StoreManager manager, String orgId, String metricName,
     List<String> metricAliases, Pair<String, String>... fieldNameAndType)
     throws IOException, OldSchemaException {
     StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);

@@ -2,10 +2,10 @@ package org.apache.avro.file;
 
 import com.google.common.collect.Lists;
 import io.fineo.internal.customer.BaseFields;
+import io.fineo.schema.MapRecord;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -179,7 +180,10 @@ public class TestMultiSchemaReadWrite {
         .set(AvroSchemaEncoder.BASE_FIELDS_KEY, base);
       for (int j = 0; j < fieldCount; j++) {
         String fieldName = "a" + j;
-        GenericRecord fieldInst = asTypedRecord(schema, fieldName, fieldName + "_alias", true);
+        String alias = fieldName + "_alias";
+        Map<String, Object> values = new HashMap<>();
+        values.put(alias, true);
+        GenericRecord fieldInst = asTypedRecord(schema, fieldName, alias, new MapRecord(values));
         recordBuilder.set(fieldName, fieldInst);
       }
       records.add(recordBuilder.build());

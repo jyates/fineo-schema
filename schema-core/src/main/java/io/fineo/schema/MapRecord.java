@@ -3,6 +3,7 @@ package io.fineo.schema;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Simple {@link Record} that is directly backed by a {@link Map}
@@ -16,47 +17,27 @@ public class MapRecord implements Record {
 
   @Override
   public Boolean getBooleanByField(String fieldName) {
-    Object o = map.get(fieldName);
-    if (o instanceof String) {
-      return Boolean.valueOf((String) o);
-    }
-    return (Boolean) o;
+    return translate(fieldName, Boolean::valueOf, Boolean.class);
   }
 
   @Override
   public Integer getIntegerByField(String fieldName) {
-    Object o = map.get(fieldName);
-    if (o instanceof String) {
-      return Integer.valueOf((String) o);
-    }
-    return (Integer) o;
+    return translate(fieldName, Integer::valueOf, Integer.class);
   }
 
   @Override
   public Long getLongByFieldName(String fieldName) {
-    Object o = map.get(fieldName);
-    if (o instanceof String) {
-      return Long.valueOf((String) o);
-    }
-    return (Long) o;
+    return translate(fieldName, Long::valueOf, Long.class);
   }
 
   @Override
   public Float getFloatByFieldName(String fieldName) {
-    Object o = map.get(fieldName);
-    if (o instanceof String) {
-      return Float.valueOf((String) o);
-    }
-    return (Float) o;
+    return translate(fieldName, Float::valueOf, Float.class);
   }
 
   @Override
   public Double getDoubleByFieldName(String fieldName) {
-    Object o = map.get(fieldName);
-    if (o instanceof String) {
-      return Double.valueOf((String) o);
-    }
-    return (Double) o;
+    return translate(fieldName, Double::valueOf, Double.class);
   }
 
   @Override
@@ -66,7 +47,7 @@ public class MapRecord implements Record {
 
   @Override
   public String getStringByField(String fieldName) {
-    return (String) map.get(fieldName);
+    return translate(fieldName, s -> s.toString(), String.class);
   }
 
   @Override
@@ -87,5 +68,15 @@ public class MapRecord implements Record {
   @Override
   public String toString() {
     return this.map.toString();
+  }
+
+  private <T> T translate(String fieldName, Function<String, T> func, Class<T> clazz) {
+    Object o = map.get(fieldName);
+    if (o.getClass().isAssignableFrom(clazz)) {
+      return (T) o;
+    } else if (!(o instanceof String)) {
+      o = o.toString();
+    }
+    return func.apply((String) o);
   }
 }

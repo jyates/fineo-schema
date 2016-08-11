@@ -66,7 +66,7 @@ public class AvroSchemaEncoder {
       // add to the named field, if we have it
       if (fieldName != null) {
         avroRecord
-          .put(fieldName, asTypedRecord(avroRecord.getSchema(), fieldName, key, entry.getValue()));
+          .put(fieldName, asTypedRecord(avroRecord.getSchema(), fieldName, key, record));
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
@@ -81,10 +81,45 @@ public class AvroSchemaEncoder {
   }
 
   public static GenericData.Record asTypedRecord(Schema objectSchema, String canonicalName,
-    String aliasName, Object value) {
+    String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
     GenericData.Record record = new GenericData.Record(field.schema());
-    record.put("fieldAliasName", aliasName);
+    record.put("fieldAliasName", recordFieldName);
+    Schema.Type type = field.schema().getField("value").schema().getType();
+    Object value = null;
+    switch (type) {
+      case RECORD:
+      case ENUM:
+      case ARRAY:
+      case MAP:
+      case UNION:
+      case FIXED:
+        throw new IllegalArgumentException("Got nested event type: " + type);
+      case STRING:
+        value = source.getStringByField(recordFieldName);
+        break;
+      case BYTES:
+        value = source.getBytesByFieldName(recordFieldName);
+        break;
+      case INT:
+        value = source.getIntegerByField(recordFieldName);
+        break;
+      case LONG:
+        value = source.getLongByFieldName(recordFieldName);
+        break;
+      case FLOAT:
+        value = source.getFloatByFieldName(recordFieldName);
+        break;
+      case DOUBLE:
+        value = source.getDoubleByFieldName(recordFieldName);
+        break;
+      case BOOLEAN:
+        value = source.getBooleanByField(recordFieldName);
+        break;
+      case NULL:
+        value = null;
+        break;
+    }
     record.put("value", value);
     return record;
   }
