@@ -66,7 +66,8 @@ public class TestAvroSchemaManager {
     // encode the record and ensure that we can read it as we expect (with canonical fields)
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
     AvroSchemaEncoder encoder = manager.encode(orgMetric);
-    GenericRecord avro = encoder.encode(new MapRecord(record));
+    MapRecord mapRecord = new MapRecord(record);
+    GenericRecord avro = encoder.encode(mapRecord);
 
     // ensure that we encoded it correctly
     assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
@@ -79,7 +80,7 @@ public class TestAvroSchemaManager {
     assertNull("Record has a field with alias name!", avro.get(orgFieldName));
     // but this record has translated fields!
     Record translated = translator.getTranslatedRecord();
-    assertEquals(record.get(orgFieldName), translated.getField(orgFieldName));
+    assertEquals(mapRecord.getBooleanByField(orgFieldName), translated.getField(orgFieldName));
   }
 
   /**
@@ -127,7 +128,7 @@ public class TestAvroSchemaManager {
     Mockito.when(meta.getCanonicalName()).thenReturn("orgid");
     verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
     Mockito.verify(meta).getCanonicalName();
-    Mockito.verify(store, Mockito.times(3)).getOrgMetadata("orgid");
+    Mockito.verify(store, Mockito.times(2)).getOrgMetadata("orgid");
   }
 
   @Test(expected = IllegalStateException.class)
@@ -169,11 +170,6 @@ public class TestAvroSchemaManager {
     AvroRecordTranslator translator = manager.translator(avro);
     RecordMetadata metadata = translator.getMetadata();
     assertEquals(10L, (long) metadata.getBaseFields().getTimestamp());
-  }
-
-  @Test
-  public void testWrongTypedRecordField() throws Exception {
-
   }
 
   @Test
