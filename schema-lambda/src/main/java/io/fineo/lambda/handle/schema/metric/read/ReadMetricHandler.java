@@ -3,7 +3,7 @@ package io.fineo.lambda.handle.schema.metric.read;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldHandler;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
 import io.fineo.lambda.handle.schema.inject.SchemaModulesUtil;
@@ -20,7 +20,7 @@ import static java.lang.String.format;
  * A lambda handler that handles Kinesis events
  */
 public class ReadMetricHandler extends
-                              ThrowingRequestHandler<ReadMetricRequest, ReadMetricResponse> {
+                               ThrowingErrorHandlerForSchema<ReadMetricRequest, ReadMetricResponse> {
   private final Provider<SchemaStore> store;
 
   @Inject

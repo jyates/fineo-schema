@@ -3,7 +3,7 @@ package io.fineo.lambda.handle.schema.create;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.store.StoreManager;
 
@@ -15,7 +15,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateReq
  * Lambda handle to do synchronous creation of an org in the schema store
  */
 public class CreateOrgHandler extends
-                              ThrowingRequestHandler<CreateOrgRequest, CreateOrgResponse> {
+                              ThrowingErrorHandlerForSchema<CreateOrgRequest, CreateOrgResponse> {
 
   private static final CreateOrgResponse RESPONSE = new CreateOrgResponse();
   private final Provider<StoreManager> store;

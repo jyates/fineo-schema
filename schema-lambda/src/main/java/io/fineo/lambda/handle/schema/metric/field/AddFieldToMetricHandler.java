@@ -5,12 +5,10 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFieldRequest;
@@ -19,8 +17,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFie
  * A lambda handler that handles Kinesis events
  */
 public class AddFieldToMetricHandler
-  extends ThrowingRequestHandler<AddFieldToMetricRequest, AddFieldToMetricResponse> {
-  private static final Logger LOG = LoggerFactory.getLogger(AddFieldToMetricHandler.class);
+  extends ThrowingErrorHandlerForSchema<AddFieldToMetricRequest, AddFieldToMetricResponse> {
 
   private static final AddFieldToMetricResponse RESPONSE = new AddFieldToMetricResponse();
   private final Provider<StoreManager> store;

@@ -3,7 +3,7 @@ package io.fineo.lambda.handle.schema.field.read;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.inject.SchemaModulesUtil;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.SchemaStore;
@@ -19,7 +19,8 @@ import static java.lang.String.format;
  * A lambda handler that handles Kinesis events
  */
 public class ReadFieldHandler extends
-                              ThrowingRequestHandler<ReadFieldRequest, ReadFieldResponse> {
+                              ThrowingErrorHandlerForSchema<ReadFieldRequest, ReadFieldResponse> {
+
   private final Provider<SchemaStore> store;
 
   @Inject

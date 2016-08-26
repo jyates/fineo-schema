@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
@@ -12,7 +12,7 @@ import io.fineo.schema.store.StoreManager;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateMetricRequest;
 
 public class CreateMetricHandler
-  extends ThrowingRequestHandler<CreateMetricRequest, CreateMetricResponse> {
+  extends ThrowingErrorHandlerForSchema<CreateMetricRequest, CreateMetricResponse> {
 
   private static final CreateMetricResponse RESPONSE = new CreateMetricResponse();
   private final Provider<StoreManager> store;

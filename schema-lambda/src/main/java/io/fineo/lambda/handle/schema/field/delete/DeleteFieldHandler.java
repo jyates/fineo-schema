@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.schema.store.StoreManager;
 
@@ -15,7 +15,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDA
  * A lambda handler that handles Kinesis events
  */
 public class DeleteFieldHandler extends
-                                ThrowingRequestHandler<DeleteFieldRequest, DeleteFieldResponse> {
+                                ThrowingErrorHandlerForSchema<DeleteFieldRequest, DeleteFieldResponse> {
 
   private static final DeleteFieldResponse RESPONSE = new DeleteFieldResponse();
   private final Provider<StoreManager> store;
