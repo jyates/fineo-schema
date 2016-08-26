@@ -22,7 +22,7 @@ import java.util.List;
 
 public class SchemaStoreModule extends AbstractModule implements Serializable {
 
-  public static final String DYNAMO_SCHEMA_STORE_TABLE = "fineo.dynamo.schema.table";
+  public static final String DYNAMO_SCHEMA_STORE_TABLE = "fineo.dynamo.schema-table";
   public static final String DYNAMO_READ_LIMIT = "fineo.dynamo.schema.limit.read";
   public static final String DYNAMO_WRITE_LIMIT = "fineo.dynamo.schema.limit.write";
   public static final String SCHEMA_UPDATE_RETRIES = "fineo.schema.retries";
@@ -40,24 +40,11 @@ public class SchemaStoreModule extends AbstractModule implements Serializable {
   @Provides
   @Inject
   @Singleton
-  public SchemaStore getSchemaStore(ValidatorFactory factory, CreateTableRequest create,
-    AmazonDynamoDBAsyncClient dynamo) {
+  public SchemaStore getSchemaStore(ValidatorFactory factory, @Named(DYNAMO_SCHEMA_STORE_TABLE)
+    String storeTable, AmazonDynamoDBAsyncClient dynamo) {
     DynamoDBRepository repo =
-      new DynamoDBRepository(factory, dynamo, create);
+      new DynamoDBRepository(factory, dynamo, storeTable);
     return new SchemaStore(repo);
-  }
-
-  @Provides
-  @Inject
-  public CreateTableRequest getDynamoSchemaTable(
-    @Named(DYNAMO_SCHEMA_STORE_TABLE) String storeTable,
-    @Named(DYNAMO_READ_LIMIT) Long read, @Named(DYNAMO_WRITE_LIMIT) Long write) {
-    CreateTableRequest create =
-      DynamoDBRepository.getBaseTableCreate(storeTable);
-    create.setProvisionedThroughput(new ProvisionedThroughput()
-      .withReadCapacityUnits(read)
-      .withWriteCapacityUnits(write));
-    return create;
   }
 
   @Provides

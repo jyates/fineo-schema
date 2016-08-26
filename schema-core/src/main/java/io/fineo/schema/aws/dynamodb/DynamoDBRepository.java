@@ -18,6 +18,7 @@ import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import io.fineo.schema.Pair;
@@ -77,13 +78,13 @@ public class DynamoDBRepository extends AbstractBackendRepository {
   private final DynamoDBMapper mapper;
 
   public DynamoDBRepository(ValidatorFactory validators, AmazonDynamoDB dynamoDB,
-    CreateTableRequest schemaTable) {
+    String tablename) {
     super(validators);
     this.client = dynamoDB;
     this.dynamo = new DynamoDB(dynamoDB);
-    this.table = getTable(schemaTable);
+    this.table = getTable(tablename);
     DynamoDBMapperConfig.Builder b = new DynamoDBMapperConfig.Builder();
-    b.setTableNameOverride(new DynamoDBMapperConfig.TableNameOverride(table.getTableName()));
+    b.setTableNameOverride(new DynamoDBMapperConfig.TableNameOverride(tablename));
     b.setConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT);
     b.setSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE);
     this.mapper = new DynamoDBMapper(client, b.build());
@@ -91,11 +92,16 @@ public class DynamoDBRepository extends AbstractBackendRepository {
 
   public static DynamoDBRepository createDynamoForTesting(AmazonDynamoDB dynamodb,
     String schemaTable, ValidatorFactory validators) {
-    CreateTableRequest create = getBaseTableCreate(schemaTable);
-    create = create.withProvisionedThroughput(new ProvisionedThroughput()
-      .withReadCapacityUnits(10L)
-      .withWriteCapacityUnits(5L));
-    return new DynamoDBRepository(validators, dynamodb, create);
+    try {
+      dynamodb.describeTable(schemaTable);
+    } catch (ResourceNotFoundException e) {
+      CreateTableRequest create = getBaseTableCreate(schemaTable);
+      create = create.withProvisionedThroughput(new ProvisionedThroughput()
+        .withReadCapacityUnits(10L)
+        .withWriteCapacityUnits(5L));
+      dynamodb.createTable(create);
+    }
+    return new DynamoDBRepository(validators, dynamodb, schemaTable);
   }
 
   /**
@@ -112,11 +118,10 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     return create;
   }
 
-  private Table getTable(CreateTableRequest table) {
+  private Table getTable(String name) {
     Table t;
     try {
       // table probably exists, so check that first
-      String name = table.getTableName();
       LOG.debug("Checking to see if " + name + " exists...");
       TableUtils.waitUntilExists(client, name, 1000, 100);
       LOG.debug("Table [" + name + "] exists! Getting it.");
@@ -125,9 +130,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
       throw new RuntimeException(e);
     } catch (AmazonClientException e) {
       LOG.warn("Got an exception while waiting for table, trying to create it instead ", e);
-      t = dynamo.createTable(table);
-      LOG.info("Created Dynamo table: " + t);
-      waitForTable(t);
+      throw e;
     }
 
     return t;
