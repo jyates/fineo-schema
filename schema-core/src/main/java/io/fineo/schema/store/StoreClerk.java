@@ -124,6 +124,11 @@ public class StoreClerk {
       return aliases;
     }
 
+    // Used by Readerator
+    public io.fineo.internal.customer.Metric getUnderlyingMetric(){
+      return this.metric;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o)
