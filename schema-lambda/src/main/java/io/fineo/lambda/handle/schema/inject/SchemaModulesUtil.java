@@ -72,12 +72,14 @@ public class SchemaModulesUtil {
     String type = null;
     switch (code) {
       case 0:
-        type = "BadRequest";
+        type = "Bad Request";
         break;
       case 3:
         type = "Forbidden";
+        break;
       case 4:
-        type = "NotFound";
+        type = "Not Found";
+        break;
     }
     throwError(context, 400 + code, type, message);
   }

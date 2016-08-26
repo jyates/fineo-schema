@@ -24,13 +24,8 @@ public class TestUpdateMetric {
     String org = "orgid", metric = "metricname", metric2 = "newmetric";
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
-    UpdateMetricRequest request = new UpdateMetricRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setNewDisplayName(metric2);
 
-    UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
-    handler.handle(request, null);
+    updateMetricDisplayName(store, org, metric, metric2);
 
     StoreClerk clerk = new StoreClerk(store, org);
     List<StoreClerk.Metric> metrics = clerk.getMetrics();
@@ -47,13 +42,8 @@ public class TestUpdateMetric {
     String org = "orgid", metric = "metricname", metric2 = "newmetric";
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
-    UpdateMetricRequest request = new UpdateMetricRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setAliases(new String[]{metric2});
 
-    UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
-    handler.handle(request, null);
+    updateMetricAliases(store, org, metric, metric2);
 
     StoreClerk clerk = new StoreClerk(store, org);
     List<StoreClerk.Metric> metrics = clerk.getMetrics();
@@ -67,12 +57,34 @@ public class TestUpdateMetric {
   @Test
   public void testMissingRequestFields() throws Exception {
     UpdateMetricRequest request = new UpdateMetricRequest();
-    HandlerTestUtils.failNoValue(this::createHandler, request);
+    HandlerTestUtils.failNoValue(TestUpdateMetric::createHandler, request);
     request.setOrgId("org");
-    HandlerTestUtils.failNoValue(this::createHandler, request);
+    HandlerTestUtils.failNoValue(TestUpdateMetric::createHandler, request);
   }
 
-  private UpdateMetricHandler createHandler(Provider<StoreManager> provider) {
+  private static UpdateMetricHandler createHandler(Provider<StoreManager> provider) {
     return new UpdateMetricHandler(provider, new UpdateRetryer(), 1);
+  }
+
+  public static void updateMetricAliases(SchemaStore store, String org, String metric,
+    String... aliases) throws Exception {
+    UpdateMetricRequest request = new UpdateMetricRequest();
+    request.setOrgId(org);
+    request.setMetricName(metric);
+    request.setAliases(aliases);
+
+    UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
+    handler.handle(request, null);
+  }
+
+  public static void updateMetricDisplayName(SchemaStore store, String org, String metric,
+    String name) throws Exception {
+    UpdateMetricRequest request = new UpdateMetricRequest();
+    request.setOrgId(org);
+    request.setMetricName(metric);
+    request.setNewDisplayName(name);
+
+    UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
+    handler.handle(request, null);
   }
 }

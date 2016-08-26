@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Module;
 import io.fineo.lambda.configure.util.PropertiesLoaderUtil;
 import io.fineo.lambda.handle.LambdaResponseWrapper;
-import io.fineo.lambda.handle.schema.metric.read.ReadMetricHandler;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,15 +13,15 @@ import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
 /**
  * Wrapper to instantiate the raw stage
  */
-public class ReadField extends
-                         LambdaResponseWrapper<ReadFieldRequest, ReadFieldResponse, ReadMetricHandler> {
+public class ReadField
+  extends LambdaResponseWrapper<ReadFieldRequest, ReadFieldResponse, ReadFieldHandler> {
 
   public ReadField() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
   }
 
   public ReadField(List<Module> modules) {
-    super(ReadMetricHandler.class, modules);
+    super(ReadFieldHandler.class, modules);
   }
 
   @Override

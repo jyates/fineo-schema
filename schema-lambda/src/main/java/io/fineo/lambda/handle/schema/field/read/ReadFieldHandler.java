@@ -11,7 +11,7 @@ import io.fineo.schema.store.StoreClerk;
 
 import java.util.List;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.checkNotNull;
+import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.throw40X;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFieldRequest;
 import static java.lang.String.format;
 
@@ -38,8 +38,10 @@ public class ReadFieldHandler extends
     try {
       StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
       String cname = metric.getCanonicalNameFromUserFieldName(request.getFieldName());
-      checkNotNull(context, cname,
-        format("No field with name or alias '%s' found", request.getFieldName()));
+      if (cname == null) {
+        throw40X(context, 4,
+          format("No field with name or alias '%s' found", request.getFieldName()));
+      }
       List<StoreClerk.Field> fields = metric.getUserVisibleFields();
       for (StoreClerk.Field field : fields) {
         if (field.getCname().equals(cname)) {
@@ -52,7 +54,8 @@ public class ReadFieldHandler extends
     SchemaModulesUtil.throwError(context, 500, "Internal Server Error",
       "Found a matching internal name, but when searching the field, couldn't find a matching "
       + "field!");
-    throw new IllegalStateException("Should never make it here!");
+    throw new IllegalStateException("Internal server error - field read should have thrown "
+                                    + "another error at this point.");
   }
 
   public static ReadFieldResponse asResponse(StoreClerk.Field field) {

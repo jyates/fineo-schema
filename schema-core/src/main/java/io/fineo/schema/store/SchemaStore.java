@@ -182,6 +182,9 @@ public class SchemaStore {
 
 
   public String getMetricCNameFromAlias(Metadata org, String aliasMetricName){
+    if(org.getCanonicalNamesToAliases() == null){
+      return null;
+    }
     Optional<String> canonicalName =
       org.getCanonicalNamesToAliases().entrySet().stream()
          .filter(entry -> entry.getValue().contains(aliasMetricName))

@@ -19,8 +19,8 @@ import static java.lang.String.format;
 /**
  * A lambda handler that handles Kinesis events
  */
-public class ReadMetricHandler extends
-                               ThrowingErrorHandlerForSchema<ReadMetricRequest, ReadMetricResponse> {
+public class ReadMetricHandler
+  extends ThrowingErrorHandlerForSchema<ReadMetricRequest, ReadMetricResponse> {
   private final Provider<SchemaStore> store;
 
   @Inject
@@ -29,7 +29,7 @@ public class ReadMetricHandler extends
   }
 
   @Override
-  protected ReadMetricResponse handle(ReadMetricRequest request, Context context)
+  public ReadMetricResponse handle(ReadMetricRequest request, Context context)
     throws Exception {
     validateMetricRequest(context, request);
 
@@ -43,6 +43,7 @@ public class ReadMetricHandler extends
       response.setAliases(metric.getAliases().toArray(new String[0]));
       List<StoreClerk.Field> fields = metric.getUserVisibleFields();
       ReadFieldResponse[] readFields = new ReadFieldResponse[fields.size()];
+      response.setFields(readFields);
       for (int i = 0; i < readFields.length; i++) {
         readFields[i] = ReadFieldHandler.asResponse(fields.get(i));
       }

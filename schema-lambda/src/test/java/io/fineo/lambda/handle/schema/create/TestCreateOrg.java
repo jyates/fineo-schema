@@ -1,6 +1,5 @@
 package io.fineo.lambda.handle.schema.create;
 
-import com.google.inject.Provider;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.exception.SchemaExistsException;
@@ -8,7 +7,6 @@ import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
