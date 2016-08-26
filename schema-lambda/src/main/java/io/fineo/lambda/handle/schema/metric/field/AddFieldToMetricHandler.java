@@ -11,7 +11,9 @@ import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.checkNotNull;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFieldRequest;
+import static java.lang.String.format;
 
 /**
  * A lambda handler that handles Kinesis events
@@ -37,8 +39,8 @@ public class AddFieldToMetricHandler
   public AddFieldToMetricResponse handle(AddFieldToMetricRequest input, Context context)
     throws Exception {
     validateFieldRequest(context, input);
-    Preconditions.checkNotNull(input.getFieldType(),
-      "Must specify a field type for the field: %s", input.getFieldName());
+    checkNotNull(context, input.getFieldType(), "Must specify a field type for the field: %s",
+      input.getFieldName());
     StoreManager manager = store.get();
     return retry.run(() -> {
       StoreManager.NewFieldBuilder builder = manager.updateOrg(input.getOrgId())

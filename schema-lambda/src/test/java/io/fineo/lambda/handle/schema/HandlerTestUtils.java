@@ -65,8 +65,8 @@ public class HandlerTestUtils {
 
   public static void expectError(Exception e, int code, String type) throws Exception {
     Map<String, Object> error = unwrapException(e);
-    assertEquals(code, error.get("httpStatus"));
-    assertEquals(type, error.get("errorType"));
+    assertEquals("Got error: " + error, code, error.get("httpStatus"));
+    assertEquals("Got error: " + error, type, error.get("errorType"));
   }
 
   public static StoreClerk.Field getOnlyFirstField(String org, String metric, SchemaStore store) {

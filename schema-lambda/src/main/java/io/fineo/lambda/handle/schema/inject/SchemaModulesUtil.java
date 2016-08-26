@@ -60,9 +60,14 @@ public class SchemaModulesUtil {
     checkNotNull(context, field.getFieldName(), "Must specify a field!");
   }
 
-  public static void checkNotNull(Context context, String field, String message)
+
+  public static void checkNotNull(Context context, String field, String message,
+    Object... errorMessageArgs)
     throws JsonProcessingException {
-    if(field == null){
+    if (errorMessageArgs != null && errorMessageArgs.length > 0) {
+      message = String.format(message, errorMessageArgs);
+    }
+    if (field == null) {
       throw40X(context, 0, message);
     }
   }
