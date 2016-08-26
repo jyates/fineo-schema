@@ -28,7 +28,7 @@ public class CreateOrgHandler extends
   @Override
   public CreateOrgResponse handle(CreateOrgRequest input, Context context)
     throws IOException, OldSchemaException {
-    validateRequest(input);
+    validateRequest(context, input);
     StoreManager manager = store.get();
     String orgId = input.getOrgId();
     StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);

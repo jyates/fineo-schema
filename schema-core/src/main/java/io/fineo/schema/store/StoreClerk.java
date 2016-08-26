@@ -37,7 +37,7 @@ public class StoreClerk {
   public List<Metric> getMetrics() {
     return collectElementsForFields(metadata, (metricCname, metricUserName, aliases) -> {
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
-      return new Metric(metricUserName, metric, orgId);
+      return new Metric(metricUserName, metric, orgId, aliases);
     });
   }
 
@@ -49,24 +49,35 @@ public class StoreClerk {
    * @return helper to access fields of the metric
    */
   public Metric getMetricForUserNameOrAlias(String metricAliasName) throws SchemaNotFoundException {
-    io.fineo.internal.customer.Metric metric =
-      store.getMetricMetadataFromAlias(metadata, metricAliasName);
-    SchemaUtils.checkFound(metric, metricAliasName, "metric");
-    return new Metric(metricAliasName, metric, orgId);
+    String expected = store.getMetricCNameFromAlias(metadata, metricAliasName);
+    Metric foundMetric =  collectElementsForFields(metadata, (metricCname, metricUserName,
+      metricAliases) -> {
+      if(expected != metricCname){
+        return null;
+      }
+
+      io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
+      return new Metric(metricUserName, metric, orgId, metricAliases);
+    }).stream().findFirst().orElse(null);
+    SchemaUtils.checkFound(foundMetric, metricAliasName, "metric");
+    return foundMetric;
   }
 
   public static class Metric {
 
     private final String userName;
     private final io.fineo.internal.customer.Metric metric;
+    private final List<String> aliases;
     private Schema schema;
     private Map<String, String> reverseAliases;
     private final String orgId;
 
-    public Metric(String userName, io.fineo.internal.customer.Metric metric, String orgId) {
+    public Metric(String userName, io.fineo.internal.customer.Metric metric, String orgId,
+      List<String> aliases) {
       this.orgId = orgId;
       this.userName = userName;
       this.metric = metric;
+      this.aliases = aliases;
     }
 
     public List<Field> getUserVisibleFields() {
@@ -109,8 +120,8 @@ public class StoreClerk {
       return this.metric.getMetadata().getCanonicalName();
     }
 
-    public io.fineo.internal.customer.Metric getUnderlyingMetric() {
-      return this.metric;
+    public List<String> getAliases() {
+      return aliases;
     }
 
     @Override

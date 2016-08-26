@@ -32,7 +32,7 @@ public class DeleteFieldHandler extends
   @Override
   protected DeleteFieldResponse handle(DeleteFieldRequest request, Context context)
     throws Exception {
-    validateMetricRequest(request);
+    validateMetricRequest(context, request);
 
     return retry.run(() -> {
       StoreManager manager = store.get();

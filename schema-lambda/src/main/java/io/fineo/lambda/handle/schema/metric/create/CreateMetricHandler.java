@@ -30,7 +30,7 @@ public class CreateMetricHandler
 
   @Override
   public CreateMetricResponse handle(CreateMetricRequest input, Context context) throws Exception {
-    validateMetricRequest(input);
+    validateMetricRequest(context, input);
     return retry.run(() -> {
       StoreManager manager = store.get();
       manager.updateOrg(input.getOrgId())

@@ -39,7 +39,7 @@ public class AddFieldToMetricHandler
   @Override
   public AddFieldToMetricResponse handle(AddFieldToMetricRequest input, Context context)
     throws Exception {
-    validateFieldRequest(input);
+    validateFieldRequest(context, input);
     Preconditions.checkNotNull(input.getFieldType(),
       "Must specify a field type for the field: %s", input.getFieldName());
     StoreManager manager = store.get();

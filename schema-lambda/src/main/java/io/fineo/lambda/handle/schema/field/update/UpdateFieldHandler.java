@@ -32,7 +32,7 @@ public class UpdateFieldHandler extends
   @Override
   protected UpdateFieldResponse handle(UpdateFieldRequest request, Context context)
     throws Exception {
-    validateFieldRequest(request);
+    validateFieldRequest(context, request);
     String[] aliases = request.getAliases();
     if (aliases == null || aliases.length == 0) {
       return RESPONSE;

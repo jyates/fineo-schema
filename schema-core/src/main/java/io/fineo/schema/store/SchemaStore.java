@@ -15,6 +15,7 @@ import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -179,6 +180,16 @@ public class SchemaStore {
     return getMetricMetadata(meta.getOrgID(), meta.getMetricCanonicalType());
   }
 
+
+  public String getMetricCNameFromAlias(Metadata org, String aliasMetricName){
+    Optional<String> canonicalName =
+      org.getCanonicalNamesToAliases().entrySet().stream()
+         .filter(entry -> entry.getValue().contains(aliasMetricName))
+         .map(entry -> entry.getKey())
+         .findFirst();
+    return canonicalName.orElse(null);
+  }
+
   /**
    * Similar to {@link #getMetricMetadata(CharSequence, String)}, but you specify the an aliased
    * metric name. The canonical metric name is then looked up from the org ID and then used to
@@ -190,13 +201,19 @@ public class SchemaStore {
   public Metric getMetricMetadataFromAlias(Metadata org, String aliasMetricName) {
     Preconditions.checkNotNull(org);
     // find the canonical name to match the alias we were given
-    Optional<String> canonicalName =
+    String canonicalName = getMetricCNameFromAlias(org, aliasMetricName);
+    return canonicalName != null ?
+           this.getMetricMetadata(org.getCanonicalName(), canonicalName) :
+           null;
+  }
+
+  public List<String> getMetricAliases(Metadata org, String aliasMetricName){
+    Optional<Map.Entry<String, List<String>>> match =
       org.getCanonicalNamesToAliases().entrySet().stream()
          .filter(entry -> entry.getValue().contains(aliasMetricName))
-         .map(entry -> entry.getKey())
          .findFirst();
-    return canonicalName.isPresent() ?
-           this.getMetricMetadata(org.getCanonicalName(), canonicalName.get()) :
+    return match.isPresent()?
+           match.get().getValue():
            null;
   }
 

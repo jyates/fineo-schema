@@ -30,7 +30,7 @@ public class UpdateMetricHandler
 
   @Override
   public UpdateMetricResponse handle(UpdateMetricRequest input, Context context) throws Exception {
-    validateMetricRequest(input);
+    validateMetricRequest(context, input);
     boolean skipAliases = input.getAliases() == null || input.getAliases().length == 0;
     boolean skipDisplay = input.getNewDisplayName() == null;
     if (skipAliases && skipDisplay) {

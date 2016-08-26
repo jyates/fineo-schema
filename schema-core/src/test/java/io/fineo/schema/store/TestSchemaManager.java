@@ -16,7 +16,6 @@ import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +25,6 @@ import static io.fineo.schema.avro.SchemaTestUtils.generateStringNames;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
 
 public class TestSchemaManager {
 
@@ -258,6 +256,22 @@ public class TestSchemaManager {
     StoreManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
     expectAllBadFields();
     mb.addAliases(BAD_FIELD_NAMES).build().commit();
+  }
+
+  @Test
+  public void testMetricAliases() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1", metricName = "metricname";
+    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+    StoreManager.MetricBuilder mb = builder.newMetric().setDisplayName(metricName);
+    String a1 = "alias1", a2 = "alias2";
+    mb.addAliases(a1, a2);
+    mb.build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
+    assertEquals(newArrayList(a1, a2), metric.getAliases());
   }
 
   private void expectAllBadFields(){

@@ -30,7 +30,7 @@ public class DeleteMetricHandler
 
   @Override
   public DeleteMetricResponse handle(DeleteMetricRequest input, Context context) throws Exception {
-    validateMetricRequest(input);
+    validateMetricRequest(context, input);
     return retry.run(() -> {
       StoreManager manager = store.get();
       manager.updateOrg(input.getOrgId()).deleteMetric(input.getMetricName()).commit();
