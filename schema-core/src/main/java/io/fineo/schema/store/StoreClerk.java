@@ -72,7 +72,18 @@ public class StoreClerk {
     private Map<String, String> reverseAliases;
     private final String orgId;
 
-    public Metric(String userName, io.fineo.internal.customer.Metric metric, String orgId,
+    /**
+     * Advanced use only! Create a Metric, but only with an underlying schema metric. This means
+     * that you can only access methods that read from the metric, rather than metadata about the
+     * metric itself
+     * @param metric underlying metric
+     * @return a 'stunted' Metric
+     */
+    public static Metric metricOnlyFunctions(io.fineo.internal.customer.Metric metric) {
+      return new Metric(null, metric, null, null);
+    }
+
+    private Metric(String userName, io.fineo.internal.customer.Metric metric, String orgId,
       List<String> aliases) {
       this.orgId = orgId;
       this.userName = userName;
