@@ -33,7 +33,7 @@ public class DeleteMetricHandler
     validateMetricRequest(input);
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(input.getOrgId()).deleteMetric(input.getMetricUserName()).commit();
+      manager.updateOrg(input.getOrgId()).deleteMetric(input.getMetricName()).commit();
       return RESPONSE;
     });
   }

@@ -26,7 +26,7 @@ public class TestUpdateMetric {
     TestCreateMetric.createMetric(store, org, metric);
     UpdateMetricRequest request = new UpdateMetricRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
+    request.setMetricName(metric);
     request.setNewDisplayName(metric2);
 
     UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
@@ -49,7 +49,7 @@ public class TestUpdateMetric {
     TestCreateMetric.createMetric(store, org, metric);
     UpdateMetricRequest request = new UpdateMetricRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
+    request.setMetricName(metric);
     request.setAliases(new String[]{metric2});
 
     UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));

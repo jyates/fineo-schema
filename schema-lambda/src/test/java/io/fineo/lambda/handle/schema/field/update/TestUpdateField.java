@@ -33,8 +33,8 @@ public class TestUpdateField {
 
     UpdateFieldRequest request = new UpdateFieldRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
-    request.setUserFieldName(field);
+    request.setMetricName(metric);
+    request.setFieldName(field);
     String alias = "fieldalias";
     request.setAliases(new String[]{alias});
     UpdateFieldHandler handler = handler(() -> new StoreManager(store));
@@ -49,7 +49,7 @@ public class TestUpdateField {
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
     request.setOrgId("o");
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
-    request.setMetricUserName("m");
+    request.setMetricName("m");
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
     request.setAliases(new String[]{"al"});
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);

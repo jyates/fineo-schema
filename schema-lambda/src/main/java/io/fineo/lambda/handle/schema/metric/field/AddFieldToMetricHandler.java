@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFieldRequest;
-import static java.util.Arrays.asList;
 
 /**
  * A lambda handler that handles Kinesis events
@@ -42,14 +41,14 @@ public class AddFieldToMetricHandler
     throws Exception {
     validateFieldRequest(input);
     Preconditions.checkNotNull(input.getFieldType(),
-      "Must specify a field type for the field: %s", input.getUserFieldName());
+      "Must specify a field type for the field: %s", input.getFieldName());
     StoreManager manager = store.get();
     return retry.run(() -> {
       StoreManager.NewFieldBuilder builder = manager.updateOrg(input.getOrgId())
-                                                    .updateMetric(input.getMetricUserName())
+                                                    .updateMetric(input.getMetricName())
                                                     .newField()
                                                     .withType(input.getFieldType())
-                                                    .withName(input.getUserFieldName());
+                                                    .withName(input.getFieldName());
       if (input.getAliases() != null) {
         builder.withAliases(newArrayList(input.getAliases()));
       }

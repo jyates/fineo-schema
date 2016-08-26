@@ -40,8 +40,8 @@ public class UpdateFieldHandler extends
 
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricUserName())
-             .addFieldAlias(request.getUserFieldName(), aliases).build().commit();
+      manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricName())
+             .addFieldAlias(request.getFieldName(), aliases).build().commit();
       return RESPONSE;
     });
 

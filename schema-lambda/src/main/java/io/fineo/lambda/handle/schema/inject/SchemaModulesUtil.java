@@ -45,11 +45,11 @@ public class SchemaModulesUtil {
 
   public static void validateMetricRequest(MetricRequest metric) {
     validateRequest(metric);
-    Preconditions.checkNotNull(metric.getMetricUserName(), "Must specify a metric name!");
+    Preconditions.checkNotNull(metric.getMetricName(), "Must specify a metric name!");
   }
 
   public static void validateFieldRequest(FieldRequest field) {
     validateMetricRequest(field);
-    Preconditions.checkNotNull(field.getUserFieldName(), "Must specify a field!");
+    Preconditions.checkNotNull(field.getFieldName(), "Must specify a field!");
   }
 }

@@ -36,8 +36,8 @@ public class DeleteFieldHandler extends
 
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricUserName())
-             .deleteField(request.getUserFieldName()).build().commit();
+      manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricName())
+             .deleteField(request.getFieldName()).build().commit();
       return RESPONSE;
     });
 

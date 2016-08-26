@@ -29,7 +29,7 @@ public class TestDeleteMetric {
 
     DeleteMetricRequest request = new DeleteMetricRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
+    request.setMetricName(metric);
     DeleteMetricHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);
 
@@ -47,7 +47,7 @@ public class TestDeleteMetric {
 
     DeleteMetricRequest request = new DeleteMetricRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
+    request.setMetricName(metric);
     DeleteMetricHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);
 

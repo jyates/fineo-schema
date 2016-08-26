@@ -2,13 +2,13 @@ package io.fineo.lambda.handle.schema;
 
 public class MetricRequest extends OrgRequest {
 
-  private String metricUserName;
+  private String metricName;
 
-  public String getMetricUserName() {
-    return metricUserName;
+  public String getMetricName() {
+    return metricName;
   }
 
-  public void setMetricUserName(String metricUserName) {
-    this.metricUserName = metricUserName;
+  public void setMetricName(String metricName) {
+    this.metricName = metricName;
   }
 }

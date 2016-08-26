@@ -40,7 +40,7 @@ public class UpdateMetricHandler
     return retry.run(() -> {
       StoreManager manager = store.get();
       StoreManager.MetricBuilder metric = manager.updateOrg(input.getOrgId())
-                                                 .updateMetric(input.getMetricUserName());
+                                                 .updateMetric(input.getMetricName());
       if (!skipAliases) {
         metric.addAliases(input.getAliases());
       }

@@ -2,15 +2,15 @@ package io.fineo.lambda.handle.schema;
 
 public class FieldRequest extends MetricRequest {
 
-  private String userFieldName;
+  private String fieldName;
   private String[] aliases;
 
-  public String getUserFieldName() {
-    return userFieldName;
+  public String getFieldName() {
+    return fieldName;
   }
 
-  public void setUserFieldName(String userFieldName) {
-    this.userFieldName = userFieldName;
+  public void setFieldName(String fieldName) {
+    this.fieldName = fieldName;
   }
 
   public String[] getAliases() {

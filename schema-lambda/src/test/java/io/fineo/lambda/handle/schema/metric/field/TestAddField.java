@@ -40,8 +40,8 @@ public class TestAddField {
     String type, String... aliases) throws Exception {
     AddFieldToMetricRequest request = new AddFieldToMetricRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
-    request.setUserFieldName(field);
+    request.setMetricName(metric);
+    request.setFieldName(field);
     request.setFieldType(type);
     if (aliases != null && aliases.length > 0) {
       request.setAliases(aliases);
@@ -74,9 +74,9 @@ public class TestAddField {
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
     request.setOrgId("org");
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
-    request.setMetricUserName("metric");
+    request.setMetricName("metric");
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
-    request.setUserFieldName("field");
+    request.setFieldName("field");
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
   }
 

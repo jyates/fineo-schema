@@ -34,7 +34,7 @@ public class CreateMetricHandler
     return retry.run(() -> {
       StoreManager manager = store.get();
       manager.updateOrg(input.getOrgId())
-             .newMetric().setDisplayName(input.getMetricUserName()).addAliases(input.getAliases())
+             .newMetric().setDisplayName(input.getMetricName()).addAliases(input.getAliases())
              .build().commit();
       return RESPONSE;
     });

@@ -30,8 +30,8 @@ public class TestDeleteField {
     DeleteFieldHandler handler = handler(() -> new StoreManager(store));
     DeleteFieldRequest request = new DeleteFieldRequest();
     request.setOrgId(org);
-    request.setMetricUserName(metric);
-    request.setUserFieldName(field);
+    request.setMetricName(metric);
+    request.setFieldName(field);
     handler.handle(request, null);
 
     StoreClerk clerk = new StoreClerk(store, org);

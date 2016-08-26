@@ -3,13 +3,13 @@ package io.fineo.lambda.handle.schema.field.delete;
 import io.fineo.lambda.handle.schema.MetricRequest;
 
 public class DeleteFieldRequest extends MetricRequest{
-  private String userFieldName;
+  private String fieldName;
 
-  public String getUserFieldName() {
-    return userFieldName;
+  public String getFieldName() {
+    return fieldName;
   }
 
-  public void setUserFieldName(String userFieldName) {
-    this.userFieldName = userFieldName;
+  public void setFieldName(String fieldName) {
+    this.fieldName = fieldName;
   }
 }

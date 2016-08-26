@@ -72,7 +72,7 @@ public class TestCreateMetric {
     // create a new metric
     CreateMetricRequest create = new CreateMetricRequest();
     create.setOrgId(org);
-    create.setMetricUserName(metric);
+    create.setMetricName(metric);
     CreateMetricHandler handler =
       new CreateMetricHandler(() -> new StoreManager(store), new UpdateRetryer(), 1);
     handler.handle(create, null);
