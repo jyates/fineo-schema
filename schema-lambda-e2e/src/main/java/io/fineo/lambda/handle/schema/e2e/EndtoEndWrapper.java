@@ -54,8 +54,6 @@ public class EndtoEndWrapper {
       "http://"+localStore.host + ":" + localStore.port);
     props.setProperty(SchemaStoreModule.SCHEMA_UPDATE_RETRIES, "1");
     props.setProperty(SchemaStoreModule.DYNAMO_SCHEMA_STORE_TABLE, localStore.table);
-    props.setProperty(SchemaStoreModule.DYNAMO_READ_LIMIT, "1");
-    props.setProperty(SchemaStoreModule.DYNAMO_WRITE_LIMIT, "1");
     modules.add(new PropertiesModule(props));
 
     // core, non-production modules. These are used in combination with the modules above to
