@@ -78,8 +78,9 @@
                   <shadedClassifierName>aws</shadedClassifierName>
                   <artifactSet>
                     <includes>
-                      <include>io.fineo.schema:schema-lambda:aws</include>
                       <include>com.beust:jcommander</include>
+                      <include>io.fineo.schema:schema-lambda:aws</include>
+                      <include>io.fineo.schema:schema-lambda:tests</include>
                       <include>io.fineo.lambda:lambda-dynamo:tests</include>
                     </includes>
                   </artifactSet>
