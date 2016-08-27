@@ -9,7 +9,7 @@ import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateMetricRequest;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 
 public class CreateMetricHandler
   extends ThrowingErrorHandlerForSchema<CreateMetricRequest, CreateMetricResponse> {

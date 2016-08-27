@@ -12,16 +12,8 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
-import io.fineo.schema.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.schemarepo.AbstractBackendRepository;
@@ -33,7 +25,6 @@ import org.schemarepo.Subject;
 import org.schemarepo.SubjectConfig;
 import org.schemarepo.ValidatorFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -66,8 +57,10 @@ import java.util.Set;
 public class DynamoDBRepository extends AbstractBackendRepository {
 
   private static final Log LOG = LogFactory.getLog(DynamoDBRepository.class);
-  public static final String PARTITION_KEY = "id";
-  public static final String SORT_KEY = "id_s";
+
+  static final String PARTITION_KEY = "id";
+  static final String SORT_KEY = "id_s";
+
   public static final String CONFIG_COLUMN = "configs";
   public static final String VERSION_COLUMN = "version";
   public static final String SCHEMAS_COLUMN = "schemas";
@@ -88,34 +81,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     b.setConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT);
     b.setSaveBehavior(DynamoDBMapperConfig.SaveBehavior.UPDATE);
     this.mapper = new DynamoDBMapper(client, b.build());
-  }
-
-  public static DynamoDBRepository createDynamoForTesting(AmazonDynamoDB dynamodb,
-    String schemaTable, ValidatorFactory validators) {
-    try {
-      dynamodb.describeTable(schemaTable);
-    } catch (ResourceNotFoundException e) {
-      CreateTableRequest create = getBaseTableCreate(schemaTable);
-      create = create.withProvisionedThroughput(new ProvisionedThroughput()
-        .withReadCapacityUnits(10L)
-        .withWriteCapacityUnits(5L));
-      dynamodb.createTable(create);
-    }
-    return new DynamoDBRepository(validators, dynamodb, schemaTable);
-  }
-
-  /**
-   * @param table name of the schema table
-   * @return the basics of a request to create the schema table. Missing throughout information
-   * to be used to create the schema table
-   */
-  public static CreateTableRequest getBaseTableCreate(String table) {
-    Pair<List<KeySchemaElement>, List<AttributeDefinition>> schema = getSchema();
-    CreateTableRequest create = new CreateTableRequest()
-      .withTableName(table)
-      .withKeySchema(schema.getKey())
-      .withAttributeDefinitions(schema.getValue());
-    return create;
   }
 
   private Table getTable(String name) {
@@ -204,7 +169,10 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     Map<String, Set<String>> columns = new HashMap<>();
     for (Map.Entry<String, Object> column : item.attributes()) {
       // skip the PK columns
-      if (column.getKey().equals(PARTITION_KEY) || column.getKey().equals(SORT_KEY)) {
+      if (column.getKey().equals(PARTITION_KEY) || column.getKey().equals(
+
+
+        SORT_KEY)) {
         continue;
       }
       columns.put(column.getKey(), (Set<String>) column.getValue());
@@ -242,33 +210,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * Get the DynamoDB schema that we should use when creating the table
-   *
-   * @return
-   */
-  public static Pair<List<KeySchemaElement>, List<AttributeDefinition>> getSchema() {
-    List<KeySchemaElement> schema = new ArrayList<>();
-    ArrayList<AttributeDefinition> attributes = new ArrayList<>();
-    // Partition key
-    schema.add(new KeySchemaElement()
-      .withAttributeName(PARTITION_KEY)
-      .withKeyType(KeyType.HASH));
-    attributes.add(new AttributeDefinition()
-      .withAttributeName(PARTITION_KEY)
-      .withAttributeType(ScalarAttributeType.S));
-
-    // sort key
-    schema.add(new KeySchemaElement()
-      .withAttributeName(SORT_KEY)
-      .withKeyType(KeyType.RANGE));
-    attributes.add(new AttributeDefinition()
-      .withAttributeName(SORT_KEY)
-      .withAttributeType(ScalarAttributeType.S));
-
-    return new Pair<>(schema, attributes);
   }
 
   /**

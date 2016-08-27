@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.google.inject.Module;
 import io.fineo.lambda.configure.PropertiesModule;
 import io.fineo.lambda.dynamo.DynamoTestConfiguratorModule;
+import io.fineo.lambda.handle.schema.SchemaStoreModuleForTesting;
 import io.fineo.lambda.handle.schema.e2e.module.FakeAwsCredentialsModule;
 import io.fineo.lambda.handle.schema.e2e.options.JsonArgument;
 import io.fineo.lambda.handle.schema.e2e.options.LocalSchemaStoreOptions;
@@ -11,7 +12,6 @@ import io.fineo.lambda.handle.schema.e2e.options.command.AddFieldCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.BaseCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.CreateMetricCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.CreateOrgCommand;
-import io.fineo.lambda.handle.schema.inject.SchemaModulesUtil;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 
 import java.io.IOException;
@@ -51,14 +51,14 @@ public class EndtoEndWrapper {
     // properties to support the build
     Properties props = new Properties();
     props.setProperty(DynamoTestConfiguratorModule.DYNAMO_URL_FOR_TESTING,
-      "http://"+localStore.host + ":" + localStore.port);
+      "http://" + localStore.host + ":" + localStore.port);
     props.setProperty(SchemaStoreModule.SCHEMA_UPDATE_RETRIES, "1");
     props.setProperty(SchemaStoreModule.DYNAMO_SCHEMA_STORE_TABLE, localStore.table);
     modules.add(new PropertiesModule(props));
 
     // core, non-production modules. These are used in combination with the modules above to
     // generate the output state
-    SchemaModulesUtil.addBaseSchemaModules(modules);
+    SchemaStoreModuleForTesting.addBaseSchemaModules(modules);
     return modules;
   }
 }

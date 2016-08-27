@@ -91,7 +91,7 @@ public class TestDynamoDBRepository extends AbstractTestPersistentRepository<Dyn
   }
 
   private DynamoDBRepository createRepository(AmazonDynamoDBClient client) {
-    return DynamoDBRepository.createDynamoForTesting(client, testTableName,
+    return DynamoDBRepositoryTestUtils.createDynamoForTesting(client, testTableName,
       new ValidatorFactory.Builder().build());
   }
 

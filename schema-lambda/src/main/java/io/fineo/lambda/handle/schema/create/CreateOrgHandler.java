@@ -9,7 +9,7 @@ import io.fineo.schema.store.StoreManager;
 
 import java.io.IOException;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateRequest;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateRequest;
 
 /**
  * Lambda handle to do synchronous creation of an org in the schema store

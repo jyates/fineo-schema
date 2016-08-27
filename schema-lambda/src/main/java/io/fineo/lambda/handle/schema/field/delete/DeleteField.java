@@ -4,14 +4,11 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Module;
 import io.fineo.lambda.configure.util.PropertiesLoaderUtil;
 import io.fineo.lambda.handle.LambdaResponseWrapper;
-import io.fineo.lambda.handle.schema.field.update.UpdateFieldHandler;
-import io.fineo.lambda.handle.schema.field.update.UpdateFieldRequest;
-import io.fineo.lambda.handle.schema.field.update.UpdateFieldResponse;
 
 import java.io.IOException;
 import java.util.List;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
 
 /**
  * Wrapper to handle requests to delete a field from a metric

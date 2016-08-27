@@ -8,7 +8,7 @@ import io.fineo.lambda.handle.LambdaResponseWrapper;
 import java.io.IOException;
 import java.util.List;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.getModules;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
 
 /**
  * Wrapper to instantiate the raw stage

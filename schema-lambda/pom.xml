@@ -11,6 +11,15 @@
   <artifactId>schema-lambda</artifactId>
   <name>schema-lambda</name>
 
+  <build>
+    <plugins>
+      <!-- Test Jar -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>io.fineo.lambda</groupId>
@@ -26,6 +35,13 @@
       <groupId>io.fineo.schema</groupId>
       <artifactId>schema-core</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.fineo.schema</groupId>
+      <artifactId>schema-core</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
     </dependency>
 
     <!-- Test Dependencies -->

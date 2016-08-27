@@ -8,7 +8,7 @@ import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.schema.store.StoreManager;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateMetricRequest;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDATE_RETRIES;
 
 /**

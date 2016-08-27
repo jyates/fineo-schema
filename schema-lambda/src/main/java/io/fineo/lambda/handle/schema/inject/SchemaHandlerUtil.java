@@ -3,7 +3,6 @@ package io.fineo.lambda.handle.schema.inject;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Module;
 import io.fineo.lambda.configure.dynamo.DynamoModule;
 import io.fineo.lambda.configure.dynamo.DynamoRegionConfigurator;
@@ -19,11 +18,10 @@ import java.util.Properties;
 
 import static io.fineo.lambda.handle.LambdaBaseWrapper.addBasicProperties;
 
-public class SchemaModulesUtil {
-  private SchemaModulesUtil() {
+public class SchemaHandlerUtil {
+  private SchemaHandlerUtil() {
   }
 
-  @VisibleForTesting
   public static void addBaseSchemaModules(List<Module> modules) {
     modules.add(new DynamoModule());
     modules.add(new SchemaStoreModule());

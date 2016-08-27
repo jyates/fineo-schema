@@ -1,7 +1,6 @@
 package io.fineo.lambda.handle.schema.metric.field;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -11,9 +10,8 @@ import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.checkNotNull;
-import static io.fineo.lambda.handle.schema.inject.SchemaModulesUtil.validateFieldRequest;
-import static java.lang.String.format;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.checkNotNull;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateFieldRequest;
 
 /**
  * A lambda handler that handles Kinesis events
