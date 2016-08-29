@@ -16,6 +16,7 @@ import org.schemarepo.ValidatorFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
@@ -55,14 +56,22 @@ public class TestReadField {
 
   @Test
   public void testMissingParameters() throws Exception {
-    ReadFieldRequest request = new ReadFieldRequest();
-    HandlerTestUtils.failNoValueWithProvider(TestReadField::handleProvider, request);
+    ReadFieldRequest request = verifyFailForRequest(null, r -> {
+    });
+    verifyFailForRequest(request, r -> r.setOrgId(""));
+    verifyFailForRequest(request, r -> r.setOrgId("orgId"));
+    verifyFailForRequest(request, r -> r.setMetricName(""));
+    verifyFailForRequest(request, r -> r.setMetricName("metric"));
+  }
 
-    request.setOrgId("org");
+  private ReadFieldRequest verifyFailForRequest(ReadFieldRequest request,
+    Consumer<ReadFieldRequest> update) throws Exception {
+    if (request == null) {
+      request = new ReadFieldRequest();
+    }
+    update.accept(request);
     HandlerTestUtils.failNoValueWithProvider(TestReadField::handleProvider, request);
-
-    request.setMetricName("metric");
-    HandlerTestUtils.failNoValueWithProvider(TestReadField::handleProvider, request);
+    return request;
   }
 
   @Test

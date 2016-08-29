@@ -32,6 +32,9 @@ public class TestCreateOrg {
   public void testNoOrgId() throws Exception {
     CreateOrgRequest request = new CreateOrgRequest();
     HandlerTestUtils.failNoValue(p -> new CreateOrgHandler(p), request);
+
+    request.setOrgId("");
+    HandlerTestUtils.failNoValue(p -> new CreateOrgHandler(p), request);
   }
 
   @Test

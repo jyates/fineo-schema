@@ -65,7 +65,7 @@ public class SchemaHandlerUtil {
     if (errorMessageArgs != null && errorMessageArgs.length > 0) {
       message = String.format(message, errorMessageArgs);
     }
-    if (field == null) {
+    if (field == null || field.length() == 0) {
       throw40X(context, 0, message);
     }
   }
