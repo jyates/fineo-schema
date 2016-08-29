@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class SchemaStoreModule extends AbstractModule implements Serializable {
 
   public static final String DYNAMO_SCHEMA_STORE_TABLE = "fineo.dynamo.schema-store";
-  public static final String SCHEMA_UPDATE_RETRIES = "fineo.schema.retries";
+  public static final String SCHEMA_UPDATE_RETRIES = "fineo.api.schema.retries";
 
   @Override
   protected void configure() {
