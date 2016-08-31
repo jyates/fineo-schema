@@ -94,7 +94,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } catch (AmazonClientException e) {
-      LOG.warn("Got an exception while waiting for table, trying to create it instead ", e);
+      LOG.warn("Got an exception while waiting for table", e);
       throw e;
     }
 
