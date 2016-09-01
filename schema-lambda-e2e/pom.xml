@@ -48,6 +48,19 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>io.fineo.schema</groupId>
+      <artifactId>schema-core</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -79,6 +92,7 @@
                   <artifactSet>
                     <includes>
                       <include>com.beust:jcommander</include>
+                      <include>io.fineo.schema:schema-core:tests</include>
                       <include>io.fineo.schema:schema-lambda:aws</include>
                       <include>io.fineo.schema:schema-lambda:tests</include>
                       <include>io.fineo.lambda:lambda-dynamo:tests</include>
