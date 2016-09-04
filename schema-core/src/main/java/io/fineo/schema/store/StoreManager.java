@@ -7,7 +7,6 @@ import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
-import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.exception.SchemaExistsException;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -170,7 +169,7 @@ public class StoreManager {
     public MetricBuilder addFieldAlias(String fieldName, String... aliases)
       throws SchemaNotFoundException {
       String canonical =
-        SchemaUtils.getCanonicalName(this.previous.getMetadata().getMeta(), fieldName);
+        SchemaUtils.getCanonicalName(this.previous.getMetadata(), fieldName);
       SchemaUtils.checkFound(canonical, fieldName, "field (or alias)");
       SchemaBuilder.FieldBuilder fb = this.metricBuilder.updateField(canonical);
       for (String alias : aliases) {

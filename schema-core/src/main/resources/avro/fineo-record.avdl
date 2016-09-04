@@ -4,6 +4,8 @@ protocol FineoRecord{
 
   // The base fields that are assumed to be in any BaseRecord
   record BaseFields {
+    // user specified name of the metric, which is aliased to an internal canonical name
+    string aliasName;
     // timestamp of the event
     long timestamp;
     // fields for which we don't have any schema from the user

@@ -3,7 +3,7 @@ package org.apache.avro.file;
 import com.google.common.collect.Lists;
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.schema.MapRecord;
-import io.fineo.schema.avro.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import static io.fineo.schema.avro.AvroSchemaEncoder.asTypedRecord;
+import static io.fineo.schema.store.AvroSchemaEncoder.asTypedRecord;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

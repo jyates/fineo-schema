@@ -1,11 +1,11 @@
-package io.fineo.schema;
+package io.fineo.schema.store;
 
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.schema.avro.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaEncoder;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaNameUtils;
-import io.fineo.schema.avro.SchemaTestUtils;
+import io.fineo.schema.store.SchemaTestUtils;
 import io.fineo.schema.store.SchemaBuilder;
 import org.apache.avro.Schema;
 import org.junit.Test;

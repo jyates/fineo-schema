@@ -1,10 +1,11 @@
-package io.fineo.schema.avro;
+package io.fineo.schema.store;
 
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.Record;
-import io.fineo.schema.store.SchemaStore;
+import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
@@ -36,13 +37,16 @@ public class AvroSchemaEncoder {
   private final Schema schema;
   // essentially the reverse of the alias map in the metric metadata
   private final Map<String, String> aliasToFieldMap;
+  private final OrgMetricMetadata metricMetadata;
 
-  AvroSchemaEncoder(String canonicalOrgId, Metric metric) {
+  AvroSchemaEncoder(String canonicalOrgId, OrgMetricMetadata metricMetadata, Metric metric) {
+    this.metricMetadata = metricMetadata;
     Schema.Parser parser = new Schema.Parser();
     parser.parse(metric.getMetricSchema());
     this.schema = parser.getTypes().get(
       SchemaNameUtils
-        .getCustomerSchemaFullName(canonicalOrgId, metric.getMetadata().getCanonicalName()));
+        .getCustomerSchemaFullName(canonicalOrgId,
+          metric.getMetadata().getMeta().getCanonicalName()));
     this.aliasToFieldMap = AvroSchemaManager.getAliasRemap(metric);
   }
 
@@ -149,7 +153,19 @@ public class AvroSchemaEncoder {
 
   private void populateBaseFields(BaseFields fields, Record record) {
     fields.setTimestamp(getTimestamp(record));
-    fields.setAliasName(record.getStringByField(ORG_METRIC_TYPE_KEY));
+    // try all the user specified names first
+    String aliasName = null;
+    for (String name : metricMetadata.getAliasKeys()) {
+      aliasName = record.getStringByField(name);
+      if (aliasName != null) {
+        break;
+      }
+    }
+    // there are no alias key mappings that match, so just try the fineo key
+    if (aliasName == null) {
+      aliasName = record.getStringByField(ORG_METRIC_TYPE_KEY);
+    }
+    fields.setAliasName(aliasName);
   }
 
   // handle special case management of the timestamp

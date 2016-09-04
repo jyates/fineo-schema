@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Lists.newArrayList;
-import static io.fineo.schema.avro.SchemaTestUtils.generateStringNames;
+import static io.fineo.schema.store.SchemaTestUtils.generateStringNames;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

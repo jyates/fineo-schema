@@ -1,6 +1,8 @@
 package io.fineo.schema.avro;
 
 import com.google.common.collect.Lists;
+import io.fineo.schema.store.AvroSchemaEncoder;
+import io.fineo.schema.store.SchemaTestUtils;
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

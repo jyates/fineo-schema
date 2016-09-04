@@ -1,10 +1,9 @@
-package io.fineo.schema.avro;
+package io.fineo.schema.store;
 
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
-import io.fineo.schema.store.SchemaBuilder;
-import io.fineo.schema.store.SchemaStore;
+import io.fineo.schema.avro.SchemaNameGenerator;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileReader;

@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
-import io.fineo.schema.avro.AvroSchemaEncoder;
-import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 

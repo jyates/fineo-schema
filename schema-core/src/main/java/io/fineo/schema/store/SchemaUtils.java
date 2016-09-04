@@ -1,8 +1,8 @@
 package io.fineo.schema.store;
 
-import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.MetricMetadata;
+import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
-import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.exception.SchemaNotFoundException;
 
 import java.util.Map;
@@ -13,7 +13,12 @@ public class SchemaUtils {
   private SchemaUtils() {
   }
 
-  public static String getCanonicalName(Metadata metadata, String aliasName) {
+  public static String getCanonicalName(MetricMetadata metadata, String aliasName) {
+    Map<String, String> aliasToCname = AvroSchemaManager.getAliasRemap(metadata);
+    return aliasToCname.get(aliasName);
+  }
+
+  public static String getCanonicalName(OrgMetadata metadata, String aliasName) {
     Map<String, String> aliasToCname = AvroSchemaManager.getAliasRemap(metadata);
     return aliasToCname.get(aliasName);
   }

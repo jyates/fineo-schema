@@ -1,11 +1,7 @@
-package io.fineo.schema;
+package io.fineo.schema.store;
 
-import com.google.common.collect.ImmutableList;
-import io.fineo.schema.avro.AvroSchemaEncoder;
-import io.fineo.schema.avro.AvroSchemaManager;
-import io.fineo.schema.store.SchemaStore;
-import io.fineo.schema.store.StoreManager;
-import io.fineo.schema.store.TestSchemaManager;
+import io.fineo.schema.MapRecord;
+import io.fineo.schema.Pair;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;

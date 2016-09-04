@@ -1,6 +1,9 @@
-package io.fineo.schema.avro;
+package io.fineo.schema.store;
 
 import io.fineo.schema.Record;
+import io.fineo.schema.avro.RecordMetadata;
+import io.fineo.schema.store.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaManager;
 import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;

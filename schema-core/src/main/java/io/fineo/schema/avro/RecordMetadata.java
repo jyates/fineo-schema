@@ -1,6 +1,7 @@
 package io.fineo.schema.avro;
 
 import io.fineo.internal.customer.BaseFields;
+import io.fineo.schema.store.AvroSchemaEncoder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;

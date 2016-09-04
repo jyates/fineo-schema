@@ -1,14 +1,16 @@
-package io.fineo.schema.avro;
+package io.fineo.schema.store;
 
 
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
-import io.fineo.schema.store.SchemaStore;
-import io.fineo.schema.store.TestSchemaManager;
+import io.fineo.schema.avro.RecordMetadata;
+import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -51,13 +53,13 @@ public class TestAvroSchemaManager {
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
 
     // Ensure the schema mapping happens as we expect
-    Metadata orgMetadata = store.getOrgMetadata(orgId);
+    OrgMetadata orgMetadata = store.getOrgMetadata(orgId);
     assertEquals("Canonical org name doesn't match client specified org name", orgId,
-      orgMetadata.getCanonicalName());
+      orgMetadata.getMetadata().getCanonicalName());
     Metric metric = store.getMetricMetadataFromAlias(orgMetadata, orgMetric);
     // means we found the metric based on the alias
     assertNotNull("No metric available for metric", metric);
-    assertNotEquals(orgMetric, metric.getMetadata().getCanonicalName());
+    assertNotEquals(orgMetric, metric.getMetadata().getMeta().getCanonicalName());
     Schema schema = metric.getSchema();
     assertFalse("Alias field name present in schema!",
       schema.getFields().stream().map(field -> field.name())
@@ -70,13 +72,13 @@ public class TestAvroSchemaManager {
     GenericRecord avro = encoder.encode(mapRecord);
 
     // ensure that we encoded it correctly
-    assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
+    Assert.assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
 
     AvroRecordTranslator translator = manager.translator(avro);
     RecordMetadata metadata = translator.getMetadata();
     assertEquals("Decoded metadata orgID doesn't match stored", metadata.getOrgID(), orgId);
     assertEquals("Schema metric type name doesn't match metric metadata canonical name",
-      metric.getMetadata().getCanonicalName(), metadata.getMetricCanonicalType());
+      metric.getMetadata().getMeta().getCanonicalName(), metadata.getMetricCanonicalType());
     assertNull("Record has a field with alias name!", avro.get(orgFieldName));
     // but this record has translated fields!
     Record translated = translator.getTranslatedRecord();
@@ -123,11 +125,14 @@ public class TestAvroSchemaManager {
     verifyIllegalCreate(store, record,
       "when no metadata received from store, even when record had all necessary fields");
 
-    Metadata meta = Mockito.mock(Metadata.class);
+    Metadata base = Mockito.mock(Metadata.class);
+    Mockito.when(base.getCanonicalName()).thenReturn("orgid");
+    OrgMetadata meta = Mockito.mock(OrgMetadata.class);
     Mockito.when(store.getOrgMetadata("orgid")).thenReturn(meta);
-    Mockito.when(meta.getCanonicalName()).thenReturn("orgid");
+    Mockito.when(meta.getMetadata()).thenReturn(base);
     verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
-    Mockito.verify(meta).getCanonicalName();
+    Mockito.verify(meta).getMetadata();
+    Mockito.verify(base).getCanonicalName();
     Mockito.verify(store, Mockito.times(2)).getOrgMetadata("orgid");
   }
 

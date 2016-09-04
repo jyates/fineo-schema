@@ -1,8 +1,9 @@
-package io.fineo.schema;
+package io.fineo.schema.store;
 
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.schema.avro.SchemaTestUtils;
+import io.fineo.schema.OldSchemaException;
+import io.fineo.schema.store.SchemaTestUtils;
 import io.fineo.schema.store.SchemaBuilder;
 import io.fineo.schema.store.SchemaStore;
 import org.junit.Ignore;
