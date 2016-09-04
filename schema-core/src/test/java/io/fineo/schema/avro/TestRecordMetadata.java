@@ -2,8 +2,10 @@ package io.fineo.schema.avro;
 
 import com.google.common.collect.Lists;
 import io.fineo.internal.customer.BaseFields;
-import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetadata;
+import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.AvroSchemaEncoder;
@@ -15,7 +17,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -49,9 +50,8 @@ public class TestRecordMetadata {
 
     // ensure the canonical name matches what we have in the store
     RecordMetadata metadata = RecordMetadata.get(deserialized);
-    Metadata schemas = store.getOrgMetadata(orgID);
-    Map<String, List<String>> metricAliasMap =
-      schemas.getCanonicalNamesToAliases();
+    OrgMetadata schemas = store.getOrgMetadata(orgID);
+    Map<String, OrgMetricMetadata> metricAliasMap = schemas.getMetrics();
     assertEquals(1, metricAliasMap.size());
     assertEquals(metricAliasMap.keySet().iterator().next(), metadata.metricCanonicalType);
     assertEquals(Lists.newArrayList(metricName), metricAliasMap.get(metadata.metricCanonicalType));
@@ -67,8 +67,7 @@ public class TestRecordMetadata {
     // verify that we have the added boolean field
     Metric metric = store.getMetricMetadata(metadata.orgID, metadata.metricCanonicalType);
     // canonical name has the aliased field name
-    Map<String, List<String>> aliases =
-      metric.getMetadata().getCanonicalNamesToAliases();
+    Map<String, FieldMetadata> aliases = metric.getMetadata().getFields();
     assertEquals(2, aliases.size());
     assertEquals(new ArrayList<>(0), aliases.remove(AvroSchemaEncoder.BASE_FIELDS_KEY));
     String fieldCannonicalName = aliases.keySet().iterator().next();

@@ -164,7 +164,7 @@ public class SchemaTestUtils {
     List<Schema.Field> fields = fieldSchema.getFields();
     assertEquals("Wrong number of fields in FieldInstanceVisitor! Got fields " + fields, 2, fields.size());
     //verify the alias field
-    assertEquals("fieldAliasName", fields.get(0).name());
+    assertEquals("displayName", fields.get(0).name());
     assertEquals("value", fields.get(1).name());
     assertEquals(type, fields.get(1).schema().getType().getName());
   }

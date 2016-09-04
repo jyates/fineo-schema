@@ -1,8 +1,9 @@
 package io.fineo.schema;
 
-import com.google.common.collect.Lists;
+import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
@@ -12,9 +13,8 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,13 +30,14 @@ public class TestSchemaUtils {
   public void testSerDe() throws Exception {
     String schema = "";
 
-    Map<String, List<String>> fields = new HashMap<>(1);
-    fields.put("fieldCName", Lists.newArrayList(" fieldAlias1"));
+    Metadata baseMetadata = Metadata.newBuilder()
+                                    .setCanonicalName("schemaCName")
+                                    .build();
+    verifyReadWrite(baseMetadata);
 
-    Metadata metricMetadata = Metadata.newBuilder()
-                                      .setCanonicalName("schemaCName")
-                                      .setCanonicalNamesToAliases(null)
-                                      .build();
+    MetricMetadata metricMetadata = MetricMetadata.newBuilder()
+                                                  .setFields(new HashMap<>()).setMeta(baseMetadata)
+                                                  .build();
     verifyReadWrite(metricMetadata);
 
     Metric metric = Metric.newBuilder()
@@ -45,16 +46,13 @@ public class TestSchemaUtils {
                           .build();
     verifyReadWrite(metric);
 
-    // set some aliases, which is a nulled-union field
-    metric = Metric
-      .newBuilder()
-      .setMetadata(Metadata
-        .newBuilder()
-        .setCanonicalNamesToAliases(fields)
-        .setCanonicalName("schemaCName")
-        .build())
-      .setMetricSchema(schema)
-      .build();
+    // add a field to the map
+    FieldMetadata field = FieldMetadata.newBuilder()
+                                       .setFieldAliases(new ArrayList<>())
+                                       .setDisplayName("fieldName").build();
+    verifyReadWrite(field);
+    metricMetadata.getFields().put("fieldId", field);
+    verifyReadWrite(metricMetadata);
     verifyReadWrite(metric);
 
     // add some 'schema' in the form of sub-record
@@ -62,15 +60,9 @@ public class TestSchemaUtils {
     instance.withNamespace("ns").withName("somename");
     Schema s = instance.build();
     schema = s.toString();
-    metric = Metric
-      .newBuilder()
-      .setMetadata(Metadata
-        .newBuilder()
-        .setCanonicalNamesToAliases(fields)
-        .setCanonicalName("schemaCName")
-        .build())
-      .setMetricSchema(schema)
-      .build();
+    metric = Metric.newBuilder(metric)
+                   .setMetricSchema(schema)
+                   .build();
     verifyReadWrite(metric);
   }
 

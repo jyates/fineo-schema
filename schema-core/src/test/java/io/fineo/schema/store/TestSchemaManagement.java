@@ -2,10 +2,8 @@ package io.fineo.schema.store;
 
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.OldSchemaException;
-import io.fineo.schema.store.SchemaTestUtils;
-import io.fineo.schema.store.SchemaBuilder;
-import io.fineo.schema.store.SchemaStore;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
@@ -41,9 +39,9 @@ public class TestSchemaManagement {
     store.createNewOrganization(org);
 
     // add a new field to the metric
-    String orgId = org.getMetadata().getCanonicalName();
+    String orgId = org.getMetadata().getMetadata().getCanonicalName();
     String metricId = org.getSchemas().keySet().iterator().next();
-    Metadata metadata = store.getOrgMetadata(orgId);
+    OrgMetadata metadata = store.getOrgMetadata(orgId);
     Metric old = store.getMetricMetadata(orgId, metricId);
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.OrganizationBuilder orgBuilder = builder.updateOrg(metadata);
@@ -68,8 +66,8 @@ public class TestSchemaManagement {
     String oldMetricId = org.getSchemas().keySet().iterator().next();
 
     // create a new metric
-    String orgId = org.getMetadata().getCanonicalName();
-    Metadata metadata = store.getOrgMetadata(orgId);
+    String orgId = org.getMetadata().getMetadata().getCanonicalName();
+    OrgMetadata metadata = store.getOrgMetadata(orgId);
     SchemaBuilder builder = SchemaBuilder.create();
     org = builder.updateOrg(metadata).newMetric()
                  .withName("another metric type").withBytes("some bytes")
@@ -79,7 +77,7 @@ public class TestSchemaManagement {
     assertNotEquals(newMetricId, oldMetricId);
     store.addNewMetricsInOrg(org);
     metadata = store.getOrgMetadata(orgId);
-    Set<String> metricIds = metadata.getCanonicalNamesToAliases().keySet();
+    Set<String> metricIds = metadata.getMetrics().keySet();
     assertEquals("Wrong number of metrics. Got metadata: " + metadata, 2, metricIds.size());
     assertTrue("Metrics don't contain " + oldMetricId, metricIds.contains(oldMetricId));
     assertTrue("Metrics don't contain " + newMetricId, metricIds.contains(newMetricId));
@@ -107,7 +105,7 @@ public class TestSchemaManagement {
     store.createNewOrganization(builder.newOrg(DEFAULT_ORG_ID)
                                        .newMetric().withName(DEFAULT_METRIC_USER_NAME).build()
                                        .build());
-    Metadata metadata = store.getOrgMetadata(DEFAULT_ORG_ID);
+    OrgMetadata metadata = store.getOrgMetadata(DEFAULT_ORG_ID);
     assertNull(store.getMetricMetadataFromAlias(metadata, "other metric"));
   }
 
@@ -123,17 +121,19 @@ public class TestSchemaManagement {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaBuilder.Organization org = SchemaTestUtils
       .addNewOrg(store, DEFAULT_METRIC_USER_NAME, DEFAULT_METRIC_USER_NAME, "field1");
-    assertEquals("Org doesn't have default value on create", "0", org.getMetadata().getVersion());
+    assertEquals("Org doesn't have default value on create", "0",
+      org.getMetadata().getMetadata().getVersion());
     assertEquals("Didn't set org version on retrieval", "0",
-      getOrgMetadata(store, org).getVersion());
+      getOrgMetadata(store, org).getMetadata().getVersion());
     store.addNewMetricsInOrg(
       SchemaBuilder.create().updateOrg(org.getMetadata()).newMetric().withName("two").build()
                    .build());
-    assertEquals("Didn't set org version on retrial", "1", getOrgMetadata(store, org).getVersion());
+    assertEquals("Didn't set org version on retrial", "1",
+      getOrgMetadata(store, org).getMetadata().getVersion());
   }
 
-  private Metadata getOrgMetadata(SchemaStore store, SchemaBuilder.Organization org) {
-    return store.getOrgMetadata(org.getMetadata().getCanonicalName());
+  private OrgMetadata getOrgMetadata(SchemaStore store, SchemaBuilder.Organization org) {
+    return store.getOrgMetadata(org.getMetadata().getMetadata().getCanonicalName());
   }
 
   @Test
@@ -141,27 +141,28 @@ public class TestSchemaManagement {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaBuilder.Organization org = SchemaTestUtils
       .addNewOrg(store, DEFAULT_METRIC_USER_NAME, DEFAULT_METRIC_USER_NAME, "field1");
-    Metadata metadata = getOrgMetadata(store, org);
+    OrgMetadata metadata = getOrgMetadata(store, org);
     Metric metric = store.getMetricMetadataFromAlias(metadata, DEFAULT_METRIC_USER_NAME);
-    assertEquals("Initial org metadata version incorrect", "0", metadata.getVersion());
+    assertEquals("Initial org metadata version incorrect", "0",
+      metadata.getMetadata().getVersion());
     assertEquals("Initial metric metadata version incorrect", "0",
-      metric.getMetadata().getVersion());
+      metric.getMetadata().getMeta().getVersion());
     org = SchemaBuilder.create().updateOrg(metadata)
                        .updateSchema(metric)
                        .withBoolean("another boolean").asField()
                        .build().build();
     Metric next = org.getSchemas().values().iterator().next();
     assertEquals("Wrong updated metric version", Integer.toString(1),
-      next.getMetadata().getVersion());
+      next.getMetadata().getMeta().getVersion());
 
     // do the update
     store.updateOrgMetric(org, metric);
 
     // check that the stored metadata changes as expected
     assertEquals("Org metadata didn't change, but got a schema version change!",
-      "0", getOrgMetadata(store, org).getVersion());
-    assertEquals("1", store.getMetricMetadata(org.getMetadata().getCanonicalName(),
-      metric.getMetadata().getCanonicalName()).getMetadata().getVersion());
+      "0", getOrgMetadata(store, org).getMetadata().getVersion());
+    assertEquals("1", store.getMetricMetadata(org.getMetadata().getMetadata().getCanonicalName(),
+      metric.getMetadata().getMeta().getCanonicalName()).getMetadata().getMeta().getVersion());
   }
 
   @Test
@@ -182,7 +183,7 @@ public class TestSchemaManagement {
     store.updateOrgMetric(organization, metric);
 
     // get the current metadata
-    Metadata updatedMetadata = store.getOrgMetadata(DEFAULT_ORG_ID);
+    OrgMetadata updatedMetadata = store.getOrgMetadata(DEFAULT_ORG_ID);
     assertNotNull(
       store.getMetricMetadataFromAlias(updatedMetadata, DEFAULT_METRIC_USER_NAME));
     assertNotNull(store.getMetricMetadataFromAlias(updatedMetadata, metricAlias));

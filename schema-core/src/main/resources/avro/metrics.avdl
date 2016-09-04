@@ -7,7 +7,7 @@ protocol Metrics {
   record FieldMetadata {
     string displayName;
     array<string> fieldAliases;
-    long hiddenTime;
+    long hiddenTime = 0;
   }
 
   // Metadata about a metric to store with a metric
