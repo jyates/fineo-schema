@@ -150,6 +150,7 @@ class SchemaBuilder {
     }
 
     public Organization build() {
+      org.setMetadata(meta.build());
       return new Organization(org.build(), schemas);
     }
   }
@@ -190,10 +191,12 @@ class SchemaBuilder {
     private MetricBuilder(OrganizationBuilder parent, Metric.Builder metric,
       OrgMetricMetadata.Builder metadata, boolean update) {
       this.parent = parent;
-      this.orgId = parent.org.getMetadata().getCanonicalName();
+      this.orgId = parent.meta.getCanonicalName();
       this.metric = metric;
       this.metadata = metadata;
-      this.metricMetadata = MetricMetadata.newBuilder(metric.getMetadata());
+      this.metricMetadata = metric.getMetadata() == null ?
+                            MetricMetadata.newBuilder() :
+                            MetricMetadata.newBuilder(metric.getMetadata());
       init(metricMetadata);
       this.update = update;
     }
@@ -203,7 +206,9 @@ class SchemaBuilder {
         metricMetadata.setFields(new HashMap<>());
       }
       if (!metricMetadata.hasMeta()) {
-        metricMetadata.setMeta(Metadata.newBuilder().setCanonicalName("to-be-replaced").build());
+        metricMetadata.setMeta(Metadata.newBuilder()
+                                       .setCanonicalName(gen.generateSchemaName())
+                                       .build());
       }
     }
 
@@ -259,12 +264,6 @@ class SchemaBuilder {
 
       // generate the final metric
       metric.setMetricSchema(recordSchema.toString());
-
-      // build the final metadata
-      if (metricMetadata.getMeta().getCanonicalName() == null) {
-        // need a canonical name for the metric
-        metricMetadata.getMeta().setCanonicalName(gen.generateSchemaName());
-      }
       metric.setMetadata(metricMetadata.build());
 
       if (update) {

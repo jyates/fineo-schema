@@ -15,7 +15,7 @@ protocol Organization {
   // Metadata about a metric in an org
   record OrgMetricMetadata {
     // other keys besides 'metrictype' to identify the metric
-    array<string> aliasKeys;
+    union{null, array<string>} aliasKeys = null;
     // values that indicate the record belongs to this metric (aka. aliases for the canonical name)
     array<string> aliasValues;
     // name that the metric should be displayed as. This is just one of the aliases

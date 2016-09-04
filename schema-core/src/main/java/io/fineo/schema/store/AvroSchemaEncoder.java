@@ -155,10 +155,12 @@ public class AvroSchemaEncoder {
     fields.setTimestamp(getTimestamp(record));
     // try all the user specified names first
     String aliasName = null;
-    for (String name : metricMetadata.getAliasKeys()) {
-      aliasName = record.getStringByField(name);
-      if (aliasName != null) {
-        break;
+    if (metricMetadata.getAliasKeys() != null) {
+      for (String name : metricMetadata.getAliasKeys()) {
+        aliasName = record.getStringByField(name);
+        if (aliasName != null) {
+          break;
+        }
       }
     }
     // there are no alias key mappings that match, so just try the fineo key
