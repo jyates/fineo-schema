@@ -1,7 +1,9 @@
 package io.fineo.schema.store;
 
 import com.google.common.collect.ImmutableList;
-import io.fineo.internal.customer.Metadata;
+import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.OrgMetadata;
+import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.avro.AvroSchemaEncoder;
 import io.fineo.schema.avro.AvroSchemaManager;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -22,7 +24,7 @@ public class StoreClerk {
 
   private final SchemaStore store;
   private final String orgId;
-  private final Metadata metadata;
+  private final OrgMetadata metadata;
 
   public StoreClerk(SchemaStore store, String orgId) {
     this.store = store;
@@ -50,9 +52,9 @@ public class StoreClerk {
    */
   public Metric getMetricForUserNameOrAlias(String metricAliasName) throws SchemaNotFoundException {
     String expected = store.getMetricCNameFromAlias(metadata, metricAliasName);
-    Metric foundMetric =  collectElementsForFields(metadata, (metricCname, metricUserName,
+    Metric foundMetric = collectElementsForFields(metadata, (metricCname, metricUserName,
       metricAliases) -> {
-      if(expected != metricCname){
+      if (expected != metricCname) {
         return null;
       }
 
@@ -76,6 +78,7 @@ public class StoreClerk {
      * Advanced use only! Create a Metric, but only with an underlying schema metric. This means
      * that you can only access methods that read from the metric, rather than metadata about the
      * metric itself
+     *
      * @param metric underlying metric
      * @return a 'stunted' Metric
      */
@@ -95,16 +98,35 @@ public class StoreClerk {
       if (schema == null) {
         this.schema = new Schema.Parser().parse(metric.getMetricSchema());
       }
-      return collectElementsForFields(metric.getMetadata(), (cname, userName, aliases) -> {
-        Schema.Field field = schema.getField(cname);
-        Schema.Type type = field.schema().getField("value").schema().getType();
-        return new Field(userName, type, aliases, cname);
-      });
+      return collectElementsForFields(
+        new MetadataWrapper<FieldMetadata>() {
+          @Override
+          public Map<String, FieldMetadata> getFields() {
+            return metric.getMetadata().getFields();
+          }
+
+          @Override
+          public String getDisplayName(FieldMetadata field) {
+            return field.getDisplayName();
+          }
+
+          @Override
+          public List<String> getAliases(FieldMetadata field) {
+            return field.getFieldAliases();
+          }
+        },
+        (cname, userName, aliases) -> {
+          Schema.Field field = schema.getField(cname);
+          Schema.Type type = field.schema().getField("value").schema().getType();
+          return new Field(userName, type, aliases, cname);
+        });
     }
 
     public List<String> getCanonicalFieldNames() {
-      return this.metric.getMetadata().getCanonicalNamesToAliases().keySet().stream().filter(
-        cname -> !cname.equals(AvroSchemaEncoder.BASE_FIELDS_KEY)).collect(Collectors.toList());
+      return this.metric.getMetadata().getFields().keySet()
+                        .stream()
+                        .filter(cname -> !cname.equals(AvroSchemaEncoder.BASE_FIELDS_KEY))
+                        .collect(Collectors.toList());
     }
 
     public String getUserName() {
@@ -113,8 +135,7 @@ public class StoreClerk {
 
     public String getUserFieldNameFromCanonicalName(String fieldCname) {
       return getUserNameFromAliases(
-
-        this.metric.getMetadata().getCanonicalNamesToAliases().get(fieldCname));
+        this.metric.getMetadata().getFields().get(fieldCname).getFieldAliases());
     }
 
     public String getCanonicalNameFromUserFieldName(String fieldName) {
@@ -129,7 +150,7 @@ public class StoreClerk {
     }
 
     public String getMetricId() {
-      return this.metric.getMetadata().getCanonicalName();
+      return this.metric.getMetadata().getMeta().getCanonicalName();
     }
 
     public List<String> getAliases() {
@@ -137,7 +158,7 @@ public class StoreClerk {
     }
 
     // Used by Readerator
-    public io.fineo.internal.customer.Metric getUnderlyingMetric(){
+    public io.fineo.internal.customer.Metric getUnderlyingMetric() {
       return this.metric;
     }
 
@@ -227,28 +248,47 @@ public class StoreClerk {
     }
   }
 
-  private static String getUserVisibleName(Metadata meta, String cname) {
-    return getUserNameFromAliases(meta.getCanonicalNamesToAliases().get(cname));
-  }
-
   private static String getUserNameFromAliases(List<String> aliases) {
     return aliases != null && aliases.size() > 0 ? aliases.get(0) : null;
   }
 
-  private static <T> List<T> collectElementsForFields(Metadata meta,
+  private static <T> List<T> collectElementsForFields(OrgMetadata meta,
     FieldInstanceVisitor<T> func) {
+    return collectElementsForFields(new MetadataWrapper<OrgMetricMetadata>() {
+      @Override
+      public Map<String, OrgMetricMetadata> getFields() {
+        return meta.getMetrics();
+      }
+
+      @Override
+      public String getDisplayName(OrgMetricMetadata field) {
+        return field.getDisplayName();
+      }
+
+      @Override
+      public List<String> getAliases(OrgMetricMetadata field) {
+        return field.getAliasValues();
+      }
+    }, func);
+  }
+
+
+  private static <T, FIELD_TYPE> List<T> collectElementsForFields(MetadataWrapper<FIELD_TYPE>
+    meta, FieldInstanceVisitor<T> func) {
     // new org, nothing created yet
-    if(meta.getCanonicalNamesToAliases() == null){
+    if (meta.getFields() == null) {
       return ImmutableList.of();
     }
-    return meta.getCanonicalNamesToAliases().keySet()
+    return meta.getFields().entrySet()
                .stream()
-               .map(cname -> {
-                 String userName = getUserVisibleName(meta, cname);
+               .map(entry -> {
+                 String cname = entry.getKey();
+                 FIELD_TYPE field = entry.getValue();
+                 String userName = meta.getDisplayName(field);
                  if (userName == null) {
                    return null;
                  }
-                 List<String> aliases = meta.getCanonicalNamesToAliases().get(cname);
+                 List<String> aliases = meta.getAliases(field);
                  List<String> remaining = new ArrayList<>(aliases);
                  remaining.remove(userName);
                  return func.call(cname, userName, remaining);
@@ -257,7 +297,15 @@ public class StoreClerk {
                .collect(toList());
   }
 
-  private static List<String> getUserVisibleNames(Metadata meta) {
+  private interface MetadataWrapper<T> {
+    Map<String, T> getFields();
+
+    String getDisplayName(T field);
+
+    List<String> getAliases(T field);
+  }
+
+  private static List<String> getUserVisibleNames(OrgMetadata meta) {
     return collectElementsForFields(meta, (cname, username, e) -> username);
   }
 
