@@ -1,0 +1,18 @@
+
+@namespace("io.fineo.internal.customer")
+protocol FineoRecord{
+
+  // The base fields that are assumed to be in any BaseRecord
+  record BaseFields {
+    // timestamp of the event
+    long timestamp;
+    // fields for which we don't have any schema from the user
+    map<string> unknown_fields;
+  }
+
+  // The base record instance that we use to build a metric type schema. In code we add the desired
+  // fields to create the full record
+  record BaseRecord {
+    BaseFields baseFields;
+  }
+}

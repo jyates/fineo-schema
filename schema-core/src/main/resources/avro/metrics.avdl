@@ -1,0 +1,40 @@
+
+@namespace("io.fineo.internal.customer")
+protocol Metrics {
+
+  import idl "fineo-common.avdl";
+
+  record FieldMetadata {
+    string displayName;
+    array<string> fieldAliases;
+    long hiddenTime;
+  }
+
+  // Metadata about a metric to store with a metric
+  record MetricMetadata {
+    Metadata meta;
+
+    // names of the fields and possible aliases for the field
+    union {null, map<FieldMetadata>} fields = null;
+  }
+
+  // A metric's schema in an organization.
+  //
+  // While this defines a schema, the actual schema of a metric is an _instance_ of this class
+  // It will store the metric's canonical name  (used to look it up in the
+  // parent's metadata), the field map for the actual metric's fields (name -> aliases) and then
+  // the schema of the actual metric itself.
+  record Metric {
+    MetricMetadata metadata;
+    // actual schema
+    string metricSchema;
+  }
+
+  // Base components of a field. In code we add the actual data type to the instance. This also
+  // saves having a huge record schema with all the different possible data types
+  record FieldInstance {
+    // name the user specified for the field. Maps to an alias name, under a canonical name, in the
+    // Metric's Metadata canonicalNameToAlias map
+    string displayName;
+  }
+}

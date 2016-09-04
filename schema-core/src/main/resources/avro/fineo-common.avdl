@@ -1,0 +1,11 @@
+
+@namespace("io.fineo.internal.customer")
+protocol FineoCommon{
+
+  record Metadata {
+    // version of this metadata
+   string version = "0";
+   // basically, the id
+   string canonicalName;
+  }
+}

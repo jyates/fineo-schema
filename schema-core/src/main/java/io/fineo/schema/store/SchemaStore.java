@@ -3,6 +3,7 @@ package io.fineo.schema.store;
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.OldSchemaException;
@@ -71,18 +72,19 @@ public class SchemaStore {
     throws IOException {
     SchemaEntry entry = org.latest();
     // check to see if we already know about this org
-    Metadata metadata = parse(entry, OrgMetadata.getClassSchema());
-    String metricId = next.getMetadata().getCanonicalName();
+    OrgMetadata currentOrgMetadata = parse(entry, OrgMetadata.getClassSchema());
+    Metadata metricBaseMetdata = next.getMetadata().getMeta();
+    String metricId = metricBaseMetdata.getCanonicalName();
     if (orgMetadata.getMetrics().containsKey(metricId)) {
       LOG.debug("Org already has metricID: " + metricId);
-      setVersion(metadata, entry);
+      setVersion(currentOrgMetadata, entry);
       return;
     }
 
     // update the org schema to what we just got sent
     try {
       entry = org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
-      setVersion(metadata, entry);
+      setVersion(currentOrgMetadata, entry);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
@@ -97,7 +99,7 @@ public class SchemaStore {
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
-    setVersion(next.getMetadata(), latestEntry);
+    setVersion(next, latestEntry);
   }
 
   /**
@@ -119,17 +121,19 @@ public class SchemaStore {
   public void updateOrgMetric(SchemaBuilder.Organization org, Metric old)
     throws IOException, OldSchemaException {
     // find the metric in the org
-    String metricID = old == null ? null : old.getMetadata().getCanonicalName();
+    String metricID = old == null ? null : old.getMetadata().getMeta().getCanonicalName();
     Metric updated = org.getSchemas().get(metricID);
     updateOrgMetric(org.getMetadata(), updated, old);
   }
 
   private void registerMetricInternal(CharSequence orgId, Metric schema,
     Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
-    Subject metricSubject = getMetricSubject(orgId, schema.getMetadata().getCanonicalName());
+    Subject metricSubject =
+      getMetricSubject(orgId, schema.getMetadata().getMeta().getCanonicalName());
     if (metricSubject == null) {
-      metricSubject =
-        repo.register(getMetricSubjectName(orgId, schema.getMetadata().getCanonicalName()), null);
+      metricSubject = repo
+        .register(getMetricSubjectName(orgId, schema.getMetadata().getMeta().getCanonicalName()),
+          null);
     }
     SchemaEntry latest = metricSubject.latest();
     Metric storedPrevious = parse(latest, Metric.getClassSchema());
@@ -153,6 +157,14 @@ public class SchemaStore {
     throw new OldSchemaException(storedPrevious, previous);
   }
 
+  private void setVersion(OrgMetadata metadata, SchemaEntry entry) {
+    setVersion(metadata.getMetadata(), entry);
+  }
+
+  private void setVersion(MetricMetadata metadata, SchemaEntry entry) {
+    setVersion(metadata.getMeta(), entry);
+  }
+
   private void setVersion(Metadata metadata, SchemaEntry entry) {
     if (entry != null) {
       metadata.setVersion(entry.getId());
@@ -171,7 +183,7 @@ public class SchemaStore {
 
     SchemaEntry entry = subject.latest();
     OrgMetadata metadata = parse(entry, OrgMetadata.getClassSchema());
-    setVersion(metadata.getMetadata(), entry);
+    setVersion(metadata, entry);
     return metadata;
   }
 
