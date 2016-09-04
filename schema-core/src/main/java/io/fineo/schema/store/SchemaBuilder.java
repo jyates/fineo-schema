@@ -386,6 +386,10 @@ class SchemaBuilder {
       return parser.getTypes().get(
         getCustomerSchemaFullName(orgId, metricMetadata.getMeta().getCanonicalName()));
     }
+
+    public MetricMetadata.Builder getMetricMetadata() {
+      return metricMetadata;
+    }
   }
 
   private enum Delete {

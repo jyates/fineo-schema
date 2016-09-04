@@ -278,13 +278,12 @@ public class SchemaStore {
   /**
    * Update the organziation for the specified metrics. Expects the previous metadata to not be
    * <tt>null</tt>, since the org should already exist.
-   *
-   * @param org            updated organization to publish
+   *  @param org            updated organization to publish
    * @param updatedMetrics map of metric name and version to update
    * @param previous       metadata describing the previous organization
    */
   public void updateOrg(SchemaBuilder.Organization org, Map<String, Metric> updatedMetrics,
-    Metadata previous) throws IOException, OldSchemaException {
+    OrgMetadata previous) throws IOException, OldSchemaException {
     Preconditions.checkNotNull(previous, "Don't have any previous metadata for the organization!");
     OrgMetadata current = org.getMetadata();
     // update the parent org metadata. Only time we don't want to do this is if we aren't

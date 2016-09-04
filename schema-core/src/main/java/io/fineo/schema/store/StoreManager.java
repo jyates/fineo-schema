@@ -3,9 +3,7 @@ package io.fineo.schema.store;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
@@ -65,7 +63,8 @@ public class StoreManager {
   public OrganizationBuilder updateOrg(String orgId) {
     OrgMetadata org = store.getOrgMetadata(orgId);
     Preconditions.checkArgument(org != null, "No information present for tenant: '%s'", orgId);
-    return new OrganizationBuilder(org);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(generator);
+    return new OrganizationBuilder(org, builder.updateOrg(org));
   }
 
   public OrganizationBuilder newOrg(String orgId) throws SchemaExistsException {
@@ -73,32 +72,24 @@ public class StoreManager {
     if (previous != null) {
       throw new SchemaExistsException("Schema for org: " + orgId + " already exists!");
     }
-    return new OrganizationBuilder(orgId);
+    SchemaBuilder builder = SchemaBuilder.createForTesting(generator);
+    return new OrganizationBuilder(null, builder.newOrg(orgId));
   }
 
   public class OrganizationBuilder {
     private final OrgMetadata previous;
-    private final OrgMetadata.Builder next;
-    private final Metadata.Builder nextMeta;
+    private final SchemaBuilder.OrganizationBuilder orgBuilder;
     private Map<String, Metric> updatedMetrics = new HashMap<>();
 
-    public OrganizationBuilder(OrgMetadata previous) {
+    public OrganizationBuilder(OrgMetadata previous, SchemaBuilder.OrganizationBuilder builder) {
       this.previous = previous;
-      next = OrgMetadata.newBuilder(previous);
-      nextMeta = Metadata.newBuilder(next.getMetadata());
-      stop.recordStart();
-    }
-
-    public OrganizationBuilder(String orgId){
-      previous = null;
-      next = OrgMetadata.newBuilder();
-      nextMeta = Metadata.newBuilder();
-      nextMeta.setCanonicalName(orgId);
+      this.orgBuilder = builder;
       stop.recordStart();
     }
 
     public MetricBuilder newMetric() {
-      return new MetricBuilder(this);
+      SchemaBuilder.MetricBuilder metricBuilder = orgBuilder.newMetric();
+      return new MetricBuilder(null, this, orgBuilder, metricBuilder);
     }
 
     public MetricBuilder updateMetric(String userName) throws SchemaNotFoundException {
@@ -144,19 +135,16 @@ public class StoreManager {
   public class MetricBuilder {
 
     private final OrganizationBuilder parent;
+    private final SchemaBuilder.OrganizationBuilder builder;
     private final Metric previous;
-    private final MetricMetadata.Builder nextMeta;
-    private final Metric.Builder next;
+    private final SchemaBuilder.MetricBuilder metricBuilder;
 
-    public MetricBuilder(OrganizationBuilder parent){
-      this(null, parent);
-    }
-
-    public MetricBuilder(Metric previous, OrganizationBuilder parent){
-      this.previous = previous;
-      this.parent = parent;
-      nextMeta = MetricMetadata.newBuilder();
-      next = Metric.newBuilder();
+    public MetricBuilder(Metric metric, OrganizationBuilder organizationBuilder,
+      SchemaBuilder.OrganizationBuilder orgBuilder, SchemaBuilder.MetricBuilder metricBuilder) {
+      this.previous = metric;
+      this.parent = organizationBuilder;
+      this.builder = orgBuilder;
+      this.metricBuilder = metricBuilder;
     }
 
     public MetricBuilder addAliases(String... aliases) {
@@ -181,7 +169,8 @@ public class StoreManager {
 
     public MetricBuilder addFieldAlias(String fieldName, String... aliases)
       throws SchemaNotFoundException {
-      String canonical = SchemaUtils.getCanonicalName(this.previous.getMetadata(), fieldName);
+      String canonical =
+        SchemaUtils.getCanonicalName(this.previous.getMetadata().getMeta(), fieldName);
       SchemaUtils.checkFound(canonical, fieldName, "field (or alias)");
       SchemaBuilder.FieldBuilder fb = this.metricBuilder.updateField(canonical);
       for (String alias : aliases) {
@@ -194,7 +183,7 @@ public class StoreManager {
     }
 
     public OrganizationBuilder build() throws IOException {
-      String cname = this.metricBuilder.getCanonicalName();
+      String cname = this.metricBuilder.getMetricMetadata().getMeta().getCanonicalName();
       this.metricBuilder.build();
       this.parent.addMetric(cname, previous);
       return this.parent;
