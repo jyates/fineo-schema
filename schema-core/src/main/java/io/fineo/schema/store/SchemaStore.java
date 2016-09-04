@@ -3,6 +3,8 @@ package io.fineo.schema.store;
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetadata;
+import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.RecordMetadata;
 import io.fineo.schema.avro.SchemaNameUtils;
@@ -15,9 +17,9 @@ import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Stores and retrieves schema for record instances
@@ -32,23 +34,24 @@ public class SchemaStore {
 
   public void createNewOrganization(SchemaBuilder.Organization organization)
     throws IllegalArgumentException, OldSchemaException, IOException {
-    Metadata meta = organization.getMetadata();
-    Subject orgMetadata = repo.register(meta.getCanonicalName(), null);
+    OrgMetadata orgMetadata = organization.getMetadata();
+    String orgID = orgMetadata.getMetadata().getCanonicalName();
+    Subject subject = repo.register(orgID, null);
     try {
-      SchemaEntry entry = orgMetadata.registerIfLatest(SchemaNameUtils.toString(meta), null);
+      SchemaEntry entry = subject.registerIfLatest(SchemaNameUtils.toString(orgMetadata), null);
       Preconditions.checkState(entry != null, "Have an existing schema for the organization!");
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException("Already have a schema for the organization", e);
     }
     // register the metrics below the repo
     for (Metric metric : organization.getSchemas().values()) {
-      registerMetricInternal(meta.getCanonicalName(), metric, null);
+      registerMetricInternal(orgID, metric, null);
     }
   }
 
-  public void updateOrgMetric(Metadata orgMetadata, Metric next,
+  public void updateOrgMetric(OrgMetadata orgMetadata, Metric next,
     Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
-    String orgId = orgMetadata.getCanonicalName();
+    String orgId = orgMetadata.getMetadata().getCanonicalName();
     Subject orgSubject = repo.lookup(orgId);
     Preconditions
       .checkArgument(orgSubject != null, "Organization[%s] was not previously registered!", orgId);
@@ -65,13 +68,13 @@ public class SchemaStore {
    * If the organization already has the given schema returns without changing the metadata
    * </p>
    */
-  private void registerSchemaIfMetricUnknown(Subject org, Metadata orgMetadata, Metric next)
+  private void registerSchemaIfMetricUnknown(Subject org, OrgMetadata orgMetadata, Metric next)
     throws IOException {
     SchemaEntry entry = org.latest();
     // check to see if we already know about this org
-    Metadata metadata = parse(entry, Metadata.getClassSchema());
+    Metadata metadata = parse(entry, OrgMetadata.getClassSchema());
     String metricId = next.getMetadata().getCanonicalName();
-    if (metadata.getCanonicalNamesToAliases().containsKey(metricId)) {
+    if (orgMetadata.getCanonicalNamesToAliases().containsKey(metricId)) {
       LOG.debug("Org already has metricID: " + metricId);
       setVersion(metadata, entry);
       return;
@@ -86,8 +89,8 @@ public class SchemaStore {
     }
   }
 
-  private void updateOrganization(Metadata next) throws IOException {
-    String orgId = next.getCanonicalName();
+  private void updateOrganization(OrgMetadata next) throws IOException {
+    String orgId = next.getMetadata().getCanonicalName();
     Subject orgSubject = repo.lookup(orgId);
     SchemaEntry latestEntry = orgSubject.latest();
     try {
@@ -95,7 +98,7 @@ public class SchemaStore {
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }
-    setVersion(next, latestEntry);
+    setVersion(next.getMetadata(), latestEntry);
   }
 
   /**
@@ -161,15 +164,15 @@ public class SchemaStore {
    * @param orgId
    * @return the stored metadata for the org, if its present
    */
-  public Metadata getOrgMetadata(String orgId) {
+  public OrgMetadata getOrgMetadata(String orgId) {
     Subject subject = repo.lookup(orgId);
     if (subject == null) {
       return null;
     }
 
     SchemaEntry entry = subject.latest();
-    Metadata metadata = parse(entry, Metadata.getClassSchema());
-    setVersion(metadata, entry);
+    OrgMetadata metadata = parse(entry, OrgMetadata.getClassSchema());
+    setVersion(metadata.getMetadata(), entry);
     return metadata;
   }
 
@@ -181,13 +184,13 @@ public class SchemaStore {
   }
 
 
-  public String getMetricCNameFromAlias(Metadata org, String aliasMetricName){
-    if(org.getCanonicalNamesToAliases() == null){
+  public String getMetricCNameFromAlias(OrgMetadata org, String aliasMetricName) {
+    if (org.getCanonicalNamesToAliases() == null) {
       return null;
     }
     Optional<String> canonicalName =
       org.getCanonicalNamesToAliases().entrySet().stream()
-         .filter(entry -> entry.getValue().contains(aliasMetricName))
+         .filter(metricAliasEntryMatches(aliasMetricName))
          .map(entry -> entry.getKey())
          .findFirst();
     return canonicalName.orElse(null);
@@ -201,23 +204,31 @@ public class SchemaStore {
    * @param aliasMetricName customer visible metric name
    * @return
    */
-  public Metric getMetricMetadataFromAlias(Metadata org, String aliasMetricName) {
+  public Metric getMetricMetadataFromAlias(OrgMetadata org, String aliasMetricName) {
     Preconditions.checkNotNull(org);
     // find the canonical name to match the alias we were given
     String canonicalName = getMetricCNameFromAlias(org, aliasMetricName);
     return canonicalName != null ?
-           this.getMetricMetadata(org.getCanonicalName(), canonicalName) :
+           this.getMetricMetadata(org.getMetadata().getCanonicalName(), canonicalName) :
            null;
   }
 
-  public List<String> getMetricAliases(Metadata org, String aliasMetricName){
-    Optional<Map.Entry<String, List<String>>> match =
+  public OrgMetricMetadata getMetricAliases(OrgMetadata org, String aliasMetricName) {
+    Optional<Map.Entry<String, OrgMetricMetadata>> match =
       org.getCanonicalNamesToAliases().entrySet().stream()
-         .filter(entry -> entry.getValue().contains(aliasMetricName))
+         .filter(metricAliasEntryMatches(aliasMetricName))
          .findFirst();
-    return match.isPresent()?
-           match.get().getValue():
+    return match.isPresent() ?
+           match.get().getValue() :
            null;
+  }
+
+  private Predicate<Map.Entry<String, OrgMetricMetadata>> metricAliasEntryMatches(
+    String metricAliasName) {
+    return nameToOrgMetric -> {
+      OrgMetricMetadata metricMetadata = nameToOrgMetric.getValue();
+      return metricMetadata.getAliasValues().contains(metricAliasName);
+    };
   }
 
   /**
@@ -272,7 +283,7 @@ public class SchemaStore {
   public void updateOrg(SchemaBuilder.Organization org, Map<String, Metric> updatedMetrics,
     Metadata previous) throws IOException, OldSchemaException {
     Preconditions.checkNotNull(previous, "Don't have any previous metadata for the organization!");
-    Metadata current = org.getMetadata();
+    OrgMetadata current = org.getMetadata();
     // update the parent org metadata. Only time we don't want to do this is if we aren't
     // updating the map of the metrics AND we are not updating the alias names of the metric.
     // For right now, its just easier to update it, rather than trying to be smart about when it is
@@ -280,7 +291,8 @@ public class SchemaStore {
     updateOrganization(current);
     for (Map.Entry<String, Metric> previousMetric : updatedMetrics.entrySet()) {
       Metric next = org.getSchemas().get(previousMetric.getKey());
-      registerMetricInternal(current.getCanonicalName(), next, previousMetric.getValue());
+      registerMetricInternal(current.getMetadata().getCanonicalName(), next,
+        previousMetric.getValue());
     }
   }
 }

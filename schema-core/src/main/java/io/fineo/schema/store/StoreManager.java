@@ -5,6 +5,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.MetricMetadata;
+import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.AvroSchemaManager;
@@ -61,35 +63,42 @@ public class StoreManager {
   }
 
   public OrganizationBuilder updateOrg(String orgId) {
-    Metadata org = store.getOrgMetadata(orgId);
+    OrgMetadata org = store.getOrgMetadata(orgId);
     Preconditions.checkArgument(org != null, "No information present for tenant: '%s'", orgId);
-    SchemaBuilder builder = SchemaBuilder.createForTesting(generator);
-    return new OrganizationBuilder(org, builder.updateOrg(org));
+    return new OrganizationBuilder(org);
   }
 
   public OrganizationBuilder newOrg(String orgId) throws SchemaExistsException {
-    Metadata previous = store.getOrgMetadata(orgId);
+    OrgMetadata previous = store.getOrgMetadata(orgId);
     if (previous != null) {
       throw new SchemaExistsException("Schema for org: " + orgId + " already exists!");
     }
-    SchemaBuilder builder = SchemaBuilder.createForTesting(generator);
-    return new OrganizationBuilder(null, builder.newOrg(orgId));
+    return new OrganizationBuilder(orgId);
   }
 
   public class OrganizationBuilder {
-    private final Metadata previous;
-    private final SchemaBuilder.OrganizationBuilder orgBuilder;
+    private final OrgMetadata previous;
+    private final OrgMetadata.Builder next;
+    private final Metadata.Builder nextMeta;
     private Map<String, Metric> updatedMetrics = new HashMap<>();
 
-    public OrganizationBuilder(Metadata previous, SchemaBuilder.OrganizationBuilder builder) {
+    public OrganizationBuilder(OrgMetadata previous) {
       this.previous = previous;
-      this.orgBuilder = builder;
+      next = OrgMetadata.newBuilder(previous);
+      nextMeta = Metadata.newBuilder(next.getMetadata());
+      stop.recordStart();
+    }
+
+    public OrganizationBuilder(String orgId){
+      previous = null;
+      next = OrgMetadata.newBuilder();
+      nextMeta = Metadata.newBuilder();
+      nextMeta.setCanonicalName(orgId);
       stop.recordStart();
     }
 
     public MetricBuilder newMetric() {
-      SchemaBuilder.MetricBuilder metricBuilder = orgBuilder.newSchema();
-      return new MetricBuilder(null, this, orgBuilder, metricBuilder);
+      return new MetricBuilder(this);
     }
 
     public MetricBuilder updateMetric(String userName) throws SchemaNotFoundException {
@@ -135,16 +144,19 @@ public class StoreManager {
   public class MetricBuilder {
 
     private final OrganizationBuilder parent;
-    private final SchemaBuilder.OrganizationBuilder builder;
     private final Metric previous;
-    private final SchemaBuilder.MetricBuilder metricBuilder;
+    private final MetricMetadata.Builder nextMeta;
+    private final Metric.Builder next;
 
-    public MetricBuilder(Metric metric, OrganizationBuilder organizationBuilder,
-      SchemaBuilder.OrganizationBuilder orgBuilder, SchemaBuilder.MetricBuilder metricBuilder) {
-      this.previous = metric;
-      this.parent = organizationBuilder;
-      this.builder = orgBuilder;
-      this.metricBuilder = metricBuilder;
+    public MetricBuilder(OrganizationBuilder parent){
+      this(null, parent);
+    }
+
+    public MetricBuilder(Metric previous, OrganizationBuilder parent){
+      this.previous = previous;
+      this.parent = parent;
+      nextMeta = MetricMetadata.newBuilder();
+      next = Metric.newBuilder();
     }
 
     public MetricBuilder addAliases(String... aliases) {

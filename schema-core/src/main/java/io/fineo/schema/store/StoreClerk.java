@@ -113,6 +113,7 @@ public class StoreClerk {
 
     public String getUserFieldNameFromCanonicalName(String fieldCname) {
       return getUserNameFromAliases(
+
         this.metric.getMetadata().getCanonicalNamesToAliases().get(fieldCname));
     }
 

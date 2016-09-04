@@ -11,18 +11,36 @@
 
 @namespace("io.fineo.internal.customer")
 protocol Organization {
-  // Metadata about an organization, specifically:
-  // - the org ID
-  // - the map of the metric cannonical and alias names
-  //
-  // Decoupled from metric instances to allow them to change independently
+
   record Metadata {
     // version of this metadata
     string version = "0";
-    // basically, the id
-    string canonicalName;
+     // basically, the id
+     string canonicalName;
+  }
+
+  // Metadata about a metric in an org
+  record OrgMetricMetadata {
+    // other keys besides 'metrictype' to identify the metric
+    array<string> aliasKeys;
+    // values that indicate the record belongs to this metric (aka. aliases for the canonical name)
+    array<string> aliasValues;
+    // name that the metric should be displayed as. This is just one of the aliases
+    string displayName;
+  }
+
+  // Metadata about an organization
+  record OrgMetadata {
+    Metadata metadata;
+
     // helper record to map a canonical name to a number of aliases
-    union {null, map<array<string>>} canonicalNamesToAliases = null;
+    union {null, map<OrgMetricMetadata>} canonicalNamesToAliases = null;
+  }
+
+  // Metadata about a metric to store with a metric
+  record MetricMetadata {
+    Metadata meta;
+    union {null, map<string>} canonicalNamesToAliases = null;
   }
 
   // A metric's schema in an organization.
@@ -42,8 +60,6 @@ protocol Organization {
 
   // The base fields that are assumed to be in any BaseRecord
   record BaseFields {
-    // user specified name of the metric, which is aliased to an internal canonical name
-    string aliasName;
     // timestamp of the event
     long timestamp;
     // fields for which we don't have any schema from the user
@@ -55,7 +71,7 @@ protocol Organization {
   record FieldInstance {
     // name the user specified for the field. Maps to an alias name, under a canonical name, in the
     // Metric's Metadata canonicalNameToAlias map
-    string fieldAliasName;
+    string displayName;
   }
 
   // The base record instance that we use to build a metric type schema. In code we add the desired

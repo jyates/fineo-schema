@@ -3,6 +3,7 @@ package io.fineo.schema.store;
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
+import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaNameUtils;
@@ -26,7 +27,7 @@ import static com.google.common.collect.Sets.newHashSet;
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
  * hierarchy. Can also be used to update existing schemas bound to a metric or organization.
  * <p>
- * This does <b>not support use of STOP WORDS</b> that - like all new dev - is incorporatd in
+ * This does <b>not support use of STOP WORDS</b> that - like all new dev - is incorporated in
  * {@link StoreManager}
  * </p>
  *
@@ -58,15 +59,15 @@ public class SchemaBuilder {
   }
 
   public class Organization {
-    private final Metadata metadata;
+    private final OrgMetadata metadata;
     private final Map<String, Metric> schemas;
 
-    private Organization(Metadata metadata, Map<String, Metric> schemas) {
+    private Organization(OrgMetadata metadata, Map<String, Metric> schemas) {
       this.metadata = metadata;
       this.schemas = schemas;
     }
 
-    public Metadata getMetadata() {
+    public OrgMetadata getMetadata() {
       return metadata;
     }
 
@@ -82,11 +83,11 @@ public class SchemaBuilder {
    * Build or update the metric schemas for an organization
    */
   public class OrganizationBuilder {
-    private final Metadata.Builder org;
+    private final OrgMetadata.Builder org;
     private Map<String, Metric> schemas = new HashMap<>();
 
-    private OrganizationBuilder(Metadata org) {
-      this.org = Metadata.newBuilder(org);
+    private OrganizationBuilder(OrgMetadata org) {
+      this.org = OrgMetadata.newBuilder(org);
     }
 
     public OrganizationBuilder(String id) {
