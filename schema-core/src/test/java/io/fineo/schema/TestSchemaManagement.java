@@ -70,7 +70,7 @@ public class TestSchemaManagement {
     String orgId = org.getMetadata().getCanonicalName();
     Metadata metadata = store.getOrgMetadata(orgId);
     SchemaBuilder builder = SchemaBuilder.create();
-    org = builder.updateOrg(metadata).newSchema()
+    org = builder.updateOrg(metadata).newMetric()
                  .withName("another metric type").withBytes("some bytes")
                  .asField()
                  .build().build();
@@ -104,7 +104,7 @@ public class TestSchemaManagement {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaBuilder builder = SchemaBuilder.create();
     store.createNewOrganization(builder.newOrg(DEFAULT_ORG_ID)
-                                       .newSchema().withName(DEFAULT_METRIC_USER_NAME).build()
+                                       .newMetric().withName(DEFAULT_METRIC_USER_NAME).build()
                                        .build());
     Metadata metadata = store.getOrgMetadata(DEFAULT_ORG_ID);
     assertNull(store.getMetricMetadataFromAlias(metadata, "other metric"));
@@ -126,7 +126,7 @@ public class TestSchemaManagement {
     assertEquals("Didn't set org version on retrieval", "0",
       getOrgMetadata(store, org).getVersion());
     store.addNewMetricsInOrg(
-      SchemaBuilder.create().updateOrg(org.getMetadata()).newSchema().withName("two").build()
+      SchemaBuilder.create().updateOrg(org.getMetadata()).newMetric().withName("two").build()
                    .build());
     assertEquals("Didn't set org version on retrial", "1", getOrgMetadata(store, org).getVersion());
   }
@@ -194,7 +194,7 @@ public class TestSchemaManagement {
 
   private SchemaBuilder.Organization createNewOrg(SchemaBuilder builder) throws IOException {
     SchemaBuilder.OrganizationBuilder orgBuilder = builder.newOrg(DEFAULT_ORG_ID);
-    return orgBuilder.newSchema()
+    return orgBuilder.newMetric()
                      .withName(DEFAULT_METRIC_USER_NAME)
                      .withBoolean("field1").asField()
                      .build().build();

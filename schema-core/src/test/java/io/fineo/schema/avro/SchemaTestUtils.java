@@ -45,7 +45,7 @@ public class SchemaTestUtils {
     String metricId, String... fieldNames) throws IOException, OldSchemaException {
     // create an organization and a metric type to populate the store
     SchemaBuilder builder = SchemaBuilder.create();
-    SchemaBuilder.MetricBuilder schema = builder.newOrg(orgid).newSchema().withName(metricId);
+    SchemaBuilder.MetricBuilder schema = builder.newOrg(orgid).newMetric().withName(metricId);
     for (String field : fieldNames) {
       schema.withBoolean(field).asField();
     }

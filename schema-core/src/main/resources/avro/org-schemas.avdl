@@ -34,7 +34,7 @@ protocol Organization {
     Metadata metadata;
 
     // helper record to map a canonical name to a number of aliases
-    union {null, map<OrgMetricMetadata>} canonicalNamesToAliases = null;
+    union {null, map<OrgMetricMetadata>} metrics = null;
   }
 
   // Metadata about a metric to store with a metric
@@ -50,7 +50,6 @@ protocol Organization {
   // parent's metadata), the field map for the actual metric's fields (name -> aliases) and then
   // the schema of the actual metric itself.
   record Metric {
-    // its 'a' metadata, but not 'the' metadata
     Metadata metadata;
     // optional map of fieldname -> delete time
     union{null, map<long>} hidden_time = null;

@@ -137,7 +137,7 @@ public class TestSchemaBuilder {
     String id = "123d43";
     String metricName = "newschema";
     SchemaBuilder.OrganizationBuilder metadata = builder.newOrg(id)
-                                                        .newSchema().withName(metricName)
+                                                        .newMetric().withName(metricName)
                                                         .build();
     SchemaBuilder.Organization organization = metadata.build();
     // verify that we have the org and the correct schema name mapping
@@ -171,7 +171,7 @@ public class TestSchemaBuilder {
   public void testNoDuplicateMetricTypeAliasesOnUpdate() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
-    builder.updateOrg(organization.getMetadata()).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+    builder.updateOrg(organization.getMetadata()).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
            .build();
   }
 
@@ -182,7 +182,7 @@ public class TestSchemaBuilder {
    */
   @Test(expected = IllegalArgumentException.class)
   public void testNoDuplicateFieldNameAliasesInSameMetric() throws Exception {
-    SchemaBuilder.create().newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+    SchemaBuilder.create().newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
                  .withBoolean(BOOLEAN_FIELD_NAME).asField()
                  .withFloat(BOOLEAN_FIELD_NAME).asField()
                  .build().build();
@@ -191,7 +191,7 @@ public class TestSchemaBuilder {
   @Test
   public void testDuplicateMetricNamesGetIgnored() throws Exception {
     SchemaBuilder.Organization org = addBooleanField(
-      SchemaBuilder.create().newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+      SchemaBuilder.create().newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
                    .withName(NEW_SCHEMA_DISPLAY_NAME)).build().build();
     assertOneMetricName(NEW_SCHEMA_DISPLAY_NAME, org);
   }
@@ -200,7 +200,7 @@ public class TestSchemaBuilder {
   public void testDuplicateMetricNamesInUpdateGetIgnored() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org = addBooleanField(
-      builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+      builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
              .withName(NEW_SCHEMA_DISPLAY_NAME)).build().build();
     Metric metric = org.getSchemas().values().iterator().next();
     org =
@@ -213,7 +213,7 @@ public class TestSchemaBuilder {
   public void testDuplicateMetricNameAndDisplayNameHasOnlyOneName() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org =
-      builder.newOrg(ORG_ID).newSchema().withDisplayName(NEW_SCHEMA_DISPLAY_NAME)
+      builder.newOrg(ORG_ID).newMetric().withDisplayName(NEW_SCHEMA_DISPLAY_NAME)
              .withName(NEW_SCHEMA_DISPLAY_NAME).build().build();
     assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME),
       collectMapListValues(org.getMetadata().getCanonicalNamesToAliases()));
@@ -227,7 +227,7 @@ public class TestSchemaBuilder {
   @Test
   public void testDuplicateFieldNamesGetIgnored() throws Exception {
     SchemaBuilder.Organization org =
-      SchemaBuilder.create().newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+      SchemaBuilder.create().newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
                    .withLong(BOOLEAN_FIELD_NAME).withAlias(BOOLEAN_FIELD_NAME).asField().build()
                    .build();
     Metric metric = org.getSchemas().values().iterator().next();
@@ -244,7 +244,7 @@ public class TestSchemaBuilder {
   public void testNoDuplicateFieldNameAliasesInUpdatedMetric() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org = builder.newOrg(ORG_ID)
-                                            .newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+                                            .newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
                                             .withBoolean(BOOLEAN_FIELD_NAME).asField().build()
                                             .build();
     Metric metric = org.getSchemas().values().iterator().next();
@@ -257,7 +257,7 @@ public class TestSchemaBuilder {
   public void testUpdateSchemaDisplayName() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org = addBooleanField(
-      builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+      builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
              .withName(NEW_SCHEMA_DISPLAY_NAME)).build().build();
     Metric metric = org.getSchemas().values().iterator().next();
     String newName = "new display name";
@@ -273,7 +273,7 @@ public class TestSchemaBuilder {
   public void testUpdateFieldDisplayName() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org =
-      builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+      builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
              .withBoolean(BOOLEAN_FIELD_NAME).asField().build().build();
     Metric metric = getFirstMetric(org);
     List<String> fieldIds = getFieldIds(metric);
@@ -305,9 +305,9 @@ public class TestSchemaBuilder {
     SchemaBuilder builder = SchemaBuilder.create();
     String metric2 = NEW_SCHEMA_DISPLAY_NAME + " 2";
     SchemaBuilder.OrganizationBuilder orgBuilder =
-      addBooleanField(builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
+      addBooleanField(builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
     SchemaBuilder.Organization organization = addBooleanField(
-      orgBuilder.newSchema().withName(metric2)).build().build();
+      orgBuilder.newMetric().withName(metric2)).build().build();
 
     // check that we have two schemas with two aliases (one each)
     assertEquals(2, organization.getSchemas().keySet().size());
@@ -326,7 +326,7 @@ public class TestSchemaBuilder {
   public void testChangeMetricAliases() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.OrganizationBuilder orgBuilder =
-      addBooleanField(builder.newOrg(ORG_ID).newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
+      addBooleanField(builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
     SchemaBuilder.Organization organization = orgBuilder.build();
 
     Metric metric = organization.getSchemas().values().iterator().next();
@@ -430,7 +430,7 @@ public class TestSchemaBuilder {
 
   private SchemaBuilder.OrganizationBuilder addMetricType(SchemaBuilder.OrganizationBuilder builder)
     throws IOException {
-    return builder.newSchema().withName(NEW_SCHEMA_DISPLAY_NAME)
+    return builder.newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
                   .withBoolean(BOOLEAN_FIELD_NAME).withAlias(BOOLEAN_FIELD_ALIAS).asField()
                   .withString(STRING_FIELD_NAME).asField()
                   .build();

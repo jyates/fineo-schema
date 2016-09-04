@@ -19,7 +19,6 @@ import org.schemarepo.Subject;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Stores and retrieves schema for record instances
@@ -74,7 +73,7 @@ public class SchemaStore {
     // check to see if we already know about this org
     Metadata metadata = parse(entry, OrgMetadata.getClassSchema());
     String metricId = next.getMetadata().getCanonicalName();
-    if (orgMetadata.getCanonicalNamesToAliases().containsKey(metricId)) {
+    if (orgMetadata.getMetrics().containsKey(metricId)) {
       LOG.debug("Org already has metricID: " + metricId);
       setVersion(metadata, entry);
       return;
@@ -185,12 +184,12 @@ public class SchemaStore {
 
 
   public String getMetricCNameFromAlias(OrgMetadata org, String aliasMetricName) {
-    if (org.getCanonicalNamesToAliases() == null) {
+    if (org.getMetrics() == null) {
       return null;
     }
     Optional<String> canonicalName =
-      org.getCanonicalNamesToAliases().entrySet().stream()
-         .filter(metricAliasEntryMatches(aliasMetricName))
+      org.getMetrics().entrySet().stream()
+         .filter(SchemaUtils.metricHasAlias(aliasMetricName))
          .map(entry -> entry.getKey())
          .findFirst();
     return canonicalName.orElse(null);
@@ -215,20 +214,12 @@ public class SchemaStore {
 
   public OrgMetricMetadata getMetricAliases(OrgMetadata org, String aliasMetricName) {
     Optional<Map.Entry<String, OrgMetricMetadata>> match =
-      org.getCanonicalNamesToAliases().entrySet().stream()
-         .filter(metricAliasEntryMatches(aliasMetricName))
+      org.getMetrics().entrySet().stream()
+         .filter(SchemaUtils.metricHasAlias(aliasMetricName))
          .findFirst();
     return match.isPresent() ?
            match.get().getValue() :
            null;
-  }
-
-  private Predicate<Map.Entry<String, OrgMetricMetadata>> metricAliasEntryMatches(
-    String metricAliasName) {
-    return nameToOrgMetric -> {
-      OrgMetricMetadata metricMetadata = nameToOrgMetric.getValue();
-      return metricMetadata.getAliasValues().contains(metricAliasName);
-    };
   }
 
   /**
