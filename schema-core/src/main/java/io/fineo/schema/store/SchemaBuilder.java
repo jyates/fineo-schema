@@ -19,12 +19,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static io.fineo.schema.avro.SchemaNameUtils.getCustomerSchemaFullName;
+import static java.lang.String.format;
 
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
@@ -184,6 +187,29 @@ class SchemaBuilder {
         + "the same. There would be no way to disambiguate between the two.\nAttempted to add "
         + "alias(es): %s", toAdd.getAliasValues()
       );
+    }
+
+    public void addMetricKey(String key, String metricId) {
+      getKeyMap().put(key, metricId);
+    }
+
+    public void removeMetricKey(String key, String metricId) {
+      String id = getKeyMap().remove(key);
+      // its not an alias for the metric - put it back and throw and error
+      if (id != null && !id.equals(metricId)) {
+        addMetricKey(key, id);
+        throw new IllegalArgumentException(
+          format("%s is not a key alias for specified metric ([id: %s]", key, metricId));
+      }
+    }
+
+    private Map<String, String> getKeyMap() {
+      Map<String, String> map = org.getMetricKeyMap();
+      if (map == null) {
+        map = new HashMap<>();
+        org.setMetricKeyMap(map);
+      }
+      return map;
     }
   }
 
@@ -432,7 +458,23 @@ class SchemaBuilder {
                            .flatMap(inst -> inst.getFieldAliases().stream())
                            .anyMatch(name -> field.fieldMetadata.getFieldAliases().contains(name)),
         "Cannot have two fields in the same metric with the same alias name! Attempted to add "
-        + "aliases: %s", field.fieldMetadata.getFieldAliases());
+        + "aliases: %s to existing aliases %s",
+        field.fieldMetadata.getFieldAliases(),
+        new AsyncToString(() -> fields.values().stream().flatMap(
+          inst -> inst.getFieldAliases().stream()).collect(Collectors.toList())));
+    }
+  }
+
+  private class AsyncToString {
+    private final Supplier<Object> supplier;
+
+    private AsyncToString(Supplier<Object> supplier) {
+      this.supplier = supplier;
+    }
+
+    @Override
+    public String toString() {
+      return supplier.get().toString();
     }
   }
 

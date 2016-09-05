@@ -72,6 +72,9 @@ public class MapRecord implements Record {
 
   private <T> T translate(String fieldName, Function<String, T> func, Class<T> clazz) {
     Object o = map.get(fieldName);
+    if(o == null){
+      return null;
+    }
     if (o.getClass().isAssignableFrom(clazz)) {
       return (T) o;
     } else if (!(o instanceof String)) {

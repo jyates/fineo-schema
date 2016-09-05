@@ -13,6 +13,8 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.exception.SchemaTypeNotFoundException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,13 +90,13 @@ public class StoreManager {
 
     public MetricBuilder newMetric() {
       SchemaBuilder.MetricBuilder metricBuilder = orgBuilder.newMetric();
-      return new MetricBuilder(null, this, orgBuilder, metricBuilder);
+      return new MetricBuilder(null, this, metricBuilder);
     }
 
     public MetricBuilder updateMetric(String userName) throws SchemaNotFoundException {
       Metric metric = getMetric(userName);
       SchemaBuilder.MetricBuilder metricBuilder = orgBuilder.updateSchema(metric);
-      return new MetricBuilder(metric, this, orgBuilder, metricBuilder);
+      return new MetricBuilder(metric, this, metricBuilder);
     }
 
 
@@ -116,8 +118,15 @@ public class StoreManager {
       return metric;
     }
 
-    private void addMetric(String cname, Metric previous) {
+    private void addMetric(String cname, Metric previous, List<String> newKeys,
+      List<String> removeKeys) {
       this.updatedMetrics.put(cname, previous);
+      for (String key : newKeys) {
+        this.orgBuilder.addMetricKey(key, cname);
+      }
+      for (String key : removeKeys) {
+        this.orgBuilder.removeMetricKey(key, cname);
+      }
     }
 
     public void commit() throws IOException, OldSchemaException {
@@ -134,15 +143,15 @@ public class StoreManager {
   public class MetricBuilder {
 
     private final OrganizationBuilder parent;
-    private final SchemaBuilder.OrganizationBuilder builder;
     private final Metric previous;
     private final SchemaBuilder.MetricBuilder metricBuilder;
+    private List<String> newKeys = new ArrayList<>();
+    private List<String> removeKeys = new ArrayList<>();
 
-    public MetricBuilder(Metric metric, OrganizationBuilder organizationBuilder,
-      SchemaBuilder.OrganizationBuilder orgBuilder, SchemaBuilder.MetricBuilder metricBuilder) {
+    public MetricBuilder(Metric metric, OrganizationBuilder parent,
+      SchemaBuilder.MetricBuilder metricBuilder) {
       this.previous = metric;
-      this.parent = organizationBuilder;
-      this.builder = orgBuilder;
+      this.parent = parent;
       this.metricBuilder = metricBuilder;
     }
 
@@ -157,6 +166,9 @@ public class StoreManager {
     }
 
     public MetricBuilder setDisplayName(String name) {
+      if (name == null) {
+        return this;
+      }
       stop.withField(name);
       this.metricBuilder.withDisplayName(name);
       // ensure its added as an alias
@@ -186,7 +198,7 @@ public class StoreManager {
     public OrganizationBuilder build() throws IOException {
       String cname = this.metricBuilder.getMetricMetadata().getMeta().getCanonicalName();
       this.metricBuilder.build();
-      this.parent.addMetric(cname, previous);
+      this.parent.addMetric(cname, previous, newKeys, removeKeys);
       return this.parent;
     }
 
@@ -199,6 +211,24 @@ public class StoreManager {
       }
 
       this.metricBuilder.updateField(cname).hardDelete();
+      return this;
+    }
+
+    public MetricBuilder addKeyAliases(String... newKeys) {
+      if (newKeys == null || newKeys.length == 0) {
+        return this;
+      }
+
+      this.newKeys.addAll(Arrays.asList(newKeys));
+      return this;
+    }
+
+    public MetricBuilder removeKeyAliases(String... keys) {
+      if (keys == null || keys.length == 0) {
+        return this;
+      }
+
+      this.removeKeys.addAll(Arrays.asList(keys));
       return this;
     }
   }

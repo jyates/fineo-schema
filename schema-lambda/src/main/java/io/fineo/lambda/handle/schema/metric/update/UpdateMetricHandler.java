@@ -9,6 +9,8 @@ import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
+import java.util.List;
+
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 
 public class UpdateMetricHandler
@@ -31,24 +33,28 @@ public class UpdateMetricHandler
   @Override
   public UpdateMetricResponse handle(UpdateMetricRequest input, Context context) throws Exception {
     validateMetricRequest(context, input);
-    boolean skipAliases = input.getAliases() == null || input.getAliases().length == 0;
-    boolean skipDisplay = input.getNewDisplayName() == null;
-    if (skipAliases && skipDisplay) {
+    boolean validAliases = validArray(input.getAliases());
+    boolean validNewKeys = validArray(input.getNewKeys());
+    boolean validRemoveKeys = validArray(input.getRemoveKeys());
+    boolean validDisplay = input.getNewDisplayName() != null;
+    if (!validAliases && !validNewKeys && !validRemoveKeys && !validDisplay) {
       return RESPONSE;
     }
 
     return retry.run(() -> {
       StoreManager manager = store.get();
-      StoreManager.MetricBuilder metric = manager.updateOrg(input.getOrgId())
-                                                 .updateMetric(input.getMetricName());
-      if (!skipAliases) {
-        metric.addAliases(input.getAliases());
-      }
-      if (!skipDisplay) {
-        metric.setDisplayName(input.getNewDisplayName());
-      }
+      StoreManager.OrganizationBuilder builder = manager.updateOrg(input.getOrgId());
+      StoreManager.MetricBuilder metric = builder.updateMetric(input.getMetricName());
+      metric.addAliases(input.getAliases());
+      metric.setDisplayName(input.getNewDisplayName());
+      metric.addKeyAliases(input.getNewKeys());
+      metric.removeKeyAliases(input.getRemoveKeys());
       metric.build().commit();
       return RESPONSE;
     });
+  }
+
+  private boolean validArray(String[] fields) {
+    return fields != null && fields.length > 0;
   }
 }
