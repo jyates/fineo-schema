@@ -8,6 +8,8 @@ protocol FineoRecord{
     string aliasName;
     // timestamp of the event
     long timestamp;
+    //the time we actually wrote the record. Used for tombstone markers
+    long writeTime = 0;
     // fields for which we don't have any schema from the user
     map<string> unknown_fields;
   }
