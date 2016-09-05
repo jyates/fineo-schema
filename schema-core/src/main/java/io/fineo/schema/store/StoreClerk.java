@@ -279,6 +279,7 @@ public class StoreClerk {
     }
     return meta.getFields().entrySet()
                .stream()
+               .filter(entry -> !AvroSchemaEncoder.BASE_FIELDS_KEY.equals(entry.getKey()))
                .map(entry -> {
                  String cname = entry.getKey();
                  FIELD_TYPE field = entry.getValue();

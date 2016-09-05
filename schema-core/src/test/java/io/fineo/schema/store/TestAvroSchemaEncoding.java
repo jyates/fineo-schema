@@ -16,9 +16,6 @@ import java.util.Map;
 
 import static com.google.common.collect.ImmutableList.of;
 
-/**
- *
- */
 public class TestAvroSchemaEncoding {
 
   @Test

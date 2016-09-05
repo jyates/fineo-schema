@@ -159,6 +159,8 @@ public class StoreManager {
     public MetricBuilder setDisplayName(String name) {
       stop.withField(name);
       this.metricBuilder.withDisplayName(name);
+      // ensure its added as an alias
+      this.metricBuilder.withName(name);
       return this;
     }
 

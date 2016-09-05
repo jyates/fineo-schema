@@ -1,5 +1,9 @@
 package io.fineo.schema.store;
 
+import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.MetricMetadata;
+import io.fineo.internal.customer.OrgMetadata;
+import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
@@ -172,5 +176,28 @@ public class SchemaTestUtils {
   public static SchemaNameGenerator generateStringNames(List<String> names){
     int[] index = new int[1];
     return () -> names.get(index[0]++);
+  }
+
+  public static Map<String, List<String>> mapFieldNames(MetricMetadata metricMetadata) {
+    Map<String, FieldMetadata> schemaFieldMap = metricMetadata.getFields();
+    Map<String, List<String>> aliases = new HashMap<>();
+    schemaFieldMap.entrySet().stream()
+                  .forEach(e -> aliases.put(e.getKey(), e.getValue().getFieldAliases()));
+    return aliases;
+  }
+
+  public static Map<String, List<String>> mapAliasValueNames(OrgMetadata orgMetadata) {
+    Map<String, OrgMetricMetadata> schemaFieldMap = orgMetadata.getMetrics();
+    Map<String, List<String>> aliases = new HashMap<>();
+    schemaFieldMap.entrySet().stream()
+                  .forEach(e -> aliases.put(e.getKey(), e.getValue().getAliasValues()));
+    return aliases;
+  }
+
+  public static <T> List<T> collectMapListValues(Map<?, List<T>> map) {
+    return map.values().stream()
+              .sequential()
+              .flatMap(list -> list.stream())
+              .collect(Collectors.toList());
   }
 }

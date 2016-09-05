@@ -20,6 +20,8 @@ import java.util.function.BiConsumer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static io.fineo.schema.avro.SchemaNameUtils.getCustomerSchemaFullName;
 
 /**
@@ -96,11 +98,17 @@ class SchemaBuilder {
 
     private void addMetric(Metric metric, OrgMetricMetadata metadata) {
       addMetricInternal(metric, metadata,
-        (id, names) -> checkArgument(!names.containsKey(id), "Already have id: %s" + id));
+        (id, names) -> {
+          checkArgument(!names.containsKey(id), "Already have metric id: '%s'", id);
+          checkAliasesDoNotAlreadyExist(names, metadata);
+        });
     }
 
     private void updateMetadata(Metric metric, OrgMetricMetadata metricMetadata) {
       addMetricInternal(metric, metricMetadata, (id, names) -> {
+        Map<String, OrgMetricMetadata> copy = newHashMap(names);
+        copy.remove(id);
+        checkAliasesDoNotAlreadyExist(copy, metricMetadata);
       });
     }
 
@@ -153,6 +161,18 @@ class SchemaBuilder {
       org.setMetadata(meta.build());
       return new Organization(org.build(), schemas);
     }
+
+    private void checkAliasesDoNotAlreadyExist(Map<String, OrgMetricMetadata> metrics,
+      OrgMetricMetadata toAdd) {
+      checkArgument(!metrics.values().stream()
+                            .flatMap(metric -> metric.getAliasValues().stream())
+                            .anyMatch(alias -> toAdd.getAliasValues().contains(alias)),
+        "Cannot add a metric with the same alias value as another metric,\n"
+        + "e.g you cannot have two metrics: 't' and 'v', whose value for 'metrictype' field is "
+        + "the same. There would be no way to disambiguate between the two.\nAttempted to add "
+        + "alias(es): %s", toAdd.getAliasValues()
+      );
+    }
   }
 
   /**
@@ -185,7 +205,7 @@ class SchemaBuilder {
     public MetricBuilder(OrganizationBuilder parent, Metric previous, OrgMetricMetadata
       previousMetadata) {
       this(parent, Metric.newBuilder(previous), OrgMetricMetadata.newBuilder(previousMetadata),
-        false);
+        true);
     }
 
     private MetricBuilder(OrganizationBuilder parent, Metric.Builder metric,
@@ -293,7 +313,7 @@ class SchemaBuilder {
     public MetricBuilder withName(String name) {
       // have to have a display name
       if (!update && metadata.getDisplayName() == null) {
-        withDisplayName(name);
+        metadata.setDisplayName(name);
       }
 
       List<String> aliases = this.metadata.getAliasValues();
@@ -309,6 +329,7 @@ class SchemaBuilder {
     }
 
     public MetricBuilder withDisplayName(String name) {
+      withName(name);
       metadata.setDisplayName(name);
       return this;
     }
@@ -318,11 +339,16 @@ class SchemaBuilder {
         "Field wants to be updates, but doesn't have a canonical name!");
       checkNotNull(this.metricMetadata.getFields().get(id),
         "No previous field found for canonical name: %s", field.canonicalName);
+      // check that we didn't add any aliases that conflict with the existing aliases
+      Map<String, FieldMetadata> map = newHashMap(this.metricMetadata.getFields());
+      map.remove(id);
+      checkAliasesDoNotAlreadyExist(map, field);
       this.metricMetadata.getFields().put(id, field.fieldMetadata.build());
       this.updatedFields.add(field);
     }
 
     private void addField(FieldBuilder field) {
+      checkAliasesDoNotAlreadyExist(field);
       // find an open canonical name
       String fieldName;
       while (true) {
@@ -389,6 +415,19 @@ class SchemaBuilder {
     public MetricMetadata.Builder getMetricMetadata() {
       return metricMetadata;
     }
+
+    private void checkAliasesDoNotAlreadyExist(FieldBuilder field) {
+      checkAliasesDoNotAlreadyExist(metricMetadata.getFields(), field);
+    }
+
+    private void checkAliasesDoNotAlreadyExist(Map<String, FieldMetadata> fields, FieldBuilder
+      field) {
+      checkArgument(!fields.values().stream()
+                           .flatMap(inst -> inst.getFieldAliases().stream())
+                           .anyMatch(name -> field.fieldMetadata.getFieldAliases().contains(name)),
+        "Cannot have two fields in the same metric with the same alias name! Attempted to add "
+        + "aliases: %s", field.fieldMetadata.getFieldAliases());
+    }
   }
 
   private enum Delete {
@@ -409,7 +448,7 @@ class SchemaBuilder {
     private FieldBuilder(MetricBuilder fields, String name, String type) {
       this.parent = fields;
       this.fieldMetadata = FieldMetadata.newBuilder()
-                                        .setFieldAliases(new ArrayList<>())
+                                        .setFieldAliases(newArrayList(name))
                                         .setDisplayName(name);
       this.type = type;
     }

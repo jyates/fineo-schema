@@ -54,7 +54,8 @@ public class TestRecordMetadata {
     Map<String, OrgMetricMetadata> metricAliasMap = schemas.getMetrics();
     assertEquals(1, metricAliasMap.size());
     assertEquals(metricAliasMap.keySet().iterator().next(), metadata.metricCanonicalType);
-    assertEquals(Lists.newArrayList(metricName), metricAliasMap.get(metadata.metricCanonicalType));
+    assertEquals(Lists.newArrayList(metricName),
+      metricAliasMap.get(metadata.metricCanonicalType).getAliasValues());
 
     // ensure the base fields match as we expect from the record
     BaseFields baseFields = metadata.getBaseFields();

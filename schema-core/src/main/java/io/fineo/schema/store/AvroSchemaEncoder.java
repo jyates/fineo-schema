@@ -20,6 +20,7 @@ import java.util.function.Predicate;
  */
 public class AvroSchemaEncoder {
 
+  public static final String FIELD_INSTANCE_NAME = "displayName";
   private final FineoStopWords STOP = new FineoStopWords();
   /**
    * Single place that we reference the schema names for the base fields, so we can set/extract
@@ -88,7 +89,7 @@ public class AvroSchemaEncoder {
     String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
     GenericData.Record record = new GenericData.Record(field.schema());
-    record.put("fieldAliasName", recordFieldName);
+    record.put(FIELD_INSTANCE_NAME, recordFieldName);
     Schema.Type type = field.schema().getField("value").schema().getType();
     Object value = null;
     switch (type) {

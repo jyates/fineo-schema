@@ -2,13 +2,14 @@ package io.fineo.schema.store;
 
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Metric;
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -28,6 +29,8 @@ import static org.junit.Assert.assertTrue;
  * Test that we build logical organization, metric type and field schemas as expected.
  */
 public class TestSchemaBuilder {
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   private static final String ORG_ID = "orgId";
   public static final String NEW_SCHEMA_DISPLAY_NAME = "newschema";
@@ -49,9 +52,10 @@ public class TestSchemaBuilder {
     Map<String, FieldMetadata> fields = metricSchema.getMetadata().getFields();
     assertEquals("Expected 1 base fields and 2 added", 3, fields.size());
     // verify the fields we added
-    assertEquals(newArrayList("bField", "aliasname"), fields.get(names.get(1)));
-    assertEquals(newArrayList(STRING_FIELD_NAME), fields.get(names.get(2)));
-    assertEquals(new ArrayList<>(), fields.get(AvroSchemaEncoder.BASE_FIELDS_KEY));
+    assertEquals(newArrayList("bField", "aliasname"), fields.get(names.get(1)).getFieldAliases());
+    assertEquals(newArrayList(STRING_FIELD_NAME), fields.get(names.get(2)).getFieldAliases());
+    assertEquals(new ArrayList<>(),
+      fields.get(AvroSchemaEncoder.BASE_FIELDS_KEY).getFieldAliases());
 
     // verify the stored fields
     Map<String, String> fieldNameTypes = new HashMap<>();
@@ -91,10 +95,10 @@ public class TestSchemaBuilder {
     Metric metric = organization.getSchemas().get(metricAliasMap.keySet().iterator().next());
     Map<String, FieldMetadata> fieldMap = metric.getMetadata().getFields();
     Map<String, List<String>> expectedFields = getBaseExpectedAliases();
-    expectedFields.put("n1", newArrayList("other alias", "aliasname", "bField"));
+    expectedFields.put("n1", newArrayList("bField", "aliasname", "other alias"));
     expectedFields.put("n2", newArrayList(STRING_FIELD_NAME));
     expectedFields.put("n3", newArrayList("iField"));
-    assertEquals(expectedFields, fieldMap);
+    assertEquals(expectedFields, SchemaTestUtils.mapFieldNames(metric.getMetadata()));
 
     // added field aliases are correct
     FieldMetadata aliases = fieldMap.get(names.get(3));
@@ -126,10 +130,13 @@ public class TestSchemaBuilder {
     verifyGeneratedMetadata(organization, names);
     metricSchema = organization.getSchemas().get(schemaName);
     Map<String, FieldMetadata> fields = metricSchema.getMetadata().getFields();
-    assertEquals(1, fields.size());
-    FieldMetadata field = fields.values().stream().findFirst().get();
+    assertEquals("Got fields: " + fields, 3, fields.size());
+    FieldMetadata field = fields.entrySet().stream()
+                                .filter(e -> e.getKey().equals("n1"))
+                                .map(e -> e.getValue())
+                                .findFirst()
+                                .get();
     assertTrue(field.getHiddenTime() > 0);
-    assertEquals("n1", fields.keySet().stream().findFirst().get());
   }
 
   @Test
@@ -146,7 +153,8 @@ public class TestSchemaBuilder {
     assertEquals(id, orgMetadata.getMetadata().getCanonicalName());
     Map<String, OrgMetricMetadata> schemaNameMap = orgMetadata.getMetrics();
     assertEquals(1, schemaNameMap.size());
-    assertEquals(newArrayList(metricName), schemaNameMap.values().iterator().next());
+    assertEquals(newArrayList(metricName),
+      schemaNameMap.values().iterator().next().getAliasValues());
 
     // look at the actual schema we created
     Map<String, Metric> schemas = organization.getSchemas();
@@ -155,41 +163,35 @@ public class TestSchemaBuilder {
     assertEquals(schemaNameMap.keySet().iterator().next(),
       schema.getMetadata().getMeta().getCanonicalName());
     Map<String, List<String>> expectedFields = getBaseExpectedAliases();
-    assertEquals(expectedFields, mapFieldNames(schema.getMetadata()));
+    assertEquals(expectedFields, SchemaTestUtils.mapFieldNames(schema.getMetadata()));
   }
 
-  private static Map<String, List<String>> mapFieldNames(MetricMetadata metricMetadata) {
-    Map<String, FieldMetadata> schemaFieldMap = metricMetadata.getFields();
-    Map<String, List<String>> aliases = new HashMap<>();
-    schemaFieldMap.entrySet().stream()
-                  .forEach(e -> aliases.put(e.getKey(), e.getValue().getFieldAliases()));
-    return aliases;
-  }
-
-  private static Map<String, List<String>> mapAliasValueNames(OrgMetadata orgMetadata) {
-    Map<String, OrgMetricMetadata> schemaFieldMap = orgMetadata.getMetrics();
-    Map<String, List<String>> aliases = new HashMap<>();
-    schemaFieldMap.entrySet().stream()
-                  .forEach(e -> aliases.put(e.getKey(), e.getValue().getAliasValues()));
-    return aliases;
-  }
-
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNoDuplicateMetricTypeAliases() throws Exception {
     List<String> names = newArrayList("n0", "n1", "n2", "n4", "n5", "n6");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
     SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
     verifyGeneratedMetadata(organization, names);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.reportMissingExceptionWithMessage(
+      "Should not be able to add a metric with the same alias value as another metric,\n e.g you "
+      + "cannot have two metrics: 't' and 'v', whose value for 'metrictype' field is the same. "
+      + "\nThere would be no way to disambiguate between the two.");
     addMetricType(builder.updateOrg(organization.getMetadata()));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNoDuplicateMetricTypeAliasesOnUpdate() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization organization = newOrgBuilderWithAMetricType(builder).build();
-    builder.updateOrg(organization.getMetadata()).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)
-           .build();
+    thrown.expect(IllegalArgumentException.class);
+    thrown.reportMissingExceptionWithMessage(
+      "Should not be able to add a metric with the same alias value as another metric,\n e.g you "
+      + "cannot have two metrics: 't' and 'v', whose value for 'metrictype' field is the same. "
+      + "\nThere would be no way to disambiguate between the two.");
+    builder.updateOrg(organization.getMetadata())
+           .newMetric().withName(NEW_SCHEMA_DISPLAY_NAME).build();
   }
 
   /**
@@ -233,12 +235,12 @@ public class TestSchemaBuilder {
       builder.newOrg(ORG_ID).newMetric().withDisplayName(NEW_SCHEMA_DISPLAY_NAME)
              .withName(NEW_SCHEMA_DISPLAY_NAME).build().build();
     assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME),
-      collectMapListValues(mapAliasValueNames(org.getMetadata())));
+      SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapAliasValueNames(org.getMetadata())));
   }
 
   private void assertOneMetricName(String metricName, SchemaBuilder.Organization org) {
     assertEquals(newArrayList(metricName),
-      collectMapListValues(mapAliasValueNames(org.getMetadata())));
+      SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapAliasValueNames(org.getMetadata())));
   }
 
   @Test
@@ -249,7 +251,7 @@ public class TestSchemaBuilder {
                    .build();
     Metric metric = org.getSchemas().values().iterator().next();
     assertEquals(newArrayList(BOOLEAN_FIELD_NAME),
-      collectMapListValues(mapFieldNames(metric.getMetadata())));
+      SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapFieldNames(metric.getMetadata())));
   }
 
   /**
@@ -257,7 +259,7 @@ public class TestSchemaBuilder {
    *
    * @throws Exception
    */
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testNoDuplicateFieldNameAliasesInUpdatedMetric() throws Exception {
     SchemaBuilder builder = SchemaBuilder.create();
     SchemaBuilder.Organization org = builder.newOrg(ORG_ID)
@@ -265,6 +267,10 @@ public class TestSchemaBuilder {
                                             .withBoolean(BOOLEAN_FIELD_NAME).asField().build()
                                             .build();
     Metric metric = org.getSchemas().values().iterator().next();
+
+    thrown.expect(IllegalArgumentException.class);
+    thrown.reportMissingExceptionWithMessage("Should not be able to add a field with the same "
+                                             + "alias as another field in the same metric");
     builder.updateOrg(org.getMetadata()).updateSchema(metric)
            .withFloat(BOOLEAN_FIELD_NAME).asField()
            .build().build();
@@ -281,13 +287,13 @@ public class TestSchemaBuilder {
     org =
       builder.updateOrg(org.getMetadata()).updateSchema(metric).withDisplayName(newName)
              .build().build();
-    List<String> names = collectMapListValues(mapAliasValueNames(org
+    List<String> names = SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapAliasValueNames(org
       .getMetadata()));
     Collections.sort(names);
     List<String> expected = newArrayList(newName, NEW_SCHEMA_DISPLAY_NAME);
     Collections.sort(expected);
     assertEquals(expected, names);
-    assertEquals(NEW_SCHEMA_DISPLAY_NAME,
+    assertEquals(newName,
       org.getMetadata()
          .getMetrics().get(metric.getMetadata().getMeta().getCanonicalName())
          .getDisplayName());
@@ -309,9 +315,16 @@ public class TestSchemaBuilder {
     assertOneMetricName(NEW_SCHEMA_DISPLAY_NAME, org);
     metric = getFirstMetric(org);
     fieldIds = getFieldIds(metric);
-    assertEquals(newArrayList(fieldId), fieldIds);
-    assertEquals(newArrayList(newName, BOOLEAN_FIELD_NAME),
-      collectMapListValues(mapFieldNames(metric.getMetadata())));
+    assertEquals("Should not have added a new field", newArrayList(fieldId), fieldIds);
+    List<String> aliases = newArrayList(newName, BOOLEAN_FIELD_NAME);
+    Collections.sort(aliases);
+    List<String> actualAliases = SchemaTestUtils.collectMapListValues(SchemaTestUtils
+      .mapFieldNames(metric.getMetadata()));
+    Collections.sort(actualAliases);
+    assertEquals(aliases, actualAliases);
+    assertEquals(NEW_SCHEMA_DISPLAY_NAME,
+      org.getMetadata().getMetrics().get(metric.getMetadata().getMeta().getCanonicalName())
+         .getDisplayName());
   }
 
   private Metric getFirstMetric(SchemaBuilder.Organization org) {
@@ -330,18 +343,19 @@ public class TestSchemaBuilder {
     String metric2 = NEW_SCHEMA_DISPLAY_NAME + " 2";
     SchemaBuilder.OrganizationBuilder orgBuilder =
       addBooleanField(builder.newOrg(ORG_ID).newMetric().withName(NEW_SCHEMA_DISPLAY_NAME)).build();
-    SchemaBuilder.Organization organization = addBooleanField(
-      orgBuilder.newMetric().withName(metric2)).build().build();
+    SchemaBuilder.Organization organization =
+      addBooleanField(orgBuilder.newMetric().withName(metric2)).build().build();
 
     // check that we have two schemas with two aliases (one each)
     assertEquals(2, organization.getSchemas().keySet().size());
-    List<String> aliases = collectMapListValues(mapAliasValueNames(organization.getMetadata()));
+    List<String> aliases = SchemaTestUtils
+      .collectMapListValues(SchemaTestUtils.mapAliasValueNames(organization.getMetadata()));
     Collections.sort(aliases);
     assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME, metric2), aliases);
     //check that we have fields with duplicate names in each schema
     organization.getSchemas().values().stream().forEach(
       metric -> assertEquals(newArrayList(BOOLEAN_FIELD_NAME),
-        collectMapListValues(mapFieldNames(metric.getMetadata()))));
+        SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapFieldNames(metric.getMetadata()))));
   }
 
   @Test
@@ -360,13 +374,6 @@ public class TestSchemaBuilder {
       org.getMetadata().getMetrics().get(metric.getMetadata().getMeta().getCanonicalName());
     assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME, metricAlias),
       metricMetadata.getAliasValues());
-  }
-
-  private <T> List<T> collectMapListValues(Map<?, List<T>> map) {
-    return map.values().stream()
-              .sequential()
-              .flatMap(list -> list.stream())
-              .collect(Collectors.toList());
   }
 
   private void verifySchemaHasFields(OrgMetadata metadata, Metric metric,
@@ -411,8 +418,9 @@ public class TestSchemaBuilder {
     assertEquals("Canonical metric name is not the expected generated name!", metricName,
       metricCanonicalName);
     assertEquals(
-      "Expected an alias for metric cname: " + metricName + ", but got: " + metrics.get(metricName),
-      1, metrics.get(metricName).getAliasValues());
+      "Expected an alias for metric cname: " + metricName + ", but got: " + metrics.get
+        (metricName).getAliasValues(),
+      1, metrics.get(metricName).getAliasValues().size());
     return metrics;
   }
 
@@ -426,7 +434,7 @@ public class TestSchemaBuilder {
     expectedAliases.put(names.get(1), newArrayList("bField", "aliasname"));
     expectedAliases.put(names.get(2), newArrayList(STRING_FIELD_NAME));
     assertEquals("Field -> Alias mapping didn't match", expectedAliases,
-      mapFieldNames(schema.getMetadata()));
+      SchemaTestUtils.mapFieldNames(schema.getMetadata()));
 
     return schema;
   }
