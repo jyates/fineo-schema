@@ -74,7 +74,7 @@ public class SchemaTestUtils {
 
   public static GenericRecord writeReadRecord(SchemaStore store, String orgId, Record record)
     throws IOException {
-    AvroSchemaEncoder bridge = new StoreManager(store).getEncoderFactory(orgId).getEncoder(record);
+    AvroSchemaEncoder bridge = new StoreClerk(store, orgId).getEncoderFactory().getEncoder(record);
     return SchemaTestUtils.writeReadRecord(bridge);
   }
 
@@ -139,7 +139,7 @@ public class SchemaTestUtils {
   public static List<GenericRecord> createRandomRecordForSchema(SchemaStore store, String orgId,
     String metricType, long startTs, int recordCount, int fieldCount)
     throws SchemaNotFoundException {
-    AvroSchemaEncoderFactory factory = new StoreManager(store).getEncoderFactory(orgId);
+    AvroSchemaEncoderFactory factory = new StoreClerk(store, orgId).getEncoderFactory();
     List<GenericRecord> records = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {
       Map<String, Object> fields = SchemaTestUtils.getBaseFields(orgId, metricType, startTs + i);

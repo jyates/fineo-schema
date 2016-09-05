@@ -51,7 +51,8 @@ public class TestAvroSchemaEncoding {
 
     Instant now = Instant.now();
     Clock clock = Clock.fixed(now, TimeZone.getDefault().toZoneId());
-    AvroSchemaEncoder encoder =  storeManager.getEncoderFactory(org).getEncoder(mapRecord);
+    StoreClerk clerk = new StoreClerk(store, org);
+    AvroSchemaEncoder encoder =  clerk.getEncoderFactory().getEncoder(mapRecord);
     encoder.setClockForTesting(clock);
     GenericRecord out = encoder.encode();
     BaseFields base = (BaseFields) out.get(AvroSchemaProperties.BASE_FIELDS_KEY);
@@ -93,7 +94,9 @@ public class TestAvroSchemaEncoding {
     map.put(f5, "1");
     MapRecord mapRecord = new MapRecord(map);
 
-    GenericData.Record record = storeManager.getEncoderFactory(org).getEncoder(mapRecord).encode();
+    StoreClerk clerk = new StoreClerk(store, org);
+    AvroSchemaEncoder encoder =  clerk.getEncoderFactory().getEncoder(mapRecord);
+    GenericData.Record record = encoder.encode();
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(record.getSchema());

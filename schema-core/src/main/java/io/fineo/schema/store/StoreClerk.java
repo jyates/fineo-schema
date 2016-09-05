@@ -2,7 +2,6 @@ package io.fineo.schema.store;
 
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
-import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -29,6 +28,12 @@ public class StoreClerk {
     this.store = store;
     this.orgId = orgId;
     this.metadata = store.getOrgMetadata(orgId);
+  }
+
+  public AvroSchemaEncoderFactory getEncoderFactory() throws
+    SchemaNotFoundException {
+    OrgMetadata orgMetadata = store.getOrgMetadata(orgId);
+    return new AvroSchemaEncoderFactory(new StoreClerk(store, orgId), orgMetadata);
   }
 
   public List<String> getUserVisibleMetricNames() {
@@ -150,6 +155,9 @@ public class StoreClerk {
     }
 
     public String getCanonicalNameFromUserFieldName(String fieldName) {
+      if (AvroSchemaProperties.IS_BASE_FIELD.test(fieldName)) {
+        return fieldName;
+      }
       if (this.reverseAliases == null) {
         this.reverseAliases = AvroSchemaManager.getAliasRemap(metric);
       }

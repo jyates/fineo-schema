@@ -23,8 +23,7 @@ public class AvroSchemaEncoderFactory {
     this.metadata = orgMetadata;
   }
 
-  public AvroSchemaEncoder getEncoder(Record record)
-    throws SchemaNotFoundException {
+  public RecordMetric getMetricForRecord(Record record) throws SchemaNotFoundException {
     Map<String, String> keys = metadata.getMetricKeyMap();
     Optional<Map.Entry<String, String>> id =
       keys == null ?
@@ -46,9 +45,15 @@ public class AvroSchemaEncoderFactory {
         AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
       metric = store.getMetricForUserNameOrAlias(metricAlias);
     }
+    return new RecordMetric(metricAlias, metric);
+  }
+
+  public AvroSchemaEncoder getEncoder(Record record)
+    throws SchemaNotFoundException {
+    RecordMetric rm = getMetricForRecord(record);
     return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
-      metric.getUnderlyingMetric(),
-      metricAlias, record);
+      rm.metric.getUnderlyingMetric(),
+      rm.metricAlias, record);
   }
 
   @VisibleForTesting
@@ -57,5 +62,15 @@ public class AvroSchemaEncoderFactory {
     return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
       metric.getUnderlyingMetric(), metricName,
       record);
+  }
+
+  public static class RecordMetric {
+    public final String metricAlias;
+    public final StoreClerk.Metric metric;
+
+    public RecordMetric(String metricAlias, StoreClerk.Metric metric) {
+      this.metricAlias = metricAlias;
+      this.metric = metric;
+    }
   }
 }

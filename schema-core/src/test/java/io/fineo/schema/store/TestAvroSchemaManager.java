@@ -70,8 +70,8 @@ public class TestAvroSchemaManager {
     // getEncoder the record and ensure that we can read it as we expect (with canonical fields)
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
     MapRecord mapRecord = new MapRecord(record);
-    GenericRecord avro = new StoreManager(store).getEncoderFactory(orgId).getEncoder(mapRecord)
-                                                .encode();
+    GenericRecord avro = new StoreClerk(store, orgId).getEncoderFactory().getEncoder(mapRecord)
+                                                     .encode();
 
     // ensure that we encoded it correctly
     Assert.assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
@@ -136,7 +136,7 @@ public class TestAvroSchemaManager {
     Mockito.verifyZeroInteractions(base);
 
     // across all the attempts
-    Mockito.verify(store, times(6)).getOrgMetadata("orgid");
+    Mockito.verify(store, times(9)).getOrgMetadata("orgid");
   }
 
   @Test(expected = IllegalStateException.class)
@@ -173,7 +173,7 @@ public class TestAvroSchemaManager {
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
 
     GenericRecord avro =
-      new StoreManager(store).getEncoderFactory(orgId).getEncoder(new MapRecord(record)).encode();
+      new StoreClerk(store, orgId).getEncoderFactory().getEncoder(new MapRecord(record)).encode();
 
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
     AvroRecordTranslator translator = manager.translator(avro);
@@ -199,7 +199,7 @@ public class TestAvroSchemaManager {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
     AvroSchemaEncoder encoder =
-      new StoreManager(store).getEncoderFactory(orgId).getEncoder(new MapRecord(record));
+      new StoreClerk(store, orgId).getEncoderFactory().getEncoder(new MapRecord(record));
 
     thrown.expect(RuntimeException.class);
     thrown.expect(TestSchemaManager.expectFailedFields(TestSchemaManager.BAD_FIELD_NAMES));
@@ -209,8 +209,8 @@ public class TestAvroSchemaManager {
   private void verifyIllegalCreate(SchemaStore store, Record record, String when)
     throws SchemaNotFoundException {
     try {
-      new StoreManager(store)
-        .getEncoderFactory(record.getStringByField(AvroSchemaProperties.ORG_ID_KEY))
+      new StoreClerk(store, record.getStringByField(AvroSchemaProperties.ORG_ID_KEY))
+        .getEncoderFactory()
         .getEncoder(record)
         .encode();
       fail("Didn't throw illegal argument exception " + when);

@@ -59,12 +59,6 @@ public class StoreManager {
     this.store = store;
   }
 
-  public AvroSchemaEncoderFactory getEncoderFactory(String orgId) throws
-    SchemaNotFoundException {
-    OrgMetadata orgMetadata = store.getOrgMetadata(orgId);
-    return new AvroSchemaEncoderFactory(new StoreClerk(store, orgId), orgMetadata);
-  }
-
   public OrganizationBuilder updateOrg(String orgId) {
     OrgMetadata org = store.getOrgMetadata(orgId);
     Preconditions.checkArgument(org != null, "No information present for tenant: '%s'", orgId);

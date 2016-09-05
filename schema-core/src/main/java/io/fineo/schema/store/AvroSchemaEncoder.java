@@ -161,7 +161,7 @@ public class AvroSchemaEncoder {
   public static AvroSchemaEncoder create(SchemaStore store, Record record)
     throws SchemaNotFoundException {
     String orgid = record.getStringByField(AvroSchemaProperties.ORG_ID_KEY);
-    return new StoreManager(store).getEncoderFactory(orgid).getEncoder(record);
+    return new StoreClerk(store, orgid).getEncoderFactory().getEncoder(record);
   }
 
   @VisibleForTesting
