@@ -2,6 +2,8 @@ package io.fineo.schema.store;
 
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.Gravestone;
+import io.fineo.internal.customer.Graveyard;
 import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.MetricMetadata;
@@ -152,13 +154,22 @@ class SchemaBuilder {
      */
     public OrganizationBuilder deleteMetric(Metric metric) {
       String name = metric.getMetadata().getMeta().getCanonicalName();
-      // remove the canonical name mapping -> so no aliases exist to support this metric.
-      org.getMetrics().put(name, OrgMetricMetadata.newBuilder().build());
+      OrgMetricMetadata metricMetadata = org.getMetrics().remove(name);
+      // at best, this is an approximation due to clock drift across machines... eh #startup
+      long deleteTime = System.currentTimeMillis();
+      Graveyard graveyard = org.getGraveyard();
+      if (graveyard == null) {
+        graveyard = Graveyard.newBuilder()
+                             .setDeadMetrics(new HashMap<>()).build();
+        org.setGraveyard(graveyard);
+      }
+      graveyard.getDeadMetrics().put(name, Gravestone.newBuilder()
+                                                     .setDeadtime(deleteTime)
+                                                     .setMetric(metricMetadata).build());
       return this;
     }
 
     public Organization build() {
-
       org.setMetadata(meta.build());
       return new Organization(org.build(), schemas);
     }
@@ -488,7 +499,6 @@ class SchemaBuilder {
       return this;
     }
   }
-
 
   private static String inc(Metadata meta) {
     String version = meta.getVersion();
