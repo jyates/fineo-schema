@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetricMetadata;
@@ -9,6 +10,8 @@ import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +28,14 @@ public class AvroSchemaEncoder {
   // essentially the reverse of the alias map in the metric metadata
   private final Map<String, String> aliasToFieldMap;
   private final OrgMetricMetadata metricMetadata;
+  private Clock clock = Clock.systemUTC();
+
+  @VisibleForTesting
+  AvroSchemaEncoder(String canonicalOrgId, OrgMetricMetadata metricMetadata, Metric metric, Clock
+    clock) {
+    this(canonicalOrgId, metricMetadata, metric);
+    this.clock = clock;
+  }
 
   AvroSchemaEncoder(String canonicalOrgId, OrgMetricMetadata metricMetadata, Metric metric) {
     this.metricMetadata = metricMetadata;
@@ -126,6 +137,7 @@ public class AvroSchemaEncoder {
 
   private void populateBaseFields(BaseFields fields, Record record) {
     fields.setTimestamp(getTimestamp(record));
+    fields.setWriteTime(Instant.now(clock).toEpochMilli());
     // try all the user specified names first
     String aliasName = null;
     if (metricMetadata.getAliasKeys() != null) {

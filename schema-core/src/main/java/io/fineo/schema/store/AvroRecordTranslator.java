@@ -71,7 +71,7 @@ public class AvroRecordTranslator {
 
     @Override
     public String getStringByField(String fieldName) {
-      return (String) getField(fieldName);
+      return getField(fieldName).toString();
     }
 
     @Override

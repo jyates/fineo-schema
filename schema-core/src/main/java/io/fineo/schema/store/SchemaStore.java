@@ -224,7 +224,7 @@ public class SchemaStore {
            null;
   }
 
-  public OrgMetricMetadata getMetricAliases(OrgMetadata org, String aliasMetricName) {
+  public OrgMetricMetadata getOrgMetricMetadataForAliasMetricName(OrgMetadata org, String aliasMetricName) {
     Optional<Map.Entry<String, OrgMetricMetadata>> match =
       org.getMetrics().entrySet().stream()
          .filter(SchemaUtils.metricHasAlias(aliasMetricName))
