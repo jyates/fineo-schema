@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.OrgMetadata;
@@ -77,6 +78,7 @@ public class StoreClerk {
      * that you can only access methods that read from the metric, rather than metadata about the
      * metric itself
      *
+     * Used in Readerator
      * @param metric underlying metric
      * @return a 'stunted' Metric
      */
@@ -115,6 +117,10 @@ public class StoreClerk {
         },
         (cname, userName, aliases) -> {
           Schema.Field field = schema.getField(cname);
+          // this field was deleted.
+          if(field == null){
+            return null;
+          }
           Schema.Type type = field.schema().getField("value").schema().getType();
           return new Field(userName, type, aliases, cname);
         });

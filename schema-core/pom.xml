@@ -41,7 +41,7 @@
           </execution>
         </executions>
         <configuration>
-          <sourceDirectory>src/main/resources/avro</sourceDirectory>
+          <sourceDirectory>src/main/avro</sourceDirectory>
           <stringType>String</stringType>
         </configuration>
       </plugin>

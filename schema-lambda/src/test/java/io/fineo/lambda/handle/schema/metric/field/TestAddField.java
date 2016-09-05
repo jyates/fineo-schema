@@ -13,6 +13,8 @@ import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
+import java.util.List;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -34,6 +36,16 @@ public class TestAddField {
     assertEquals(field, f.getName());
     assertEquals(Schema.Type.STRING, f.getType());
     assertEquals(newArrayList(), f.getAliases());
+
+    StoreClerk clerk = new StoreClerk(store, org);
+    List<StoreClerk.Metric> metrics = clerk.getMetrics();
+    assertEquals(1, metrics.size());
+    StoreClerk.Metric storedMetric = metrics.get(0);
+    List<StoreClerk.Field> fields = storedMetric.getUserVisibleFields();
+    assertEquals(1, fields.size());
+    StoreClerk.Field storedField = fields.get(0);
+    assertEquals(field, storedField.getName());
+    assertEquals(Schema.Type.STRING, storedField.getType());
   }
 
   public static void createField(SchemaStore store, String org, String metric, String field,

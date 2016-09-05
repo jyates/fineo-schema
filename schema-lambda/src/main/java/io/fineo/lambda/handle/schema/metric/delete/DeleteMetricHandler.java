@@ -27,7 +27,6 @@ public class DeleteMetricHandler
     this.retry.setRetries(retries);
   }
 
-
   @Override
   public DeleteMetricResponse handle(DeleteMetricRequest input, Context context) throws Exception {
     validateMetricRequest(context, input);

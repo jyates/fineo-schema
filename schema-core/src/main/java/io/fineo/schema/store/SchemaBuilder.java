@@ -148,7 +148,7 @@ class SchemaBuilder {
      * makes the update logic simpler
      *
      * @param metric to "delete"
-     * @return
+     * @return the update in progress for the org
      */
     public OrganizationBuilder deleteMetric(Metric metric) {
       String name = metric.getMetadata().getMeta().getCanonicalName();
