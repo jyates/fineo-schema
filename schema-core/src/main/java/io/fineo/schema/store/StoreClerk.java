@@ -1,6 +1,5 @@
 package io.fineo.schema.store;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.OrgMetadata;
@@ -129,7 +128,7 @@ public class StoreClerk {
     public List<String> getCanonicalFieldNames() {
       return this.metric.getMetadata().getFields().keySet()
                         .stream()
-                        .filter(cname -> !cname.equals(AvroSchemaEncoder.BASE_FIELDS_KEY))
+                        .filter(cname -> !cname.equals(AvroSchemaProperties.BASE_FIELDS_KEY))
                         .collect(Collectors.toList());
     }
 
@@ -285,7 +284,7 @@ public class StoreClerk {
     }
     return meta.getFields().entrySet()
                .stream()
-               .filter(entry -> !AvroSchemaEncoder.BASE_FIELDS_KEY.equals(entry.getKey()))
+               .filter(entry -> !AvroSchemaProperties.BASE_FIELDS_KEY.equals(entry.getKey()))
                .map(entry -> {
                  String cname = entry.getKey();
                  FIELD_TYPE field = entry.getValue();

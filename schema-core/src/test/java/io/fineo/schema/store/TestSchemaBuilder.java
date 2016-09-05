@@ -55,7 +55,7 @@ public class TestSchemaBuilder {
     assertEquals(newArrayList("bField", "aliasname"), fields.get(names.get(1)).getFieldAliases());
     assertEquals(newArrayList(STRING_FIELD_NAME), fields.get(names.get(2)).getFieldAliases());
     assertEquals(new ArrayList<>(),
-      fields.get(AvroSchemaEncoder.BASE_FIELDS_KEY).getFieldAliases());
+      fields.get(AvroSchemaProperties.BASE_FIELDS_KEY).getFieldAliases());
 
     // verify the stored fields
     Map<String, String> fieldNameTypes = new HashMap<>();
@@ -333,7 +333,7 @@ public class TestSchemaBuilder {
 
   private List<String> getFieldIds(Metric metric) {
     return metric.getMetadata().getFields().keySet().stream()
-                 .filter(name -> !AvroSchemaEncoder.BASE_FIELDS_KEY.equals(name))
+                 .filter(name -> !AvroSchemaProperties.BASE_FIELDS_KEY.equals(name))
                  .collect(Collectors.toList());
   }
 
@@ -441,7 +441,7 @@ public class TestSchemaBuilder {
 
   private static Map<String, List<String>> getBaseExpectedAliases() {
     Map<String, List<String>> expectedAliases = new HashMap<>();
-    expectedAliases.put(AvroSchemaEncoder.BASE_FIELDS_KEY, new ArrayList<>());
+    expectedAliases.put(AvroSchemaProperties.BASE_FIELDS_KEY, new ArrayList<>());
     return expectedAliases;
   }
 

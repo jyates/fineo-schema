@@ -1,7 +1,7 @@
 package io.fineo.schema.avro;
 
 import io.fineo.internal.customer.BaseFields;
-import io.fineo.schema.store.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -54,7 +54,7 @@ public class RecordMetadata {
   }
 
   public BaseFields getBaseFields() {
-    Object obj = record.get(AvroSchemaEncoder.BASE_FIELDS_KEY);
+    Object obj = record.get(AvroSchemaProperties.BASE_FIELDS_KEY);
     if (obj instanceof BaseFields) {
       return (BaseFields) obj;
     }

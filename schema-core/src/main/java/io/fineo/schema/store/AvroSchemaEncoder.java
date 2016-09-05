@@ -11,7 +11,6 @@ import org.apache.avro.generic.GenericData;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Bridge between the 'logical' schema and the physical schema.
@@ -20,20 +19,7 @@ import java.util.function.Predicate;
  */
 public class AvroSchemaEncoder {
 
-  public static final String FIELD_INSTANCE_NAME = "displayName";
   private final FineoStopWords STOP = new FineoStopWords();
-  /**
-   * Single place that we reference the schema names for the base fields, so we can set/extract
-   * them by name properly
-   */
-  public static final String ORG_ID_KEY = "companykey";
-  public static final String ORG_METRIC_TYPE_KEY = "metrictype";
-  public static final String TIMESTAMP_KEY = "timestamp";
-  /**
-   * name in the base schema that contains the metrics that all records must have
-   */
-  public static final String BASE_FIELDS_KEY = "baseFields";
-  public static final String BASE_TIMESTAMP_FIELD_NAME = "timestamp";
 
   private final Schema schema;
   // essentially the reverse of the alias map in the metric metadata
@@ -61,7 +47,7 @@ public class AvroSchemaEncoder {
     for (Map.Entry<String, Object> entry : record.getFields()) {
       String key = entry.getKey();
       // org ID and canonical name is encoded in the schema
-      if (IS_BASE_FIELD.test(key)) {
+      if (AvroSchemaProperties.IS_BASE_FIELD.test(key)) {
         continue;
       }
 
@@ -89,7 +75,7 @@ public class AvroSchemaEncoder {
     String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
     GenericData.Record record = new GenericData.Record(field.schema());
-    record.put(FIELD_INSTANCE_NAME, recordFieldName);
+    record.put(AvroSchemaProperties.FIELD_INSTANCE_NAME, recordFieldName);
     Schema.Type type = field.schema().getField("value").schema().getType();
     Object value = null;
     switch (type) {
@@ -129,25 +115,11 @@ public class AvroSchemaEncoder {
     return record;
   }
 
-  /**
-   * Function to help skip past the base field names in a record's schema. Returns <tt>true</tt>
-   * when a field is a 'base field'.
-   */
-  public static Predicate<String> IS_BASE_FIELD = fieldName -> {
-    switch (fieldName) {
-      case ORG_ID_KEY:
-      case ORG_METRIC_TYPE_KEY:
-      case TIMESTAMP_KEY:
-        return true;
-    }
-    return false;
-  };
-
   private void populateBaseFields(Record record, GenericData.Record avroRecord) {
-    BaseFields fields = (BaseFields) avroRecord.get(BASE_FIELDS_KEY);
+    BaseFields fields = (BaseFields) avroRecord.get(AvroSchemaProperties.BASE_FIELDS_KEY);
     if (fields == null) {
       fields = new BaseFields();
-      avroRecord.put(BASE_FIELDS_KEY, fields);
+      avroRecord.put(AvroSchemaProperties.BASE_FIELDS_KEY, fields);
     }
     populateBaseFields(fields, record);
   }
@@ -166,7 +138,7 @@ public class AvroSchemaEncoder {
     }
     // there are no alias key mappings that match, so just try the fineo key
     if (aliasName == null) {
-      aliasName = record.getStringByField(ORG_METRIC_TYPE_KEY);
+      aliasName = record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
     }
     fields.setAliasName(aliasName);
   }
@@ -174,17 +146,17 @@ public class AvroSchemaEncoder {
   // handle special case management of the timestamp
   private Long getTimestamp(Record record) {
     try {
-      return record.getLongByFieldName(TIMESTAMP_KEY);
+      return record.getLongByFieldName(AvroSchemaProperties.TIMESTAMP_KEY);
     } catch (ClassCastException e) {
       if (e.getMessage().contains("java.lang.Integer cannot be cast to java.lang.Long")) {
-        return (long) record.getIntegerByField(TIMESTAMP_KEY);
+        return (long) record.getIntegerByField(AvroSchemaProperties.TIMESTAMP_KEY);
       }
       throw e;
     }
   }
 
   private Map<String, String> getAndSetUnknownFieldsIfEmpty(GenericData.Record avroRecord) {
-    BaseFields fields = (BaseFields) avroRecord.get(BASE_FIELDS_KEY);
+    BaseFields fields = (BaseFields) avroRecord.get(AvroSchemaProperties.BASE_FIELDS_KEY);
     Map<String, String> unknown = fields.getUnknownFields();
     if (unknown == null) {
       unknown = new HashMap<>();
@@ -194,8 +166,8 @@ public class AvroSchemaEncoder {
   }
 
   public static AvroSchemaEncoder create(SchemaStore store, Record record) {
-    String orgid = record.getStringByField(ORG_ID_KEY);
-    String type = record.getStringByField(ORG_METRIC_TYPE_KEY);
+    String orgid = record.getStringByField(AvroSchemaProperties.ORG_ID_KEY);
+    String type = record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
     return new AvroSchemaManager(store, orgid).encode(type);
   }
 }

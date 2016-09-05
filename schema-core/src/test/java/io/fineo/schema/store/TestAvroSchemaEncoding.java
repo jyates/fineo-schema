@@ -32,9 +32,9 @@ public class TestAvroSchemaEncoding {
       p(f5, "INTEGER"));
 
     Map<String, Object> mapRecord = new HashMap<>();
-    mapRecord.put(AvroSchemaEncoder.ORG_ID_KEY, org);
-    mapRecord.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, metric);
-    mapRecord.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10);
+    mapRecord.put(AvroSchemaProperties.ORG_ID_KEY, org);
+    mapRecord.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, metric);
+    mapRecord.put(AvroSchemaProperties.TIMESTAMP_KEY, 10);
     mapRecord.put(f1, 1);
     mapRecord.put(f2, "true");
     mapRecord.put(f3, 1);

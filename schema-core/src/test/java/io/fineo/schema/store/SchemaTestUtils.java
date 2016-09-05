@@ -66,9 +66,9 @@ public class SchemaTestUtils {
 
   public static Map<String, Object> getBaseFields(String orgid, String metricId, long ts) {
     Map<String, Object> fields = new HashMap<>();
-    fields.put(AvroSchemaEncoder.ORG_ID_KEY, orgid);
-    fields.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, metricId);
-    fields.put(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME, ts);
+    fields.put(AvroSchemaProperties.ORG_ID_KEY, orgid);
+    fields.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, metricId);
+    fields.put(AvroSchemaProperties.BASE_TIMESTAMP_FIELD_NAME, ts);
     return fields;
   }
 

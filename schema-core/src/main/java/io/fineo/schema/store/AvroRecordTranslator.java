@@ -2,9 +2,6 @@ package io.fineo.schema.store;
 
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.RecordMetadata;
-import io.fineo.schema.store.AvroSchemaEncoder;
-import io.fineo.schema.store.AvroSchemaManager;
-import io.fineo.schema.store.SchemaStore;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 
@@ -90,7 +87,7 @@ public class AvroRecordTranslator {
     @Override
     public Object getField(String aliasName) {
       String cname = aliasMap.get(aliasName);
-      if (AvroSchemaEncoder.IS_BASE_FIELD.test(cname)) {
+      if (AvroSchemaProperties.IS_BASE_FIELD.test(cname)) {
         return record.get(cname);
       }
       IndexedRecord field = (IndexedRecord) record.get(cname);

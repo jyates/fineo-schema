@@ -1,7 +1,7 @@
 package io.fineo.schema.avro;
 
 import com.google.common.collect.Lists;
-import io.fineo.schema.store.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaTestUtils;
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
@@ -39,7 +39,7 @@ public class TestAvroSchemaInstanceBuilder {
 
     assertEquals(2, built.getFields().size());
 
-    Schema.Field base = built.getField(AvroSchemaEncoder.BASE_FIELDS_KEY);
+    Schema.Field base = built.getField(AvroSchemaProperties.BASE_FIELDS_KEY);
     assertNotNull("Missing base field!", base);
 
     Schema.Field added = built.getField(SIMPLE_FIELD_CNAME);
@@ -66,7 +66,7 @@ public class TestAvroSchemaInstanceBuilder {
     expectedFields.put("new_field", "string");
     for(Schema.Field field : built2.getFields()){
       // skip base fields
-      if(field.name().equals(AvroSchemaEncoder.BASE_FIELDS_KEY)){
+      if(field.name().equals(AvroSchemaProperties.BASE_FIELDS_KEY)){
         continue;
       }
       SchemaTestUtils.verifyFieldType(expectedFields.get(field.name()), field);
@@ -95,7 +95,7 @@ public class TestAvroSchemaInstanceBuilder {
 
   private Map<String, String> getBaseTypeMap() {
     Map<String, String> map = new HashMap<>();
-    map.put(AvroSchemaEncoder.BASE_FIELDS_KEY, "record");
+    map.put(AvroSchemaProperties.BASE_FIELDS_KEY, "record");
     return map;
   }
 
@@ -106,7 +106,7 @@ public class TestAvroSchemaInstanceBuilder {
       .withName(metricName);
 
     // check to make sure we have the expected base field
-    assertEquals(Lists.newArrayList(AvroSchemaEncoder.BASE_FIELDS_KEY),
+    assertEquals(Lists.newArrayList(AvroSchemaProperties.BASE_FIELDS_KEY),
       Lists.newArrayList(builder.getBaseFieldNames()));
 
     // add fields

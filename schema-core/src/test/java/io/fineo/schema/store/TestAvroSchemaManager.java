@@ -41,10 +41,10 @@ public class TestAvroSchemaManager {
     // start with a simple record that uses customer defined fields
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";
-    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    record.put(AvroSchemaProperties.ORG_ID_KEY, orgId);
     String orgMetric = "org-visible-metric-name";
-    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
-    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10l);
+    record.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaProperties.TIMESTAMP_KEY, 10l);
     String orgFieldName = "org-aliased-key";
     record.put(orgFieldName, "true");
 
@@ -114,14 +114,14 @@ public class TestAvroSchemaManager {
     MapRecord record = new MapRecord(content);
     verifyIllegalCreate(store, record, "when no metric or orgid");
 
-    content.put(AvroSchemaEncoder.ORG_ID_KEY, "orgid");
+    content.put(AvroSchemaProperties.ORG_ID_KEY, "orgid");
     verifyIllegalCreate(store, record, "when no orgid, but metricId present");
 
-    content.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, "metricid");
-    content.remove(AvroSchemaEncoder.ORG_ID_KEY);
+    content.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, "metricid");
+    content.remove(AvroSchemaProperties.ORG_ID_KEY);
     verifyIllegalCreate(store, record, "when no metricId, but orgId present");
 
-    content.put(AvroSchemaEncoder.ORG_ID_KEY, "orgid");
+    content.put(AvroSchemaProperties.ORG_ID_KEY, "orgid");
     verifyIllegalCreate(store, record,
       "when no metadata received from store, even when record had all necessary fields");
 
@@ -140,10 +140,10 @@ public class TestAvroSchemaManager {
   public void testCreateExistingOrg() throws Exception {
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";
-    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    record.put(AvroSchemaProperties.ORG_ID_KEY, orgId);
     String orgMetric = "org-visible-metric-name";
-    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
-    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10l);
+    record.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaProperties.TIMESTAMP_KEY, 10l);
     String orgFieldName = "org-aliased-key";
     record.put(orgFieldName, "true");
 
@@ -158,10 +158,10 @@ public class TestAvroSchemaManager {
     // start with a simple record that uses customer defined fields
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";
-    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    record.put(AvroSchemaProperties.ORG_ID_KEY, orgId);
     String orgMetric = "org-visible-metric-name";
-    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
-    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10);
+    record.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaProperties.TIMESTAMP_KEY, 10);
     String orgFieldName = "org-aliased-key";
     record.put(orgFieldName, "true");
 
@@ -181,10 +181,10 @@ public class TestAvroSchemaManager {
   public void testInvalidFieldNames() throws Exception {
     Map<String, Object> record = new HashMap<>();
     String orgId = "orgid";
-    record.put(AvroSchemaEncoder.ORG_ID_KEY, orgId);
+    record.put(AvroSchemaProperties.ORG_ID_KEY, orgId);
     String orgMetric = "org-visible-metric-name";
-    record.put(AvroSchemaEncoder.ORG_METRIC_TYPE_KEY, orgMetric);
-    record.put(AvroSchemaEncoder.TIMESTAMP_KEY, 10);
+    record.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, orgMetric);
+    record.put(AvroSchemaProperties.TIMESTAMP_KEY, 10);
     String orgFieldName = "org-aliased-key";
     record.put(orgFieldName, "true");
     // unknown fields that have invalid names

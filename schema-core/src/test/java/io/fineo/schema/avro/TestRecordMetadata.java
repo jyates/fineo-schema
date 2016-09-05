@@ -9,6 +9,7 @@ import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.AvroSchemaEncoder;
+import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.SchemaTestUtils;
 import org.apache.avro.Schema;
@@ -60,7 +61,7 @@ public class TestRecordMetadata {
     // ensure the base fields match as we expect from the record
     BaseFields baseFields = metadata.getBaseFields();
     // only time outside the schema that we actually reference this by name
-    assertEquals(fields.get(AvroSchemaEncoder.BASE_TIMESTAMP_FIELD_NAME),
+    assertEquals(fields.get(AvroSchemaProperties.BASE_TIMESTAMP_FIELD_NAME),
       baseFields.getTimestamp());
     assertEquals(metricName, baseFields.getAliasName());
     assertEquals(0, baseFields.getUnknownFields().size());
@@ -70,7 +71,7 @@ public class TestRecordMetadata {
     // canonical name has the aliased field name
     Map<String, FieldMetadata> aliases = metric.getMetadata().getFields();
     assertEquals(2, aliases.size());
-    FieldMetadata baseFieldsEntry = aliases.remove(AvroSchemaEncoder.BASE_FIELDS_KEY);
+    FieldMetadata baseFieldsEntry = aliases.remove(AvroSchemaProperties.BASE_FIELDS_KEY);
     assertEquals(FieldMetadata.newBuilder()
                               .setDisplayName("baseFields")
                               .setFieldAliases(new ArrayList<>()).build(),
