@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * Stores and retrieves schema for record instances
  */
@@ -53,8 +55,7 @@ public class SchemaStore {
     Metric previous) throws IllegalArgumentException, OldSchemaException, IOException {
     String orgId = orgMetadata.getMetadata().getCanonicalName();
     Subject orgSubject = repo.lookup(orgId);
-    Preconditions
-      .checkArgument(orgSubject != null, "Organization[%s] was not previously registered!", orgId);
+    checkArgument(orgSubject != null, "Organization [%s] was not previously registered!", orgId);
     // ensure the metric gets registered
     registerSchemaIfMetricUnknown(orgSubject, orgMetadata, next);
     // register the metric itself
@@ -75,16 +76,15 @@ public class SchemaStore {
     OrgMetadata currentOrgMetadata = parse(entry, OrgMetadata.getClassSchema());
     Metadata metricBaseMetdata = next.getMetadata().getMeta();
     String metricId = metricBaseMetdata.getCanonicalName();
-    if (orgMetadata.getMetrics().containsKey(metricId)) {
+    if (currentOrgMetadata.getMetrics().containsKey(metricId)) {
       LOG.debug("Org already has metricID: " + metricId);
-      setVersion(currentOrgMetadata, entry);
       return;
     }
 
     // update the org schema to what we just got sent
     try {
-      entry = org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
-      setVersion(currentOrgMetadata, entry);
+      setVersion(orgMetadata, entry);
+      org.registerIfLatest(SchemaNameUtils.toString(orgMetadata), entry);
     } catch (SchemaValidationException e) {
       throw new IllegalArgumentException(e);
     }

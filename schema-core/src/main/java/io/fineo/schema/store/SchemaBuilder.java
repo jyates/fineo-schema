@@ -158,6 +158,7 @@ class SchemaBuilder {
     }
 
     public Organization build() {
+
       org.setMetadata(meta.build());
       return new Organization(org.build(), schemas);
     }
@@ -296,13 +297,7 @@ class SchemaBuilder {
     }
 
     private String inc(MetricMetadata metadata) {
-      return inc(metadata.getMeta());
-    }
-
-    private String inc(Metadata meta) {
-      String version = meta.getVersion();
-      int i = Integer.parseInt(version);
-      return Integer.toString(++i);
+      return SchemaBuilder.inc(metadata.getMeta());
     }
 
     private void hide(FieldBuilder field) {
@@ -492,5 +487,12 @@ class SchemaBuilder {
       }
       return this;
     }
+  }
+
+
+  private static String inc(Metadata meta) {
+    String version = meta.getVersion();
+    int i = Integer.parseInt(version);
+    return Integer.toString(++i);
   }
 }

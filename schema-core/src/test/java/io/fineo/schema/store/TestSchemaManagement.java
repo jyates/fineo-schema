@@ -1,6 +1,5 @@
 package io.fineo.schema.store;
 
-import io.fineo.internal.customer.Metadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.OldSchemaException;
@@ -128,7 +127,7 @@ public class TestSchemaManagement {
     store.addNewMetricsInOrg(
       SchemaBuilder.create().updateOrg(org.getMetadata()).newMetric().withName("two").build()
                    .build());
-    assertEquals("Didn't set org version on retrial", "1",
+    assertEquals("Didn't set org version on retrieval", "1",
       getOrgMetadata(store, org).getMetadata().getVersion());
   }
 
