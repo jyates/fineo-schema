@@ -70,9 +70,13 @@ public class TestRecordMetadata {
     // canonical name has the aliased field name
     Map<String, FieldMetadata> aliases = metric.getMetadata().getFields();
     assertEquals(2, aliases.size());
-    assertEquals(new ArrayList<>(0), aliases.remove(AvroSchemaEncoder.BASE_FIELDS_KEY));
+    FieldMetadata baseFieldsEntry = aliases.remove(AvroSchemaEncoder.BASE_FIELDS_KEY);
+    assertEquals(FieldMetadata.newBuilder()
+                              .setDisplayName("baseFields")
+                              .setFieldAliases(new ArrayList<>()).build(),
+      baseFieldsEntry);
     String fieldCannonicalName = aliases.keySet().iterator().next();
-    assertEquals(Lists.newArrayList(field), aliases.get(fieldCannonicalName));
+    assertEquals(Lists.newArrayList(field), aliases.get(fieldCannonicalName).getFieldAliases());
     // its the right type
 
     Schema s = metadata.metricSchema;
