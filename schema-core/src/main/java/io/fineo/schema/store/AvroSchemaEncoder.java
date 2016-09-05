@@ -3,10 +3,10 @@ package io.fineo.schema.store;
 import com.google.common.annotations.VisibleForTesting;
 import io.fineo.internal.customer.BaseFields;
 import io.fineo.internal.customer.Metric;
-import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.SchemaNameUtils;
+import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
@@ -27,18 +27,12 @@ public class AvroSchemaEncoder {
   private final Schema schema;
   // essentially the reverse of the alias map in the metric metadata
   private final Map<String, String> aliasToFieldMap;
-  private final OrgMetricMetadata metricMetadata;
-  private Clock clock = Clock.systemUTC();
+  private final String metricName;
+  private final Record record;
+  private Clock clock = Clock.systemUTC(); // same as instant.now()
 
-  @VisibleForTesting
-  AvroSchemaEncoder(String canonicalOrgId, OrgMetricMetadata metricMetadata, Metric metric, Clock
-    clock) {
-    this(canonicalOrgId, metricMetadata, metric);
-    this.clock = clock;
-  }
-
-  AvroSchemaEncoder(String canonicalOrgId, OrgMetricMetadata metricMetadata, Metric metric) {
-    this.metricMetadata = metricMetadata;
+  AvroSchemaEncoder(String canonicalOrgId, Metric metric, String metricName, Record record) {
+    this.metricName = metricName;
     Schema.Parser parser = new Schema.Parser();
     parser.parse(metric.getMetricSchema());
     this.schema = parser.getTypes().get(
@@ -46,9 +40,10 @@ public class AvroSchemaEncoder {
         .getCustomerSchemaFullName(canonicalOrgId,
           metric.getMetadata().getMeta().getCanonicalName()));
     this.aliasToFieldMap = AvroSchemaManager.getAliasRemap(metric);
+    this.record = record;
   }
 
-  public GenericData.Record encode(Record record) {
+  public GenericData.Record encode() {
     GenericData.Record avroRecord = new GenericData.Record(schema);
     // pull out the fields that all records must contain, the 'base' fields
     populateBaseFields(record, avroRecord);
@@ -135,24 +130,10 @@ public class AvroSchemaEncoder {
     populateBaseFields(fields, record);
   }
 
-  private void populateBaseFields(BaseFields fields, Record record) {
-    fields.setTimestamp(getTimestamp(record));
-    fields.setWriteTime(Instant.now(clock).toEpochMilli());
-    // try all the user specified names first
-    String aliasName = null;
-    if (metricMetadata.getAliasKeys() != null) {
-      for (String name : metricMetadata.getAliasKeys()) {
-        aliasName = record.getStringByField(name);
-        if (aliasName != null) {
-          break;
-        }
-      }
-    }
-    // there are no alias key mappings that match, so just try the fineo key
-    if (aliasName == null) {
-      aliasName = record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
-    }
-    fields.setAliasName(aliasName);
+  private void populateBaseFields(BaseFields baseMetricFields, Record record) {
+    baseMetricFields.setTimestamp(getTimestamp(record));
+    baseMetricFields.setWriteTime(Instant.now(clock).toEpochMilli());
+    baseMetricFields.setAliasName(metricName);
   }
 
   // handle special case management of the timestamp
@@ -177,9 +158,14 @@ public class AvroSchemaEncoder {
     return unknown;
   }
 
-  public static AvroSchemaEncoder create(SchemaStore store, Record record) {
+  public static AvroSchemaEncoder create(SchemaStore store, Record record)
+    throws SchemaNotFoundException {
     String orgid = record.getStringByField(AvroSchemaProperties.ORG_ID_KEY);
-    String type = record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
-    return new AvroSchemaManager(store, orgid).encode(type);
+    return new StoreManager(store).getEncoderFactory(orgid).getEncoder(record);
+  }
+
+  @VisibleForTesting
+  void setClockForTesting(Clock clock) {
+    this.clock = clock;
   }
 }

@@ -8,6 +8,7 @@ import io.fineo.schema.MapRecord;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.SchemaNameGenerator;
+import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileReader;
@@ -32,7 +33,6 @@ import java.util.stream.IntStream;
 import java.util.zip.Deflater;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class SchemaTestUtils {
 
@@ -72,15 +72,15 @@ public class SchemaTestUtils {
     return fields;
   }
 
-  public static AvroSchemaEncoder getBridgeForSchema(SchemaStore store, Record record) {
-    AvroSchemaEncoder bridge = AvroSchemaEncoder.create(store, record);
-    assertNotNull("didn't find a matching metric name for record: " + record, bridge);
-    return bridge;
+  public static GenericRecord writeReadRecord(SchemaStore store, String orgId, Record record)
+    throws IOException {
+    AvroSchemaEncoder bridge = new StoreManager(store).getEncoderFactory(orgId).getEncoder(record);
+    return SchemaTestUtils.writeReadRecord(bridge);
   }
 
-  public static GenericRecord writeReadRecord(AvroSchemaEncoder bridge, Record record)
+  public static GenericRecord writeReadRecord(AvroSchemaEncoder bridge)
     throws IOException {
-    GenericData.Record outRecord = bridge.encode(record);
+    GenericData.Record outRecord = bridge.encode();
     GenericRecord decoded = readWriteData(outRecord);
     assertEquals(outRecord, decoded);
     return decoded;
@@ -137,8 +137,9 @@ public class SchemaTestUtils {
   }
 
   public static List<GenericRecord> createRandomRecordForSchema(SchemaStore store, String orgId,
-    String metricType, long startTs, int recordCount, int fieldCount) {
-    AvroSchemaEncoder bridge = new AvroSchemaManager(store, orgId).encode(metricType);
+    String metricType, long startTs, int recordCount, int fieldCount)
+    throws SchemaNotFoundException {
+    AvroSchemaEncoderFactory factory = new StoreManager(store).getEncoderFactory(orgId);
     List<GenericRecord> records = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {
       Map<String, Object> fields = SchemaTestUtils.getBaseFields(orgId, metricType, startTs + i);
@@ -146,7 +147,8 @@ public class SchemaTestUtils {
       for (int j = 0; j < fieldCount; j++) {
         fields.put("a" + j, true);
       }
-      records.add(bridge.encode(record));
+      records.add(factory.getEncoderForTesting(metricType, record.getStringByField
+        (AvroSchemaProperties.ORG_METRIC_TYPE_KEY), record).encode());
     }
     return records;
   }
@@ -166,14 +168,15 @@ public class SchemaTestUtils {
     assertEquals("Schema field instance should be a record!", Schema.Type.RECORD,
       fieldSchema.getType());
     List<Schema.Field> fields = fieldSchema.getFields();
-    assertEquals("Wrong number of fields in FieldInstanceVisitor! Got fields " + fields, 2, fields.size());
+    assertEquals("Wrong number of fields in FieldInstanceVisitor! Got fields " + fields, 2,
+      fields.size());
     //verify the alias field
     assertEquals("displayName", fields.get(0).name());
     assertEquals("value", fields.get(1).name());
     assertEquals(type, fields.get(1).schema().getType().getName());
   }
 
-  public static SchemaNameGenerator generateStringNames(List<String> names){
+  public static SchemaNameGenerator generateStringNames(List<String> names) {
     int[] index = new int[1];
     return () -> names.get(index[0]++);
   }

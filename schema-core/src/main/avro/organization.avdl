@@ -14,8 +14,6 @@ protocol Organization {
 
   // Metadata about a metric in an org
   record OrgMetricMetadata {
-    // other keys besides 'metrictype' to identify the metric
-    union{null, array<string>} aliasKeys = null;
     // values that indicate the record belongs to this metric (aka. aliases for the canonical name)
     array<string> aliasValues;
     // name that the metric should be displayed as. This is just one of the aliases
@@ -37,9 +35,14 @@ protocol Organization {
   record OrgMetadata {
     Metadata metadata;
 
-    // helper record to map a canonical name to a number of aliases
+    // the metrics that we know about
     union {null, map<OrgMetricMetadata>} metrics = null;
 
+    // org level special keys that identify a metric type, rather than "metrictype" as a key
+    // simply points to the metric id, which we can use to lookup the metirc in 'metrics'
+    union {null, map<string>} metricKeyMap = null;
+
+    // dead metrics that we can't quite get rid of yet
     union {null,Graveyard} graveyard = null;
   }
 }

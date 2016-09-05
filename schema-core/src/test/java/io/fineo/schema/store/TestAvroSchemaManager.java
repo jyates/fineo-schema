@@ -8,6 +8,7 @@ import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.RecordMetadata;
 import io.fineo.schema.avro.SchemaNameUtils;
+import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.junit.Assert;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
 
 /**
  * Encoding/Decoding of metrics is consistent using the manager
@@ -65,11 +67,11 @@ public class TestAvroSchemaManager {
       schema.getFields().stream().map(field -> field.name())
             .anyMatch(name -> name.equals(orgFieldName)));
 
-    // encode the record and ensure that we can read it as we expect (with canonical fields)
+    // getEncoder the record and ensure that we can read it as we expect (with canonical fields)
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
-    AvroSchemaEncoder encoder = manager.encode(orgMetric);
     MapRecord mapRecord = new MapRecord(record);
-    GenericRecord avro = encoder.encode(mapRecord);
+    GenericRecord avro = new StoreManager(store).getEncoderFactory(orgId).getEncoder(mapRecord)
+                                                .encode();
 
     // ensure that we encoded it correctly
     Assert.assertEquals(SchemaNameUtils.getOrgId(avro.getSchema().getNamespace()), orgId);
@@ -103,8 +105,7 @@ public class TestAvroSchemaManager {
     Record record = new MapRecord(fields);
 
     //create a bridge between the record and the avro type
-    AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, record);
-    SchemaTestUtils.writeReadRecord(bridge, record);
+    SchemaTestUtils.writeReadRecord(store, id, record);
   }
 
   @Test
@@ -131,9 +132,11 @@ public class TestAvroSchemaManager {
     Mockito.when(store.getOrgMetadata("orgid")).thenReturn(meta);
     Mockito.when(meta.getMetadata()).thenReturn(base);
     verifyIllegalCreate(store, record, "when org id exists, but metric type not found");
-    Mockito.verify(meta).getMetadata();
-    Mockito.verify(base).getCanonicalName();
-    Mockito.verify(store, Mockito.times(2)).getOrgMetadata("orgid");
+    Mockito.verify(meta, times(2)).getMetrics();
+    Mockito.verifyZeroInteractions(base);
+
+    // across all the attempts
+    Mockito.verify(store, times(6)).getOrgMetadata("orgid");
   }
 
   @Test(expected = IllegalStateException.class)
@@ -169,9 +172,10 @@ public class TestAvroSchemaManager {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
 
+    GenericRecord avro =
+      new StoreManager(store).getEncoderFactory(orgId).getEncoder(new MapRecord(record)).encode();
+
     AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
-    AvroSchemaEncoder encoder = manager.encode(orgMetric);
-    GenericRecord avro = encoder.encode(new MapRecord(record));
     AvroRecordTranslator translator = manager.translator(avro);
     RecordMetadata metadata = translator.getMetadata();
     assertEquals(10L, (long) metadata.getBaseFields().getTimestamp());
@@ -194,19 +198,23 @@ public class TestAvroSchemaManager {
 
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     SchemaTestUtils.addNewOrg(store, orgId, orgMetric, orgFieldName);
-    AvroSchemaManager manager = new AvroSchemaManager(store, orgId);
-    AvroSchemaEncoder encoder = manager.encode(orgMetric);
+    AvroSchemaEncoder encoder =
+      new StoreManager(store).getEncoderFactory(orgId).getEncoder(new MapRecord(record));
 
     thrown.expect(RuntimeException.class);
     thrown.expect(TestSchemaManager.expectFailedFields(TestSchemaManager.BAD_FIELD_NAMES));
-    encoder.encode(new MapRecord(record));
+    encoder.encode();
   }
 
-  private void verifyIllegalCreate(SchemaStore store, Record record, String when) {
+  private void verifyIllegalCreate(SchemaStore store, Record record, String when)
+    throws SchemaNotFoundException {
     try {
-      AvroSchemaEncoder.create(store, record);
+      new StoreManager(store)
+        .getEncoderFactory(record.getStringByField(AvroSchemaProperties.ORG_ID_KEY))
+        .getEncoder(record)
+        .encode();
       fail("Didn't throw illegal argument exception " + when);
-    } catch (IllegalArgumentException | NullPointerException e) {
+    } catch (IllegalArgumentException | NullPointerException | SchemaNotFoundException e) {
       //expected
     }
   }

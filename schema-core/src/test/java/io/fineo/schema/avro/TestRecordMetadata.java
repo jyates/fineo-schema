@@ -8,12 +8,10 @@ import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.Record;
-import io.fineo.schema.store.AvroSchemaEncoder;
 import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.SchemaTestUtils;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.junit.Test;
 
@@ -38,9 +36,8 @@ public class TestRecordMetadata {
     fields.put(field, true);
     Record record = new MapRecord(fields);
 
-    // encode the record as an avro record
-    AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, record);
-    GenericRecord deserialized = SchemaTestUtils.writeReadRecord(bridge, record);
+    // getEncoder the record as an avro record
+    GenericRecord deserialized = SchemaTestUtils.writeReadRecord(store, orgID, record);
 
     // validate that we parse elements out correctly from the record
     verifyRecordMetadataMatchesExpectedNaming(deserialized);
@@ -106,8 +103,7 @@ public class TestRecordMetadata {
     Record genRecord = new MapRecord(rawFields);
 
     //create a bridge between the record and the avro type
-    AvroSchemaEncoder bridge = SchemaTestUtils.getBridgeForSchema(store, genRecord);
-    GenericData.Record record = bridge.encode(genRecord);
+    GenericRecord record = SchemaTestUtils.writeReadRecord(store, id, genRecord);
     RecordMetadata metadata = RecordMetadata.get(record);
     BaseFields fields = metadata.getBaseFields();
     assertEquals(start, fields.getTimestamp().longValue());

@@ -28,17 +28,6 @@ class AvroSchemaManager {
       checkNotNull(store.getOrgMetadata(checkNotNull(orgId, "OrgID can never be null!")));
   }
 
-  public AvroSchemaEncoder encode(String aliasedMetricType) {
-    Preconditions.checkArgument(aliasedMetricType != null);
-
-    String orgId = orgMetadata.getMetadata().getCanonicalName();
-    Metric metric = checkNotNull(store.getMetricMetadataFromAlias(orgMetadata, aliasedMetricType),
-      "Don't have a metric '%s' for org '%s", aliasedMetricType, orgId);
-    OrgMetricMetadata metricMetadata =
-      orgMetadata.getMetrics().get(metric.getMetadata().getMeta().getCanonicalName());
-    return new AvroSchemaEncoder(orgId, metricMetadata, metric);
-  }
-
   public static AvroRecordTranslator translator(SchemaStore store, GenericRecord record) {
     RecordMetadata metadata = RecordMetadata.get(record);
     return new AvroSchemaManager(store, metadata.getOrgID()).translator(record);

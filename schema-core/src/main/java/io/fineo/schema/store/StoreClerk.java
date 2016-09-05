@@ -2,6 +2,7 @@ package io.fineo.schema.store;
 
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -63,6 +64,12 @@ public class StoreClerk {
     return foundMetric;
   }
 
+  public Metric getMetricForCanonicalName(String metricId) {
+    io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricId);
+    OrgMetricMetadata metadata = this.metadata.getMetrics().get(metricId);
+    return new Metric(metadata.getDisplayName(), metric, orgId, metadata.getAliasValues());
+  }
+
   public static class Metric {
 
     private final String userName;
@@ -76,8 +83,9 @@ public class StoreClerk {
      * Advanced use only! Create a Metric, but only with an underlying schema metric. This means
      * that you can only access methods that read from the metric, rather than metadata about the
      * metric itself
-     *
+     * <p>
      * Used in Readerator
+     *
      * @param metric underlying metric
      * @return a 'stunted' Metric
      */
@@ -117,7 +125,7 @@ public class StoreClerk {
         (cname, userName, aliases) -> {
           Schema.Field field = schema.getField(cname);
           // this field was deleted.
-          if(field == null){
+          if (field == null) {
             return null;
           }
           Schema.Type type = field.schema().getField("value").schema().getType();
