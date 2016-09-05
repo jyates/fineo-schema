@@ -147,8 +147,7 @@ public class SchemaTestUtils {
       for (int j = 0; j < fieldCount; j++) {
         fields.put("a" + j, true);
       }
-      records.add(factory.getEncoderForTesting(metricType, record.getStringByField
-        (AvroSchemaProperties.ORG_METRIC_TYPE_KEY), record).encode());
+      records.add(factory.getEncoder(record).encode());
     }
     return records;
   }
