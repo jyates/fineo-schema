@@ -285,7 +285,6 @@ class SchemaBuilder {
           case HARD:
             instance.deleteField(field.canonicalName);
             metric.getMetadata().getFields().remove(field.canonicalName);
-            break;
           case SOFT:
             hide(field);
             break;

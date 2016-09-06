@@ -138,6 +138,13 @@ public class StoreClerk {
         });
     }
 
+    public List<FieldMetadata> getHiddenFields() {
+      return metric.getMetadata().getFields().entrySet().stream()
+                   .filter(entry -> entry.getValue().getHiddenTime() > 0)
+                   .map(entry -> entry.getValue())
+                   .collect(Collectors.toList());
+    }
+
     public List<String> getCanonicalFieldNames() {
       return this.metric.getMetadata().getFields().keySet()
                         .stream()

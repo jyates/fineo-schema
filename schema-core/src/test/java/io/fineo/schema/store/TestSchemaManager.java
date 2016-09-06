@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Pair;
@@ -25,6 +26,7 @@ import static io.fineo.schema.store.SchemaTestUtils.generateStringNames;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestSchemaManager {
 
@@ -274,7 +276,28 @@ public class TestSchemaManager {
     assertEquals(newArrayList(a1, a2), metric.getAliases());
   }
 
-  private void expectAllBadFields(){
+  @Test
+  public void testDeleteField() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(SchemaNameGenerator.DEFAULT_INSTANCE, store);
+    String orgId = "org1", metricName = "metricname", field = "f1";
+    manager.newOrg(orgId).newMetric().setDisplayName(metricName).newField().withName(field)
+           .withType(StoreManager.Type.BOOLEAN).build().build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    assertEquals(1, clerk.getMetricForUserNameOrAlias(metricName).getUserVisibleFields().size());
+
+    // delete the field
+    manager.updateOrg(orgId).updateMetric(metricName).deleteField(field).build().commit();
+    assertEquals(0, clerk.getMetricForUserNameOrAlias(metricName).getUserVisibleFields().size());
+    List<FieldMetadata> fields = clerk.getMetricForUserNameOrAlias(metricName).getHiddenFields();
+    assertEquals(1, fields.size());
+    FieldMetadata meta = fields.get(0);
+    assertEquals(field, meta.getDisplayName());
+    assertTrue(meta.getHiddenTime() > 0);
+  }
+
+  private void expectAllBadFields() {
     thrown.expect(RuntimeException.class);
     thrown.expect(expectFailedFields(BAD_FIELD_NAMES));
   }
