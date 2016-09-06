@@ -67,11 +67,12 @@ public class TestRecordMetadata {
     Metric metric = store.getMetricMetadata(metadata.orgID, metadata.metricCanonicalType);
     // canonical name has the aliased field name
     Map<String, FieldMetadata> aliases = metric.getMetadata().getFields();
-    assertEquals(2, aliases.size());
+    assertEquals(3, aliases.size());
     FieldMetadata baseFieldsEntry = aliases.remove(AvroSchemaProperties.BASE_FIELDS_KEY);
     assertEquals(FieldMetadata.newBuilder()
                               .setDisplayName("baseFields")
-                              .setFieldAliases(new ArrayList<>()).build(),
+                              .setFieldAliases(new ArrayList<>())
+                              .setInternalField(true).build(),
       baseFieldsEntry);
     String fieldCannonicalName = aliases.keySet().iterator().next();
     assertEquals(Lists.newArrayList(field), aliases.get(fieldCannonicalName).getFieldAliases());

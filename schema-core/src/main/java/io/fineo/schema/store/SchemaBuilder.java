@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Gravestone;
@@ -11,14 +12,17 @@ import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
+import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
 import org.apache.avro.Schema;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -44,7 +48,8 @@ class SchemaBuilder {
     return new SchemaBuilder(SchemaNameGenerator.DEFAULT_INSTANCE);
   }
 
-  public static SchemaBuilder createForTesting(SchemaNameGenerator gen) {
+  @VisibleForTesting
+  static SchemaBuilder createForTesting(SchemaNameGenerator gen) {
     return new SchemaBuilder(gen);
   }
 
@@ -211,6 +216,18 @@ class SchemaBuilder {
       }
       return map;
     }
+
+    public OrganizationBuilder withTimestampFormat(String... formats) {
+      validateTimestampParsingFormats(formats);
+      List<String> ts = this.org.getTimestampFormats();
+      if (ts == null) {
+        ts = newArrayList(formats);
+        this.org.setTimestampFormats(ts);
+        return this;
+      }
+      ts.addAll(Arrays.asList(formats));
+      return this;
+    }
   }
 
   /**
@@ -238,6 +255,8 @@ class SchemaBuilder {
 
     public MetricBuilder(OrganizationBuilder parent) {
       this(parent, Metric.newBuilder(), OrgMetricMetadata.newBuilder(), false);
+      // add the timestamp field to any record
+      this.withLong(AvroSchemaProperties.TIMESTAMP_KEY).asInternalField();
     }
 
     public MetricBuilder(OrganizationBuilder parent, Metric previous, OrgMetricMetadata
@@ -275,49 +294,63 @@ class SchemaBuilder {
       checkArgument(update || (metadata.hasAliasValues() && metadata.getAliasValues().size() > 0),
         "Must have at least one name for the metric types when not updating a schema");
       // build the schema based on the newFields given
-      AvroSchemaInstanceBuilder instance =
+      AvroSchemaInstanceBuilder schemaBuilder =
         new AvroSchemaInstanceBuilder(metric.getMetricSchema(), orgId,
           metricMetadata.getMeta().getCanonicalName());
 
       // do any updates we need for the updated records
-      updatedFields.forEach(field -> {
-        switch (field.delete) {
-          case HARD:
-            instance.deleteField(field.canonicalName);
-            metric.getMetadata().getFields().remove(field.canonicalName);
-          case SOFT:
-            hide(field);
-            break;
-          case NONE:
-          default:
-            return;
-        }
-      });
+      updatedFields
+        .stream()
+        // internal
+        .filter(SKIP_INTERNAL_FIELDS)
+        .forEach(field -> {
+          switch (field.delete) {
+            case HARD:
+              schemaBuilder.deleteField(field.canonicalName);
+              metric.getMetadata().getFields().remove(field.canonicalName);
+            case SOFT:
+              hide(field);
+              break;
+            case NONE:
+            default:
+              return;
+          }
+        });
 
       // add fields from the base record so we have the name mapping. We have already added
       // user-defined fields to the metadata in the field builder
       Map<String, FieldMetadata> fieldAliases = metricMetadata.getFields();
-      instance.getBaseFieldNames().stream().forEach(name -> {
+      schemaBuilder.getBaseFieldNames().stream().forEach(name -> {
           FieldMetadata metadata = fieldAliases.get(name);
           if (metadata == null) {
-            metadata = FieldMetadata.newBuilder()
-                                    .setDisplayName(name)
-                                    .setFieldAliases(new ArrayList<>())
-                                    .build();
+            FieldMetadata.Builder builder = FieldMetadata.newBuilder()
+                                                         .setDisplayName(name)
+                                                         .setFieldAliases(new ArrayList<>());
+            if (name.equals(AvroSchemaProperties.BASE_FIELDS_KEY)) {
+              builder.setInternalField(true);
+            }
+            metadata = builder.build();
             fieldAliases.put(name, metadata);
           }
         }
       );
+      // add the internal fields as schema too
+      newFields.stream()
+               .filter(SKIP_INTERNAL_FIELDS.negate())
+               .forEach(builder -> {
+                 fieldAliases.put(builder.canonicalName, builder.fieldMetadata.build());
+               });
 
       // actually add the new fields to the instance schema
-      newFields.stream().forEach(field -> {
-        instance.newField()
-                .name(String.valueOf(field.canonicalName))
-                .type(field.type)
-                .done();
-      });
+      newFields.stream()
+               .filter(SKIP_INTERNAL_FIELDS)
+               .forEach(field -> schemaBuilder.newField()
+                                              .name(field.canonicalName)
+                                              .type(field.type)
+                                              .done());
 
-      Schema recordSchema = instance.build();
+
+      Schema recordSchema = schemaBuilder.build();
 
       // generate the final metric
       metric.setMetricSchema(recordSchema.toString());
@@ -331,6 +364,9 @@ class SchemaBuilder {
       }
       return parent;
     }
+
+    private final Predicate<FieldBuilder> SKIP_INTERNAL_FIELDS =
+      builder -> !builder.fieldMetadata.getInternalField();
 
     private String inc(MetricMetadata metadata) {
       return SchemaBuilder.inc(metadata.getMeta());
@@ -380,15 +416,19 @@ class SchemaBuilder {
 
     private void addField(FieldBuilder field) {
       checkAliasesDoNotAlreadyExist(field);
-      // find an open canonical name
       String fieldName;
-      while (true) {
-        // find an empty name
-        fieldName = gen.generateSchemaName();
-        Map<String, FieldMetadata> fields = metricMetadata.getFields();
-        if (fields.get(fieldName) == null) {
-          fields.put(fieldName, field.fieldMetadata.build());
-          break;
+      if (field.fieldMetadata.getInternalField()) {
+        fieldName = field.fieldMetadata.getDisplayName();
+      } else {
+        // find an open canonical name
+        while (true) {
+          // find an empty name
+          fieldName = gen.generateSchemaName();
+          Map<String, FieldMetadata> fields = metricMetadata.getFields();
+          if (fields.get(fieldName) == null) {
+            fields.put(fieldName, field.fieldMetadata.build());
+            break;
+          }
         }
       }
       field.canonicalName = fieldName;
@@ -431,7 +471,8 @@ class SchemaBuilder {
       // get the properties of the known field from the schema
       Schema record = getRecordSchema();
       Schema.Field field = record.getField(fieldCanonicalName);
-      String type = field.schema().getType().getName();
+      // internal fields don't need to worry about managing type on update
+      String type = fieldMetdata.getInternalField() ? null : field.schema().getType().getName();
       return new FieldBuilder(this, fieldCanonicalName, fieldMetdata, type);
     }
 
@@ -461,6 +502,24 @@ class SchemaBuilder {
         field.fieldMetadata.getFieldAliases(),
         new AsyncToString(() -> fields.values().stream().flatMap(
           inst -> inst.getFieldAliases().stream()).collect(Collectors.toList())));
+    }
+
+    public MetricBuilder withTimestampFormat(String... formats) {
+      validateTimestampParsingFormats(formats);
+      List<String> ts = this.metricMetadata.getTimestampFormats();
+      if (ts == null) {
+        ts = newArrayList(formats);
+        this.metricMetadata.setTimestampFormats(ts);
+        return this;
+      }
+      ts.addAll(Arrays.asList(formats));
+      return this;
+    }
+  }
+
+  private void validateTimestampParsingFormats(String... formats) {
+    for (String format : formats) {
+      MultiPatternTimestampParser.getFormatter(format);
     }
   }
 
@@ -538,6 +597,12 @@ class SchemaBuilder {
         this.fieldMetadata.getFieldAliases().add(name);
       }
       return this;
+    }
+
+    private MetricBuilder asInternalField() {
+      this.fieldMetadata.setInternalField(true);
+      parent.addField(this);
+      return parent;
     }
   }
 

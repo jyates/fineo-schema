@@ -93,5 +93,10 @@ public class AvroRecordTranslator {
       IndexedRecord field = (IndexedRecord) record.get(cname);
       return field.get(1);
     }
+
+    @Override
+    public void delete(String field) {
+      throw new UnsupportedOperationException("Cannot delete from a translated record!");
+    }
   }
 }

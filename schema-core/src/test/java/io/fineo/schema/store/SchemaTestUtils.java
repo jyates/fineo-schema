@@ -36,6 +36,10 @@ import static org.junit.Assert.assertEquals;
 
 public class SchemaTestUtils {
 
+  public static SchemaStore getStore(){
+    return new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+  }
+
   public static SchemaStore createStoreWithBooleanFields(String orgid, String metricId,
     String... fieldNames)
     throws IOException, OldSchemaException {

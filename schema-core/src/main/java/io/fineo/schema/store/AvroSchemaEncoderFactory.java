@@ -1,9 +1,11 @@
 package io.fineo.schema.store;
 
-import com.google.common.annotations.VisibleForTesting;
+import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.Record;
 import io.fineo.schema.exception.SchemaNotFoundException;
+import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
+import io.fineo.schema.store.timestamp.TimestampFieldExtractor;
 
 import java.util.Map;
 import java.util.Optional;
@@ -11,7 +13,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- *
+ * Factory to around the encoding of a record
  */
 public class AvroSchemaEncoderFactory {
 
@@ -25,19 +27,15 @@ public class AvroSchemaEncoderFactory {
 
   public RecordMetric getMetricForRecord(Record record) throws SchemaNotFoundException {
     Map<String, String> keys = metadata.getMetricKeyMap();
-    Optional<Map.Entry<String, String>> id =
-      keys == null ?
-      Optional.empty() :
-      keys.entrySet().stream()
-          .filter(entry -> record.getStringByField(entry.getKey()) != null)
-          .findAny();
+    Optional<String> key = keys == null ? Optional.empty() : SchemaUtils.getFieldInRecord(record,
+      keys.keySet());
 
     String metricAlias;
     StoreClerk.Metric metric;
     // try just the simple metrictype key
-    if (id.isPresent()) {
-      metricAlias = record.getStringByField(id.get().getKey());
-      metric = store.getMetricForCanonicalName(id.get().getValue());
+    if (key.isPresent()) {
+      metricAlias = record.getStringByField(key.get());
+      metric = store.getMetricForCanonicalName(keys.get(key.get()));
     } else {
       metricAlias = checkNotNull(record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY),
         "No metric type found in record for fields %s or standard key %s",
@@ -51,17 +49,12 @@ public class AvroSchemaEncoderFactory {
   public AvroSchemaEncoder getEncoder(Record record)
     throws SchemaNotFoundException {
     RecordMetric rm = getMetricForRecord(record);
+    MetricMetadata mm = rm.metric.getUnderlyingMetric().getMetadata();
+    MultiPatternTimestampParser parser = new MultiPatternTimestampParser(metadata, mm, new
+      TimestampFieldExtractor(mm));
     return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
       rm.metric.getUnderlyingMetric(),
-      rm.metricAlias, record);
-  }
-
-  @VisibleForTesting
-  AvroSchemaEncoder getEncoderForTesting(String metricId, String metricName, Record record) {
-    StoreClerk.Metric metric = store.getMetricForCanonicalName(metricId);
-    return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
-      metric.getUnderlyingMetric(), metricName,
-      record);
+      rm.metricAlias, record, parser);
   }
 
   public static class RecordMetric {

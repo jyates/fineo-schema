@@ -33,6 +33,7 @@ public class StoreClerk {
   public AvroSchemaEncoderFactory getEncoderFactory() throws
     SchemaNotFoundException {
     OrgMetadata orgMetadata = store.getOrgMetadata(orgId);
+
     return new AvroSchemaEncoderFactory(new StoreClerk(store, orgId), orgMetadata);
   }
 
@@ -146,9 +147,11 @@ public class StoreClerk {
     }
 
     public List<String> getCanonicalFieldNames() {
-      return this.metric.getMetadata().getFields().keySet()
+      return this.metric.getMetadata().getFields().entrySet()
                         .stream()
-                        .filter(cname -> !cname.equals(AvroSchemaProperties.BASE_FIELDS_KEY))
+                        // hide internal fields
+                        .filter(entry -> !entry.getValue().getInternalField())
+                        .map(entry -> entry.getKey())
                         .collect(Collectors.toList());
     }
 
@@ -274,6 +277,10 @@ public class StoreClerk {
     }
   }
 
+  public OrgMetadata getOrgMetadataForTesting(){
+    return this.metadata;
+  }
+
   private static String getUserNameFromAliases(List<String> aliases) {
     return aliases != null && aliases.size() > 0 ? aliases.get(0) : null;
   }
@@ -341,6 +348,6 @@ public class StoreClerk {
 
   @FunctionalInterface
   public interface TriFunction<F1, F2, F3, R> {
-    public R call(F1 field1, F2 field2, F3 field3);
+    R call(F1 field1, F2 field2, F3 field3);
   }
 }

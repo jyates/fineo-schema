@@ -38,6 +38,9 @@ protocol Organization {
     // the metrics that we know about
     union {null, map<OrgMetricMetadata>} metrics = null;
 
+    // org level timestamp formats
+    union {null, array<string>} timestampFormats = null;
+
     // org level special keys that identify a metric type, rather than "metrictype" as a key
     // simply points to the metric id, which we can use to lookup the metirc in 'metrics'
     union {null, map<string>} metricKeyMap = null;

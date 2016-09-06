@@ -1,6 +1,8 @@
 package io.fineo.schema.store;
 
+import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Pair;
@@ -17,18 +19,25 @@ import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.schema.store.SchemaTestUtils.generateStringNames;
+import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats.ISO_INSTANT;
+import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
+  .RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestSchemaManager {
+
+  private static final String orgId = "org1", metricName = "metricname";
 
   private static final String STRING = "STRING";
   public static final String[] BAD_FIELD_NAMES =
@@ -297,6 +306,62 @@ public class TestSchemaManager {
     assertTrue(meta.getHiddenTime() > 0);
   }
 
+  @Test
+  public void testCreationHasTimestampFieldMetadata() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    manager.newOrg(orgId).newMetric().setDisplayName(metricName).build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
+    MetricMetadata metricMetadata = metric.getUnderlyingMetric().getMetadata();
+    FieldMetadata timestamp = metricMetadata.getFields().get(AvroSchemaProperties.TIMESTAMP_KEY);
+    assertNotNull("No timestamp field found in metric metadata", timestamp);
+    assertTrue("Timestamp field is not an internal field!", timestamp.getInternalField());
+  }
+
+  @Test
+  public void testUpdateTimestampField() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    manager.newOrg(orgId).newMetric().setDisplayName(metricName).build().commit();
+    String alias = "ts-alias";
+    manager.updateOrg(orgId).updateMetric(metricName).addFieldAlias(AvroSchemaProperties
+      .TIMESTAMP_KEY, alias).build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
+    MetricMetadata metricMetadata = metric.getUnderlyingMetric().getMetadata();
+    FieldMetadata timestamp = metricMetadata.getFields().get(AvroSchemaProperties.TIMESTAMP_KEY);
+    assertEquals(newArrayList(AvroSchemaProperties.TIMESTAMP_KEY, alias), timestamp
+      .getFieldAliases());
+  }
+
+  @Test
+  public void testValidTimestampParsingSpecification() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    thrown.expect(IllegalArgumentException.class);
+    manager.newOrg(orgId)
+           .withTimestampFormat("a/c/v")
+           .newMetric().setDisplayName(metricName)
+           .build().commit();
+  }
+
+  /**
+   * Able to just specify the names of the specs, rather than a pattern
+   */
+  @Test
+  public void testSpecifyTimestampParsingSpecificationNames() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    manager.newOrg(orgId)
+           .withTimestampFormat(RFC_1123_DATE_TIME.name())
+           .newMetric().setDisplayName(metricName)
+           .withTimestampFormat(ISO_INSTANT.name())
+           .build().commit();
+  }
+
   private void expectAllBadFields() {
     thrown.expect(RuntimeException.class);
     thrown.expect(expectFailedFields(BAD_FIELD_NAMES));
@@ -310,6 +375,8 @@ public class TestSchemaManager {
       @Override
       public boolean matches(Object item) {
         msg = ((RuntimeException) item).getMessage();
+        Preconditions.checkNotNull(msg, "No message attached to error! \nCause: %s, \nStack: %s",
+          item, Arrays.toString(((RuntimeException) item).getStackTrace()));
         for (String field : fields) {
           if (msg.contains(field)) {
             this.error.remove(field);

@@ -33,7 +33,7 @@ public class TestSchemaBuilder {
   public ExpectedException thrown = ExpectedException.none();
 
   private static final String ORG_ID = "orgId";
-  public static final String NEW_SCHEMA_DISPLAY_NAME = "newschema";
+  private static final String NEW_SCHEMA_DISPLAY_NAME = "newschema";
   private static final String BOOLEAN_FIELD_NAME = "bField";
   private static final String STRING_FIELD_NAME = "sField";
   private static final String BOOLEAN_FIELD_ALIAS = "aliasname";
@@ -50,7 +50,7 @@ public class TestSchemaBuilder {
     Metric metricSchema = verifyGeneratedMetricMetadata(organization, names);
     // verify each field name + alias in the actual schema
     Map<String, FieldMetadata> fields = metricSchema.getMetadata().getFields();
-    assertEquals("Expected 1 base fields and 2 added", 3, fields.size());
+    assertEquals("Wrong number of initial fields! Got fields: " + fields, 4, fields.size());
     // verify the fields we added
     assertEquals(newArrayList("bField", "aliasname"), fields.get(names.get(1)).getFieldAliases());
     assertEquals(newArrayList(STRING_FIELD_NAME), fields.get(names.get(2)).getFieldAliases());
@@ -130,7 +130,7 @@ public class TestSchemaBuilder {
     verifyGeneratedMetadata(organization, names);
     metricSchema = organization.getSchemas().get(schemaName);
     Map<String, FieldMetadata> fields = metricSchema.getMetadata().getFields();
-    assertEquals("Got fields: " + fields, 3, fields.size());
+    assertEquals("Got fields: " + fields, 4, fields.size());
     FieldMetadata field = fields.entrySet().stream()
                                 .filter(e -> e.getKey().equals("n1"))
                                 .map(e -> e.getValue())
@@ -250,7 +250,7 @@ public class TestSchemaBuilder {
                    .withLong(BOOLEAN_FIELD_NAME).withAlias(BOOLEAN_FIELD_NAME).asField().build()
                    .build();
     Metric metric = org.getSchemas().values().iterator().next();
-    assertEquals(newArrayList(BOOLEAN_FIELD_NAME),
+    assertEquals(newArrayList(BOOLEAN_FIELD_NAME, AvroSchemaProperties.TIMESTAMP_KEY),
       SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapFieldNames(metric.getMetadata())));
   }
 
@@ -307,7 +307,7 @@ public class TestSchemaBuilder {
              .withBoolean(BOOLEAN_FIELD_NAME).asField().build().build();
     Metric metric = getFirstMetric(org);
     List<String> fieldIds = getFieldIds(metric);
-    assertEquals("Got fields: " + fieldIds, 1, fieldIds.size());
+    assertEquals("Got fields: " + fieldIds, 2, fieldIds.size());
     String fieldId = fieldIds.get(0);
     String newName = "new field name";
     org = builder.updateOrg(org.getMetadata()).updateSchema(metric).updateField(fieldId)
@@ -315,8 +315,10 @@ public class TestSchemaBuilder {
     assertOneMetricName(NEW_SCHEMA_DISPLAY_NAME, org);
     metric = getFirstMetric(org);
     fieldIds = getFieldIds(metric);
-    assertEquals("Should not have added a new field", newArrayList(fieldId), fieldIds);
-    List<String> aliases = newArrayList(newName, BOOLEAN_FIELD_NAME);
+    assertEquals("Should not have added a new field",
+      newArrayList(fieldId, AvroSchemaProperties.TIMESTAMP_KEY), fieldIds);
+    List<String> aliases =
+      newArrayList(newName, BOOLEAN_FIELD_NAME, AvroSchemaProperties.TIMESTAMP_KEY);
     Collections.sort(aliases);
     List<String> actualAliases = SchemaTestUtils.collectMapListValues(SchemaTestUtils
       .mapFieldNames(metric.getMetadata()));
@@ -354,7 +356,7 @@ public class TestSchemaBuilder {
     assertEquals(newArrayList(NEW_SCHEMA_DISPLAY_NAME, metric2), aliases);
     //check that we have fields with duplicate names in each schema
     organization.getSchemas().values().stream().forEach(
-      metric -> assertEquals(newArrayList(BOOLEAN_FIELD_NAME),
+      metric -> assertEquals(newArrayList(BOOLEAN_FIELD_NAME, AvroSchemaProperties.TIMESTAMP_KEY),
         SchemaTestUtils.collectMapListValues(SchemaTestUtils.mapFieldNames(metric.getMetadata()))));
   }
 
@@ -442,6 +444,8 @@ public class TestSchemaBuilder {
   private static Map<String, List<String>> getBaseExpectedAliases() {
     Map<String, List<String>> expectedAliases = new HashMap<>();
     expectedAliases.put(AvroSchemaProperties.BASE_FIELDS_KEY, new ArrayList<>());
+    expectedAliases
+      .put(AvroSchemaProperties.TIMESTAMP_KEY, newArrayList(AvroSchemaProperties.TIMESTAMP_KEY));
     return expectedAliases;
   }
 

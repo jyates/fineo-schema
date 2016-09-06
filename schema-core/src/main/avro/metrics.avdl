@@ -8,6 +8,10 @@ protocol Metrics {
     string displayName;
     array<string> fieldAliases;
     long hiddenTime = 0;
+
+    // if this is an internal field. They should not be able to be deleted by the user. These
+    // fields are also not added to the output schema - they are managed by the BaseFields instance
+    boolean internalField = false;
   }
 
   // Metadata about a metric to store with a metric
@@ -16,6 +20,8 @@ protocol Metrics {
 
     // names of the fields and possible aliases for the field
     union {null, map<FieldMetadata>} fields = null;
+
+    union {null, array<string>} timestampFormats = null;
   }
 
   // A metric's schema in an organization.

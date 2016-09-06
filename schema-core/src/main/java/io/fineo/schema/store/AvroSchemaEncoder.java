@@ -2,11 +2,13 @@ package io.fineo.schema.store;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fineo.internal.customer.BaseFields;
+import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.SchemaNameUtils;
 import io.fineo.schema.exception.SchemaNotFoundException;
+import io.fineo.schema.store.timestamp.TimestampParser;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
@@ -29,9 +31,13 @@ public class AvroSchemaEncoder {
   private final Map<String, String> aliasToFieldMap;
   private final String metricName;
   private final Record record;
+  private final TimestampParser timestampParser;
+  private final Metric metric;
   private Clock clock = Clock.systemUTC(); // same as instant.now()
 
-  AvroSchemaEncoder(String canonicalOrgId, Metric metric, String metricName, Record record) {
+  AvroSchemaEncoder(String canonicalOrgId, Metric metric, String metricName, Record record,
+    TimestampParser timestampParser) {
+    this.metric = metric;
     this.metricName = metricName;
     Schema.Parser parser = new Schema.Parser();
     parser.parse(metric.getMetricSchema());
@@ -41,6 +47,7 @@ public class AvroSchemaEncoder {
           metric.getMetadata().getMeta().getCanonicalName()));
     this.aliasToFieldMap = AvroSchemaManager.getAliasRemap(metric);
     this.record = record;
+    this.timestampParser = timestampParser;
   }
 
   public GenericData.Record encode() {
@@ -52,18 +59,19 @@ public class AvroSchemaEncoder {
     STOP.recordStart();
     for (Map.Entry<String, Object> entry : record.getFields()) {
       String key = entry.getKey();
-      // org ID and canonical name is encoded in the schema
-      if (AvroSchemaProperties.IS_BASE_FIELD.test(key)) {
+      String fieldCName = aliasToFieldMap.get(key);
+      // skip base/internal fields
+      FieldMetadata fieldMetadata = metric.getMetadata().getFields().get(fieldCName);
+      if (AvroSchemaProperties.IS_BASE_FIELD.test(key) ||
+          (fieldMetadata != null && fieldMetadata.getInternalField())) {
         continue;
       }
 
       STOP.withField(key);
-      String fieldName = aliasToFieldMap.get(key);
 
-      // add to the named field, if we have it
-      if (fieldName != null) {
+      if (fieldCName != null) {
         avroRecord
-          .put(fieldName, asTypedRecord(avroRecord.getSchema(), fieldName, key, record));
+          .put(fieldCName, asTypedRecord(avroRecord.getSchema(), fieldCName, key, record));
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
@@ -138,14 +146,7 @@ public class AvroSchemaEncoder {
 
   // handle special case management of the timestamp
   private Long getTimestamp(Record record) {
-    try {
-      return record.getLongByFieldName(AvroSchemaProperties.TIMESTAMP_KEY);
-    } catch (ClassCastException e) {
-      if (e.getMessage().contains("java.lang.Integer cannot be cast to java.lang.Long")) {
-        return (long) record.getIntegerByField(AvroSchemaProperties.TIMESTAMP_KEY);
-      }
-      throw e;
-    }
+    return timestampParser.getTimestamp(record);
   }
 
   private Map<String, String> getAndSetUnknownFieldsIfEmpty(GenericData.Record avroRecord) {

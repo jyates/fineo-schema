@@ -99,7 +99,6 @@ public class StoreManager {
       return new MetricBuilder(metric, this, metricBuilder);
     }
 
-
     public OrganizationBuilder deleteMetric(String userName) {
       Metric metric;
       try {
@@ -109,6 +108,15 @@ public class StoreManager {
         return this;
       }
       orgBuilder.deleteMetric(metric);
+      return this;
+    }
+
+    public OrganizationBuilder withTimestampFormat(String... formats) {
+      if (formats == null || formats.length == 0) {
+        return this;
+      }
+
+      this.orgBuilder.withTimestampFormat(formats);
       return this;
     }
 
@@ -229,6 +237,15 @@ public class StoreManager {
       }
 
       this.removeKeys.addAll(Arrays.asList(keys));
+      return this;
+    }
+
+    public MetricBuilder withTimestampFormat(String... formats) {
+      if (formats == null || formats.length == 0) {
+        return this;
+      }
+
+      this.metricBuilder.withTimestampFormat(formats);
       return this;
     }
   }
