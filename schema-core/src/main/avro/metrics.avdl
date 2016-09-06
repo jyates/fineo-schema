@@ -7,7 +7,16 @@ protocol Metrics {
   record FieldMetadata {
     string displayName;
     array<string> fieldAliases;
-    long hiddenTime = 0;
+  }
+
+  // track the field that was deleted
+  record FieldGravestone {
+    long deadtime = 0;
+    FieldMetadata field;
+  }
+
+  record FieldGraveyard {
+    map<FieldGravestone> deadFields;
   }
 
   // Metadata about a metric to store with a metric
@@ -16,6 +25,9 @@ protocol Metrics {
 
     // names of the fields and possible aliases for the field
     union {null, map<FieldMetadata>} fields = null;
+
+    // dead fields that we can't quite get rid of yet
+    union {null, FieldGraveyard} graveyard = null;
   }
 
   // A metric's schema in an organization.

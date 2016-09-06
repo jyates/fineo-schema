@@ -1,6 +1,8 @@
 package io.fineo.schema.store;
 
 import com.google.common.collect.ImmutableList;
+import io.fineo.internal.customer.FieldGravestone;
+import io.fineo.internal.customer.FieldGraveyard;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
@@ -8,6 +10,8 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -138,11 +142,12 @@ public class StoreClerk {
         });
     }
 
-    public List<FieldMetadata> getHiddenFields() {
-      return metric.getMetadata().getFields().entrySet().stream()
-                   .filter(entry -> entry.getValue().getHiddenTime() > 0)
-                   .map(entry -> entry.getValue())
-                   .collect(Collectors.toList());
+    public Collection<FieldGravestone> getHiddenFields() {
+      FieldGraveyard graveyard = metric.getMetadata().getGraveyard();
+      if (graveyard == null) {
+        return Collections.emptyList();
+      }
+      return graveyard.getDeadFields().values();
     }
 
     public List<String> getCanonicalFieldNames() {

@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import io.fineo.internal.customer.FieldGravestone;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.OldSchemaException;
@@ -288,13 +289,23 @@ public class TestSchemaManager {
     assertEquals(1, clerk.getMetricForUserNameOrAlias(metricName).getUserVisibleFields().size());
 
     // delete the field
+    long min = System.currentTimeMillis();
     manager.updateOrg(orgId).updateMetric(metricName).deleteField(field).build().commit();
     assertEquals(0, clerk.getMetricForUserNameOrAlias(metricName).getUserVisibleFields().size());
-    List<FieldMetadata> fields = clerk.getMetricForUserNameOrAlias(metricName).getHiddenFields();
+    List<FieldGravestone> fields = newArrayList(clerk.getMetricForUserNameOrAlias(metricName)
+                                                     .getHiddenFields());
     assertEquals(1, fields.size());
-    FieldMetadata meta = fields.get(0);
+    FieldGravestone gravestone = fields.get(0);
+    FieldMetadata meta = gravestone.getField();
     assertEquals(field, meta.getDisplayName());
-    assertTrue(meta.getHiddenTime() > 0);
+    assertTrue(
+      "Deadtime was set to " + gravestone.getDeadtime() + ", but expected larger than start "
+      + "time of " + min, gravestone.getDeadtime() > min);
+
+    // add the field back in
+    manager.updateOrg(orgId).updateMetric(metricName)
+           .newField().withName(field).withType(StoreManager.Type.BOOLEAN).build()
+           .build().commit();
   }
 
   private void expectAllBadFields() {

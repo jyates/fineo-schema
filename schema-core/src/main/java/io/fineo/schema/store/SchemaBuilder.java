@@ -1,6 +1,8 @@
 package io.fineo.schema.store;
 
 import com.google.common.base.Preconditions;
+import io.fineo.internal.customer.FieldGravestone;
+import io.fineo.internal.customer.FieldGraveyard;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Gravestone;
 import io.fineo.internal.customer.Graveyard;
@@ -280,13 +282,20 @@ class SchemaBuilder {
           metricMetadata.getMeta().getCanonicalName());
 
       // do any updates we need for the updated records
+      long deadTime = System.currentTimeMillis();
       updatedFields.forEach(field -> {
         switch (field.delete) {
           case HARD:
             instance.deleteField(field.canonicalName);
-            metric.getMetadata().getFields().remove(field.canonicalName);
           case SOFT:
-            hide(field);
+            FieldMetadata metadata = metricMetadata.getFields().remove(field.canonicalName);
+            FieldGraveyard graveyard = metricMetadata.getGraveyard();
+            if(graveyard == null){
+              graveyard = FieldGraveyard.newBuilder().setDeadFields(new HashMap<>()).build();
+             metricMetadata.setGraveyard(graveyard);
+            }
+            graveyard.getDeadFields().put(field.canonicalName,
+              FieldGravestone.newBuilder().setDeadtime(deadTime).setField(metadata).build());
             break;
           case NONE:
           default:
@@ -334,11 +343,6 @@ class SchemaBuilder {
 
     private String inc(MetricMetadata metadata) {
       return SchemaBuilder.inc(metadata.getMeta());
-    }
-
-    private void hide(FieldBuilder field) {
-      FieldMetadata metadata = this.metricMetadata.getFields().get(field.canonicalName);
-      metadata.setHiddenTime(System.currentTimeMillis());
     }
 
     public MetricBuilder withName(String name) {
@@ -515,11 +519,6 @@ class SchemaBuilder {
         this.parent.updateField(this);
       }
       return this.parent;
-    }
-
-    public MetricBuilder softDelete() {
-      this.delete = Delete.SOFT;
-      return this.asField();
     }
 
     public MetricBuilder hardDelete() {

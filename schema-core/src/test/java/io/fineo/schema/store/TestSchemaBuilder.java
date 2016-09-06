@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test that we build logical organization, metric type and field schemas as expected.
@@ -113,7 +112,7 @@ public class TestSchemaBuilder {
   }
 
   @Test
-  public void testHideField() throws Exception {
+  public void testDeleteField() throws Exception {
     List<String> names = newArrayList("n0", "n1", "n2", "n3", "n4");
     SchemaNameGenerator gen = setupMockNameGenerator(names);
     SchemaBuilder builder = SchemaBuilder.createForTesting(gen);
@@ -124,19 +123,13 @@ public class TestSchemaBuilder {
 
     organization = builder.updateOrg(organization.getMetadata())
                           .updateSchema(metricSchema)
-                          .updateField("n1").softDelete().build()
+                          .updateField("n1").hardDelete().build()
                           .build();
     // metadata doesn't change
     verifyGeneratedMetadata(organization, names);
     metricSchema = organization.getSchemas().get(schemaName);
     Map<String, FieldMetadata> fields = metricSchema.getMetadata().getFields();
-    assertEquals("Got fields: " + fields, 3, fields.size());
-    FieldMetadata field = fields.entrySet().stream()
-                                .filter(e -> e.getKey().equals("n1"))
-                                .map(e -> e.getValue())
-                                .findFirst()
-                                .get();
-    assertTrue(field.getHiddenTime() > 0);
+    assertEquals("Got fields: " + fields, 2, fields.size());
   }
 
   @Test
