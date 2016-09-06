@@ -1,6 +1,5 @@
 package io.fineo.schema.store;
 
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.Record;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -49,9 +48,9 @@ public class AvroSchemaEncoderFactory {
   public AvroSchemaEncoder getEncoder(Record record)
     throws SchemaNotFoundException {
     RecordMetric rm = getMetricForRecord(record);
-    MetricMetadata mm = rm.metric.getUnderlyingMetric().getMetadata();
-    MultiPatternTimestampParser parser = new MultiPatternTimestampParser(metadata, mm, new
-      TimestampFieldExtractor(mm));
+    MultiPatternTimestampParser parser =
+      new MultiPatternTimestampParser(metadata, rm.metric.getTimestampPatterns(),
+        TimestampFieldExtractor.create(rm.metric));
     return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
       rm.metric.getUnderlyingMetric(),
       rm.metricAlias, record, parser);

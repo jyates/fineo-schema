@@ -8,6 +8,7 @@ public class UpdateMetricRequest extends MetricRequest{
   private String[] removeKeys;
   private String newDisplayName;
   private String[] aliases;
+  private String[] timestampPatterns;
 
   public String getNewDisplayName() {
     return newDisplayName;
@@ -39,5 +40,13 @@ public class UpdateMetricRequest extends MetricRequest{
 
   public void setRemoveKeys(String[] removeKeys) {
     this.removeKeys = removeKeys;
+  }
+
+  public String[] getTimestampPatterns() {
+    return timestampPatterns;
+  }
+
+  public void setTimestampPatterns(String[] timestampPatterns) {
+    this.timestampPatterns = timestampPatterns;
   }
 }

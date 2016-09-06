@@ -219,13 +219,7 @@ class SchemaBuilder {
 
     public OrganizationBuilder withTimestampFormat(String... formats) {
       validateTimestampParsingFormats(formats);
-      List<String> ts = this.org.getTimestampFormats();
-      if (ts == null) {
-        ts = newArrayList(formats);
-        this.org.setTimestampFormats(ts);
-        return this;
-      }
-      ts.addAll(Arrays.asList(formats));
+      this.org.setTimestampFormats(Arrays.asList(formats));
       return this;
     }
   }
@@ -506,13 +500,7 @@ class SchemaBuilder {
 
     public MetricBuilder withTimestampFormat(String... formats) {
       validateTimestampParsingFormats(formats);
-      List<String> ts = this.metricMetadata.getTimestampFormats();
-      if (ts == null) {
-        ts = newArrayList(formats);
-        this.metricMetadata.setTimestampFormats(ts);
-        return this;
-      }
-      ts.addAll(Arrays.asList(formats));
+      this.metricMetadata.setTimestampFormats(Arrays.asList(formats));
       return this;
     }
   }

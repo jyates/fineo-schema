@@ -360,6 +360,18 @@ public class TestSchemaManager {
            .newMetric().setDisplayName(metricName)
            .withTimestampFormat(ISO_INSTANT.name())
            .build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    assertEquals(newArrayList(ISO_INSTANT.name()),
+      clerk.getMetricForUserNameOrAlias(metricName).getTimestampPatterns());
+
+    // setting a new format should just have that format
+    manager.updateOrg(orgId)
+           .updateMetric(metricName)
+           .withTimestampFormat(RFC_1123_DATE_TIME.name())
+           .build().commit();
+    assertEquals(newArrayList(RFC_1123_DATE_TIME.name()),
+      clerk.getMetricForUserNameOrAlias(metricName).getTimestampPatterns());
   }
 
   private void expectAllBadFields() {

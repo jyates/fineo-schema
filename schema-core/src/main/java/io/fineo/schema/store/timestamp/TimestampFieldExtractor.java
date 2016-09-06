@@ -1,10 +1,9 @@
 package io.fineo.schema.store.timestamp;
 
-import io.fineo.internal.customer.FieldMetadata;
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.schema.Record;
 import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaUtils;
+import io.fineo.schema.store.StoreClerk;
 
 import java.util.List;
 
@@ -13,15 +12,18 @@ import java.util.List;
  */
 public class TimestampFieldExtractor {
 
-  private final MetricMetadata metric;
+  private final List<String> aliases;
 
-  public TimestampFieldExtractor(MetricMetadata metric) {
-    this.metric = metric;
+  public static TimestampFieldExtractor create(StoreClerk.Metric metric) {
+    StoreClerk.Field field = metric.getFieldForCanonicalName(AvroSchemaProperties.TIMESTAMP_KEY);
+    return new TimestampFieldExtractor(field.getAliases());
+  }
+
+  private TimestampFieldExtractor(List<String> timestampAliases) {
+    this.aliases = timestampAliases;
   }
 
   public String getTimestampKey(Record record) {
-    FieldMetadata timestampMetadata = metric.getFields().get(AvroSchemaProperties.TIMESTAMP_KEY);
-    List<String> aliases = timestampMetadata.getFieldAliases();
     return SchemaUtils.getFieldInRecord(record, aliases).orElse(AvroSchemaProperties.TIMESTAMP_KEY);
   }
 }

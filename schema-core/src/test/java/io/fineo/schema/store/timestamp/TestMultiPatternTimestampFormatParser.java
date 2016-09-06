@@ -99,7 +99,7 @@ public class TestMultiPatternTimestampFormatParser {
     StoreClerk.Metric m = clerk.getMetricForUserNameOrAlias(metric);
     MetricMetadata metricMetadata = m.getUnderlyingMetric().getMetadata();
     MultiPatternTimestampParser parser = new MultiPatternTimestampParser(clerk
-      .getOrgMetadataForTesting(), metricMetadata, new TimestampFieldExtractor(metricMetadata));
+      .getOrgMetadataForTesting(), m.getTimestampPatterns(), TimestampFieldExtractor.create(m));
 
     return parser.getTimestamp(new MapRecord(map));
   }

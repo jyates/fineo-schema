@@ -70,7 +70,6 @@ public class TestTimestampFieldExtractor {
   private TimestampFieldExtractor getExtractor(SchemaStore store, String org)
     throws SchemaNotFoundException {
     StoreClerk clerk = new StoreClerk(store, org);
-    return new TimestampFieldExtractor(clerk
-      .getMetricForUserNameOrAlias(metric).getUnderlyingMetric().getMetadata());
+    return TimestampFieldExtractor.create(clerk.getMetricForUserNameOrAlias(metric));
   }
 }

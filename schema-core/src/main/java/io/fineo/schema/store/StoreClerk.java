@@ -8,6 +8,7 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -108,9 +109,6 @@ public class StoreClerk {
     }
 
     public List<Field> getUserVisibleFields() {
-      if (schema == null) {
-        this.schema = new Schema.Parser().parse(metric.getMetricSchema());
-      }
       return collectElementsForFields(
         new MetadataWrapper<FieldMetadata>() {
           @Override
@@ -129,14 +127,21 @@ public class StoreClerk {
           }
         },
         (cname, userName, aliases) -> {
-          Schema.Field field = schema.getField(cname);
-          // this field was deleted.
-          if (field == null) {
-            return null;
-          }
-          Schema.Type type = field.schema().getField("value").schema().getType();
-          return new Field(userName, type, aliases, cname);
+          Field field = buildField(cname, userName, aliases);
+          return field.isInternalField() ? null : field;
         });
+    }
+
+    private Field buildField(String cname, String userName, List<String> aliases) {
+      if (schema == null) {
+        this.schema = new Schema.Parser().parse(metric.getMetricSchema());
+      }
+      Schema.Field field = schema.getField(cname);
+      if (field == null) {
+        return new Field(userName, aliases, cname);
+      }
+      Schema.Type type = field.schema().getField("value").schema().getType();
+      return new Field(userName, type, aliases, cname);
     }
 
     public List<FieldMetadata> getHiddenFields() {
@@ -207,6 +212,22 @@ public class StoreClerk {
     public int hashCode() {
       return metric != null ? metric.hashCode() : 0;
     }
+
+    public List<String> getTimestampPatterns() {
+      List<String> patterns = this.metric.getMetadata().getTimestampFormats();
+      if(patterns == null){
+        patterns = Collections.emptyList();
+      }
+      return patterns;
+    }
+
+    public Field getFieldForCanonicalName(String name) {
+      FieldMetadata metadata = this.metric.getMetadata().getFields().get(name);
+      if (metadata == null) {
+        return null;
+      }
+      return buildField(name, metadata.getDisplayName(), metadata.getFieldAliases());
+    }
   }
 
   public static class Field {
@@ -214,12 +235,23 @@ public class StoreClerk {
     private final Schema.Type type;
     private final List<String> aliases;
     private final String cname;
+    private final boolean internalField;
+
+    public Field(String name, List<String> aliases, String cname) {
+      this(name, null, aliases, cname, true);
+    }
 
     public Field(String name, Schema.Type type, List<String> aliases, String cname) {
+      this(name, type, aliases, cname, false);
+    }
+
+    private Field(String name, Schema.Type type, List<String> aliases, String cname,
+      boolean internalField) {
       this.name = name;
       this.type = type;
       this.aliases = aliases;
       this.cname = cname;
+      this.internalField = internalField;
     }
 
     public String getName() {
@@ -275,9 +307,13 @@ public class StoreClerk {
              ", cname='" + cname + '\'' +
              '}';
     }
+
+    public boolean isInternalField() {
+      return this.internalField;
+    }
   }
 
-  public OrgMetadata getOrgMetadataForTesting(){
+  public OrgMetadata getOrgMetadataForTesting() {
     return this.metadata;
   }
 

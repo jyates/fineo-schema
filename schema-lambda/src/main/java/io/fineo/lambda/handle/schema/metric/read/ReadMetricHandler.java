@@ -41,6 +41,7 @@ public class ReadMetricHandler
 
       response.setName(metric.getUserName());
       response.setAliases(metric.getAliases().toArray(new String[0]));
+      response.setTimestampPatterns(metric.getTimestampPatterns().toArray(new String[0]));
       List<StoreClerk.Field> fields = metric.getUserVisibleFields();
       ReadFieldResponse[] readFields = new ReadFieldResponse[fields.size()];
       response.setFields(readFields);

@@ -1,7 +1,6 @@
 package io.fineo.schema.store.timestamp;
 
 import com.google.common.base.Preconditions;
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.Record;
 import org.slf4j.Logger;
@@ -14,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.time.temporal.TemporalAccessor;
+import java.util.List;
 
 /**
  * Parse the timestamp with various patterns. First the metric-level patterns are attempted,
@@ -48,13 +48,13 @@ public class MultiPatternTimestampParser implements TimestampParser {
   }
 
   private final OrgMetadata org;
-  private final MetricMetadata metric;
+  private final List<String> fallbackPattterns;
   private final TimestampFieldExtractor extractor;
 
-  public MultiPatternTimestampParser(OrgMetadata org, MetricMetadata metric,
+  public MultiPatternTimestampParser(OrgMetadata org, List<String> fallbackPattterns,
     TimestampFieldExtractor extractor) {
     this.org = org;
-    this.metric = metric;
+    this.fallbackPattterns = fallbackPattterns;
     this.extractor = extractor;
   }
 
@@ -64,7 +64,7 @@ public class MultiPatternTimestampParser implements TimestampParser {
     String value = Preconditions.checkNotNull(record.getStringByField(key),
       "Could not find a timestamp in record: %s", record);
     // start with the metric-level aliases
-    Long parsed = parseTime(value, metric.getTimestampFormats());
+    Long parsed = parseTime(value, fallbackPattterns);
     // maybe the org level has something
     if (parsed == null) {
       parsed = parseTime(value, org.getTimestampFormats());

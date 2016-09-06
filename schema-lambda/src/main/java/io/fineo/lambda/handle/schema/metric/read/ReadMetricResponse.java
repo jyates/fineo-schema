@@ -6,6 +6,7 @@ public class ReadMetricResponse {
   public String name;
   public String[] aliases;
   public ReadFieldResponse[] fields;
+  private String[] timestampPatterns;
 
   public String getName() {
     return name;
@@ -29,5 +30,13 @@ public class ReadMetricResponse {
 
   public void setFields(ReadFieldResponse[] fields) {
     this.fields = fields;
+  }
+
+  public void setTimestampPatterns(String[] timestampPatterns) {
+    this.timestampPatterns = timestampPatterns;
+  }
+
+  public String[] getTimestampPatterns() {
+    return timestampPatterns;
   }
 }

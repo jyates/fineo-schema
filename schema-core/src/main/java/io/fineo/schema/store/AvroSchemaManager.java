@@ -1,10 +1,8 @@
 package io.fineo.schema.store;
 
-import com.google.common.base.Preconditions;
 import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
-import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.avro.RecordMetadata;
 import org.apache.avro.generic.GenericRecord;
 

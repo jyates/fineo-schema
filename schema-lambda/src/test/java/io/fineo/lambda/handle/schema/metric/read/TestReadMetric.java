@@ -10,16 +10,14 @@ import io.fineo.lambda.handle.schema.metric.field.TestAddField;
 import io.fineo.lambda.handle.schema.metric.update.TestUpdateMetric;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
+import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.lambda.handle.schema.field.read.TestReadField.field;
 import static io.fineo.lambda.handle.schema.field.read.TestReadField.sort;
 import static org.junit.Assert.assertArrayEquals;
@@ -35,11 +33,7 @@ public class TestReadMetric {
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
 
-    ReadMetricRequest request = new ReadMetricRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    ReadMetricHandler handler = handler(store);
-    ReadMetricResponse response = handler.handle(request, null);
+    ReadMetricResponse response = read(store, org, metric);
 
     StoreClerk clerk = new StoreClerk(store, org);
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
@@ -58,11 +52,7 @@ public class TestReadMetric {
     String alias = "a1", alias2 = "a2";
     TestUpdateMetric.updateMetricAliases(store, org, metric, alias, alias2);
 
-    ReadMetricRequest request = new ReadMetricRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    ReadMetricHandler handler = handler(store);
-    ReadMetricResponse response = handler.handle(request, null);
+    ReadMetricResponse response = read(store, org, metric);
 
     StoreClerk clerk = new StoreClerk(store, org);
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
@@ -87,11 +77,7 @@ public class TestReadMetric {
     TestAddField.createField(store, org, metric, f1, f1Type);
     TestAddField.createField(store, org, metric, f2, f2Type, f2Alias);
 
-    ReadMetricRequest request = new ReadMetricRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    ReadMetricHandler handler = handler(store);
-    ReadMetricResponse response = handler.handle(request, null);
+    ReadMetricResponse response = read(store, org, metric);
 
     StoreClerk clerk = new StoreClerk(store, org);
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
@@ -126,6 +112,41 @@ public class TestReadMetric {
     } catch (Exception e) {
       HandlerTestUtils.expectError(e, 404, "Not Found");
     }
+  }
+
+  @Test
+  public void testReadTimestampPatterns() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org", metric = "metric";
+    TestCreateOrg.createOrg(store, org);
+    TestCreateMetric.createMetric(store, org, metric);
+    String t1 = MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name();
+    TestUpdateMetric.setTimestampPatterns(store, org, metric, t1);
+
+    ReadMetricResponse response = read(store, org, metric);
+    assertArrayEquals(new String[]{t1}, response.getTimestampPatterns());
+
+    // set a new pattern
+    String t2 = MultiPatternTimestampParser.TimeFormats.ISO_DATE_TIME.name();
+    TestUpdateMetric.setTimestampPatterns(store, org, metric, t2);
+    response = read(store, org, metric);
+    assertArrayEquals(new String[]{t2}, response.getTimestampPatterns());
+
+    // set multiple patterns
+    TestUpdateMetric.setTimestampPatterns(store, org, metric, t1, t2);
+    response = read(store, org, metric);
+    assertArrayEquals(
+      "Arrays didn't match. Order is important here - it defines the order that patterns are "
+      + "evaluated.",
+      new String[]{t1, t2}, response.getTimestampPatterns());
+  }
+
+  private ReadMetricResponse read(SchemaStore store, String org, String metric) throws Exception {
+    ReadMetricRequest request = new ReadMetricRequest();
+    request.setOrgId(org);
+    request.setMetricName(metric);
+    ReadMetricHandler handler = handler(store);
+    return handler.handle(request, null);
   }
 
   private static ReadMetricHandler handleProvider(Provider<SchemaStore> store) {

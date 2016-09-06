@@ -11,6 +11,7 @@ import io.fineo.schema.store.AvroSchemaEncoderFactory;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
+import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
 import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
@@ -20,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
+  .RFC_1123_DATE_TIME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -108,6 +112,20 @@ public class TestUpdateMetric {
     assertReadMetricForKey(store, org, metric, metricKey);
   }
 
+  @Test
+  public void testUpdateMetricTimestampPatterns() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "orgid", metric = "metricname";
+    TestCreateOrg.createOrg(store, org);
+    TestCreateMetric.createMetric(store, org, metric);
+    String name = MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name();
+    setTimestampPatterns(store, org, metric, name);
+
+    StoreClerk clerk = new StoreClerk(store, org);
+    StoreClerk.Metric m = clerk.getMetricForUserNameOrAlias(metric);
+    assertEquals(newArrayList(name), m.getTimestampPatterns());
+  }
+
   private void assertReadMetricForKey(SchemaStore store, String org, String metric, String
     metricKey) throws SchemaNotFoundException {
     StoreClerk clerk = new StoreClerk(store, org);
@@ -153,6 +171,13 @@ public class TestUpdateMetric {
   public static void updateMetricDisplayName(SchemaStore store, String org, String metric,
     String name) throws Exception {
     handleRequest(store, org, metric, request -> request.setNewDisplayName(name));
+  }
+
+  public static void setTimestampPatterns(SchemaStore store, String org, String metric, String
+    ... patterns) throws Exception {
+    handleRequest(store, org, metric, request -> {
+      request.setTimestampPatterns(patterns);
+    });
   }
 
   private static void handleRequest(SchemaStore store, String org, String metric,

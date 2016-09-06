@@ -9,8 +9,6 @@ import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
-import java.util.List;
-
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 
 public class UpdateMetricHandler
@@ -33,11 +31,12 @@ public class UpdateMetricHandler
   @Override
   public UpdateMetricResponse handle(UpdateMetricRequest input, Context context) throws Exception {
     validateMetricRequest(context, input);
-    boolean validAliases = validArray(input.getAliases());
-    boolean validNewKeys = validArray(input.getNewKeys());
-    boolean validRemoveKeys = validArray(input.getRemoveKeys());
-    boolean validDisplay = input.getNewDisplayName() != null;
-    if (!validAliases && !validNewKeys && !validRemoveKeys && !validDisplay) {
+    boolean valid = validArray(input.getAliases());
+    valid = valid || validArray(input.getNewKeys());
+    valid = valid || validArray(input.getRemoveKeys());
+    valid = valid || validArray(input.getTimestampPatterns());
+    valid = valid || input.getNewDisplayName() != null;
+    if (!valid) {
       return RESPONSE;
     }
 
@@ -49,6 +48,7 @@ public class UpdateMetricHandler
       metric.setDisplayName(input.getNewDisplayName());
       metric.addKeyAliases(input.getNewKeys());
       metric.removeKeyAliases(input.getRemoveKeys());
+      metric.withTimestampFormat(input.getTimestampPatterns());
       metric.build().commit();
       return RESPONSE;
     });
