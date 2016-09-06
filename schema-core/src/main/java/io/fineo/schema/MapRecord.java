@@ -66,11 +66,6 @@ public class MapRecord implements Record {
   }
 
   @Override
-  public void delete(String field) {
-    this.map.remove(field);
-  }
-
-  @Override
   public String toString() {
     return this.map.toString();
   }

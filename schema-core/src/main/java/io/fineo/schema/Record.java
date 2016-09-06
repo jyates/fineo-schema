@@ -29,6 +29,4 @@ public interface Record {
   Iterable<Map.Entry<String, Object>> getFields();
 
   Object getField(String name);
-
-  void delete(String field);
 }
