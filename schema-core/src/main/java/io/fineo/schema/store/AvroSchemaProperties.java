@@ -12,6 +12,7 @@ public class AvroSchemaProperties {
   public static final String TIMESTAMP_KEY = "timestamp";
   public static final String WRITE_TIME_KEY = "writeTime";
   public static final String FIELD_INSTANCE_NAME = "displayName";
+  public static final String METRIC_ORIGINAL_FIELD_ALIAS = "aliasName";
 
   /**
    * Function to help skip past the base field names in a record's schema. Returns <tt>true</tt>

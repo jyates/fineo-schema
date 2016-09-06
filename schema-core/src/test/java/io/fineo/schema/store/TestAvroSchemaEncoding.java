@@ -57,9 +57,11 @@ public class TestAvroSchemaEncoding {
     GenericRecord out = encoder.encode();
     BaseFields base = (BaseFields) out.get(AvroSchemaProperties.BASE_FIELDS_KEY);
     assertEquals((Long) now.toEpochMilli(), base.getWriteTime());
+    assertEquals(now.toEpochMilli(), base.get(AvroSchemaProperties.WRITE_TIME_KEY));
     assertEquals((Long) 10l, base.getTimestamp());
     assertEquals(newHashMap(), base.getUnknownFields());
     assertEquals(metric, base.getAliasName());
+    assertEquals(metric, base.get(AvroSchemaProperties.METRIC_ORIGINAL_FIELD_ALIAS));
 
     // check the field values
     Record translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
