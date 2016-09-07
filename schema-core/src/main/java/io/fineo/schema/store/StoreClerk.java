@@ -77,6 +77,32 @@ public class StoreClerk {
     return new Metric(metadata.getDisplayName(), metric, orgId, metadata.getAliasValues());
   }
 
+  public Tenant getTenat(){
+    return new Tenant(metadata);
+  }
+
+  public static class Tenant{
+    private final OrgMetadata metadata;
+
+    public Tenant(OrgMetadata metadata) {
+      this.metadata = metadata;
+    }
+
+    public List<String> getTimestampPatterns(){
+      List<String> patterns = metadata.getTimestampFormats();
+      if(patterns == null){
+        patterns = Collections.emptyList();
+      }
+      return patterns;
+    }
+
+    public List<String> getMetricKeyAliases(){
+      List<String> aliases = metadata.getMetricKeys();
+      return aliases == null? Collections.emptyList() : aliases;
+    }
+  }
+
+
   public static class Metric {
 
     private final String userName;

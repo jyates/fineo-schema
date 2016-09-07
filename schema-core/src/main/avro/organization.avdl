@@ -43,7 +43,7 @@ protocol Organization {
 
     // org level special keys that identify a metric type, rather than "metrictype" as a key
     // simply points to the metric id, which we can use to lookup the metirc in 'metrics'
-    union {null, map<string>} metricKeyMap = null;
+    union {null, array<string>} metricKeys = null;
 
     // dead metrics that we can't quite get rid of yet
     union {null,Graveyard} graveyard = null;

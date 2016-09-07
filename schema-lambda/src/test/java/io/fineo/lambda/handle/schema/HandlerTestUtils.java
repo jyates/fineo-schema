@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 import io.fineo.lambda.handle.ThrowingRequestHandler;
+import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
@@ -18,6 +19,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class HandlerTestUtils {
@@ -28,13 +30,13 @@ public class HandlerTestUtils {
   }
 
   public static <IN, OUT> void failNoValue(
-    Function<Provider<StoreManager>, ThrowingErrorHandlerForSchema<IN, OUT>> handler, IN msg)
+    Function<Provider<StoreManager>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg)
     throws Exception {
     failNoValueWithProvider(handler, msg);
   }
 
   public static <IN, OUT, PROVIDED> void failNoValueWithProvider(
-    Function<Provider<PROVIDED>, ThrowingErrorHandlerForSchema<IN, OUT>> handler, IN msg)
+    Function<Provider<PROVIDED>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg)
     throws Exception {
     Provider manager = Mockito.mock(Provider.class);
     ThrowingRequestHandler<IN, OUT> handle = handler.apply(manager);
@@ -45,6 +47,24 @@ public class HandlerTestUtils {
       fail();
     } catch (RuntimeException e) {
       expectError(e, 400, "Bad Request");
+      Mockito.verifyZeroInteractions(manager);
+    }
+  }
+
+  public static <IN, OUT, PROVIDED> void fail500(
+    Function<Provider<PROVIDED>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg)
+    throws Exception {
+    Provider manager = Mockito.mock(Provider.class);
+    ThrowingRequestHandler<IN, OUT> handle = handler.apply(manager);
+    Context context = Mockito.mock(Context.class);
+    Mockito.when(context.getAwsRequestId()).thenReturn(UUID.randomUUID().toString());
+    try {
+      handle.handleRequest(msg, context);
+      fail();
+    } catch (RuntimeException e) {
+      expectError(e, 500, "Internal Server Error");
+      assertTrue("Got a 500 error, but doesn't contain the error email!",
+        e.getMessage().contains("errors@fineo.io"));
       Mockito.verifyZeroInteractions(manager);
     }
   }

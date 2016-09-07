@@ -3,10 +3,10 @@ package io.fineo.lambda.handle.schema.metric.read;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
+import io.fineo.lambda.handle.external.ExternalErrorsUtil;
+import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldHandler;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
-import io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
@@ -20,7 +20,7 @@ import static java.lang.String.format;
  * A lambda handler that handles Kinesis events
  */
 public class ReadMetricHandler
-  extends ThrowingErrorHandlerForSchema<ReadMetricRequest, ReadMetricResponse> {
+  extends ExternalFacingRequestHandler<ReadMetricRequest, ReadMetricResponse> {
   private final Provider<SchemaStore> store;
 
   @Inject
@@ -50,8 +50,7 @@ public class ReadMetricHandler
       }
       return response;
     } catch (SchemaNotFoundException e) {
-      SchemaHandlerUtil.throw40X(context, 4, format("Metric [%s] not found!", metricName));
+      throw ExternalErrorsUtil.get40X(context, 4, format("Metric [%s] not found!", metricName));
     }
-    throw new IllegalStateException("Should never make it here!");
   }
 }

@@ -31,7 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static io.fineo.schema.avro.SchemaNameUtils.getCustomerSchemaFullName;
-import static java.lang.String.format;
 
 /**
  * Builder to generate a storable (in a {@link SchemaStore}) schema and organization/metric type
@@ -194,27 +193,12 @@ class SchemaBuilder {
       );
     }
 
-    public void addMetricKey(String key, String metricId) {
-      getKeyMap().put(key, metricId);
-    }
-
-    public void removeMetricKey(String key, String metricId) {
-      String id = getKeyMap().remove(key);
-      // its not an alias for the metric - put it back and throw and error
-      if (id != null && !id.equals(metricId)) {
-        addMetricKey(key, id);
-        throw new IllegalArgumentException(
-          format("%s is not a key alias for specified metric ([id: %s]", key, metricId));
+    public OrganizationBuilder setMetricKeys(String ... keys){
+      if(keys == null){
+        return this;
       }
-    }
-
-    private Map<String, String> getKeyMap() {
-      Map<String, String> map = org.getMetricKeyMap();
-      if (map == null) {
-        map = new HashMap<>();
-        org.setMetricKeyMap(map);
-      }
-      return map;
+      org.setMetricKeys(Arrays.asList(keys));
+      return this;
     }
 
     public OrganizationBuilder withTimestampFormat(String... formats) {

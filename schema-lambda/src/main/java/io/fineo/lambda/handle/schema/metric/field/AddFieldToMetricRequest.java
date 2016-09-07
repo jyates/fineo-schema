@@ -1,6 +1,6 @@
 package io.fineo.lambda.handle.schema.metric.field;
 
-import io.fineo.lambda.handle.schema.FieldUpdateRequest;
+import io.fineo.lambda.handle.schema.request.FieldUpdateRequest;
 
 public class AddFieldToMetricRequest extends FieldUpdateRequest {
 

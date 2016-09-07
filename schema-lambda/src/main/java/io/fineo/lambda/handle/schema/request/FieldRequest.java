@@ -1,4 +1,4 @@
-package io.fineo.lambda.handle.schema;
+package io.fineo.lambda.handle.schema.request;
 
 public class FieldRequest extends MetricRequest {
 

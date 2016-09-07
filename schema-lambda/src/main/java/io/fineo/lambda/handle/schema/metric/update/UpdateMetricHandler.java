@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import io.fineo.lambda.handle.schema.ThrowingErrorHandlerForSchema;
+import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
@@ -12,7 +12,7 @@ import io.fineo.schema.store.StoreManager;
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 
 public class UpdateMetricHandler
-  extends ThrowingErrorHandlerForSchema<UpdateMetricRequest, UpdateMetricResponse> {
+  extends ExternalFacingRequestHandler<UpdateMetricRequest, UpdateMetricResponse> {
 
   private static final UpdateMetricResponse RESPONSE = new UpdateMetricResponse();
   private final Provider<StoreManager> store;
@@ -32,8 +32,6 @@ public class UpdateMetricHandler
   public UpdateMetricResponse handle(UpdateMetricRequest input, Context context) throws Exception {
     validateMetricRequest(context, input);
     boolean valid = validArray(input.getAliases());
-    valid = valid || validArray(input.getNewKeys());
-    valid = valid || validArray(input.getRemoveKeys());
     valid = valid || validArray(input.getTimestampPatterns());
     valid = valid || input.getNewDisplayName() != null;
     if (!valid) {
@@ -46,8 +44,6 @@ public class UpdateMetricHandler
       StoreManager.MetricBuilder metric = builder.updateMetric(input.getMetricName());
       metric.addAliases(input.getAliases());
       metric.setDisplayName(input.getNewDisplayName());
-      metric.addKeyAliases(input.getNewKeys());
-      metric.removeKeyAliases(input.getRemoveKeys());
       metric.withTimestampFormat(input.getTimestampPatterns());
       metric.build().commit();
       return RESPONSE;

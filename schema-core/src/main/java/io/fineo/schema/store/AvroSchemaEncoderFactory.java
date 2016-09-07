@@ -6,9 +6,6 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
 import io.fineo.schema.store.timestamp.TimestampFieldExtractor;
 
-import java.util.Map;
-import java.util.Optional;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -25,23 +22,14 @@ public class AvroSchemaEncoderFactory {
   }
 
   public RecordMetric getMetricForRecord(Record record) throws SchemaNotFoundException {
-    Map<String, String> keys = metadata.getMetricKeyMap();
-    Optional<String> key = keys == null ? Optional.empty() : SchemaUtils.getFieldInRecord(record,
-      keys.keySet());
+    String key = SchemaUtils.getFieldInRecord(record, metadata.getMetricKeys()).orElse
+      (AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
 
-    String metricAlias;
-    StoreClerk.Metric metric;
-    // try just the simple metrictype key
-    if (key.isPresent()) {
-      metricAlias = record.getStringByField(key.get());
-      metric = store.getMetricForCanonicalName(keys.get(key.get()));
-    } else {
-      metricAlias = checkNotNull(record.getStringByField(AvroSchemaProperties.ORG_METRIC_TYPE_KEY),
-        "No metric type found in record for fields %s or standard key %s",
-        keys == null ? "[]" : keys.keySet(),
-        AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
-      metric = store.getMetricForUserNameOrAlias(metricAlias);
-    }
+    String metricAlias = checkNotNull(record.getStringByField(key),
+      "No metric type found in record for fields %s or standard key %s",
+      metadata.getMetricKeys() == null ? "[]" : metadata.getMetricKeys(),
+      AvroSchemaProperties.ORG_METRIC_TYPE_KEY);record.getStringByField(key);
+    StoreClerk.Metric metric = store.getMetricForUserNameOrAlias(metricAlias);
     return new RecordMetric(metricAlias, metric);
   }
 

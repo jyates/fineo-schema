@@ -74,45 +74,6 @@ public class TestUpdateMetric {
   }
 
   @Test
-  public void testUpdateKeyAliases() throws Exception {
-    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
-    String org = "orgid", metric = "metricname", metricKey = "newkey";
-    TestCreateOrg.createOrg(store, org);
-    TestCreateMetric.createMetric(store, org, metric);
-    addMetricKeyAliases(store, org, metric, metricKey);
-    StoreClerk clerk = new StoreClerk(store, org);
-    assertReadMetricForKey(store, org, metric, metricKey);
-
-    removeMetricKeyAliases(store, org, metric, metricKey);
-    tryReadMetricNotFound(clerk, metric, metricKey);
-
-    // add and remove at the same time
-    handleRequest(store, org, metric, request -> {
-      request.setNewKeys(new String[]{metricKey, "anotherkey"});
-      request.setRemoveKeys(new String[]{"anotherkey"});
-    });
-    assertReadMetricForKey(store, org, metric, metricKey);
-    tryReadMetricNotFound(clerk, metric, "anotherkey");
-  }
-
-  @Test
-  public void testRemoveKeyForOtherMetricFails() throws Exception {
-    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
-    String org = "orgid", metric = "metricname", metric2 = "metricname2", metricKey = "newkey";
-    TestCreateOrg.createOrg(store, org);
-    TestCreateMetric.createMetric(store, org, metric);
-    TestCreateMetric.createMetric(store, org, metric2);
-    addMetricKeyAliases(store, org, metric, metricKey);
-    try {
-      removeMetricKeyAliases(store, org, metric2, metricKey);
-      fail("Shouldn't have been able to remove alias for metric that doesn't have that alias");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    assertReadMetricForKey(store, org, metric, metricKey);
-  }
-
-  @Test
   public void testUpdateMetricTimestampPatterns() throws Exception {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     String org = "orgid", metric = "metricname";
@@ -158,15 +119,6 @@ public class TestUpdateMetric {
     handleRequest(store, org, metric, request -> request.setAliases(aliases));
   }
 
-  public static void addMetricKeyAliases(SchemaStore store, String org, String metric,
-    String... keys) throws Exception {
-    handleRequest(store, org, metric, request -> request.setNewKeys(keys));
-  }
-
-  public static void removeMetricKeyAliases(SchemaStore store, String org, String metric,
-    String... keys) throws Exception {
-    handleRequest(store, org, metric, request -> request.setRemoveKeys(keys));
-  }
 
   public static void updateMetricDisplayName(SchemaStore store, String org, String metric,
     String name) throws Exception {

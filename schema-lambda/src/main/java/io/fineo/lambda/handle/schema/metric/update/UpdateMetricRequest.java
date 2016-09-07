@@ -1,11 +1,9 @@
 package io.fineo.lambda.handle.schema.metric.update;
 
-import io.fineo.lambda.handle.schema.MetricRequest;
+import io.fineo.lambda.handle.schema.request.MetricRequest;
 
 public class UpdateMetricRequest extends MetricRequest{
 
-  private String[] newKeys;
-  private String[] removeKeys;
   private String newDisplayName;
   private String[] aliases;
   private String[] timestampPatterns;
@@ -24,22 +22,6 @@ public class UpdateMetricRequest extends MetricRequest{
 
   public void setAliases(String[] aliases) {
     this.aliases = aliases;
-  }
-
-  public String[] getNewKeys() {
-    return newKeys;
-  }
-
-  public void setNewKeys(String[] newKeys) {
-    this.newKeys = newKeys;
-  }
-
-  public String[] getRemoveKeys() {
-    return removeKeys;
-  }
-
-  public void setRemoveKeys(String[] removeKeys) {
-    this.removeKeys = removeKeys;
   }
 
   public String[] getTimestampPatterns() {

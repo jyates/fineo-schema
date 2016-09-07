@@ -13,8 +13,6 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.exception.SchemaTypeNotFoundException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,11 +110,20 @@ public class StoreManager {
     }
 
     public OrganizationBuilder withTimestampFormat(String... formats) {
-      if (formats == null || formats.length == 0) {
+      if (formats == null) {
         return this;
       }
 
       this.orgBuilder.withTimestampFormat(formats);
+      return this;
+    }
+
+    public OrganizationBuilder withMetricKeys(String... keys) {
+      if (keys == null) {
+        return this;
+      }
+
+      this.orgBuilder.setMetricKeys(keys);
       return this;
     }
 
@@ -126,15 +133,8 @@ public class StoreManager {
       return metric;
     }
 
-    private void addMetric(String cname, Metric previous, List<String> newKeys,
-      List<String> removeKeys) {
+    private void addMetric(String cname, Metric previous) {
       this.updatedMetrics.put(cname, previous);
-      for (String key : newKeys) {
-        this.orgBuilder.addMetricKey(key, cname);
-      }
-      for (String key : removeKeys) {
-        this.orgBuilder.removeMetricKey(key, cname);
-      }
     }
 
     public void commit() throws IOException, OldSchemaException {
@@ -153,8 +153,6 @@ public class StoreManager {
     private final OrganizationBuilder parent;
     private final Metric previous;
     private final SchemaBuilder.MetricBuilder metricBuilder;
-    private List<String> newKeys = new ArrayList<>();
-    private List<String> removeKeys = new ArrayList<>();
 
     public MetricBuilder(Metric metric, OrganizationBuilder parent,
       SchemaBuilder.MetricBuilder metricBuilder) {
@@ -206,7 +204,7 @@ public class StoreManager {
     public OrganizationBuilder build() throws IOException {
       String cname = this.metricBuilder.getMetricMetadata().getMeta().getCanonicalName();
       this.metricBuilder.build();
-      this.parent.addMetric(cname, previous, newKeys, removeKeys);
+      this.parent.addMetric(cname, previous);
       return this.parent;
     }
 
@@ -219,24 +217,6 @@ public class StoreManager {
       }
 
       this.metricBuilder.updateField(cname).hardDelete();
-      return this;
-    }
-
-    public MetricBuilder addKeyAliases(String... newKeys) {
-      if (newKeys == null || newKeys.length == 0) {
-        return this;
-      }
-
-      this.newKeys.addAll(Arrays.asList(newKeys));
-      return this;
-    }
-
-    public MetricBuilder removeKeyAliases(String... keys) {
-      if (keys == null || keys.length == 0) {
-        return this;
-      }
-
-      this.removeKeys.addAll(Arrays.asList(keys));
       return this;
     }
 

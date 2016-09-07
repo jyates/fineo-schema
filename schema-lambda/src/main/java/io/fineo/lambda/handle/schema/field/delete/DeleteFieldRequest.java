@@ -1,6 +1,6 @@
 package io.fineo.lambda.handle.schema.field.delete;
 
-import io.fineo.lambda.handle.schema.MetricRequest;
+import io.fineo.lambda.handle.schema.request.MetricRequest;
 
 public class DeleteFieldRequest extends MetricRequest{
   private String fieldName;
