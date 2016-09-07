@@ -11,7 +11,8 @@ public class OrgRequest {
     return orgId;
   }
 
-  public void setOrgId(String orgId) {
+  public <T extends OrgRequest> T setOrgId(String orgId) {
     this.orgId = orgId;
+    return (T) this;
   }
 }

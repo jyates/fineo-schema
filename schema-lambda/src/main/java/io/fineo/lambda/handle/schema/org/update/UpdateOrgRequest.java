@@ -2,7 +2,7 @@ package io.fineo.lambda.handle.schema.org.update;
 
 import io.fineo.lambda.handle.schema.request.OrgRequest;
 
-public class UpdateOrgRequest extends OrgRequest{
+public class UpdateOrgRequest extends OrgRequest {
 
   private String[] metricTypeKeys;
   private String[] timestampPatterns;

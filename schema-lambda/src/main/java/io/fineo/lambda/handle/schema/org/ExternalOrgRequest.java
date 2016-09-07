@@ -7,7 +7,7 @@ import io.fineo.lambda.handle.schema.org.update.UpdateOrgRequest;
 /**
  *
  */
-public class ExternalOrgRequest<T extends OrgRequest> {
+public class ExternalOrgRequest extends OrgRequest{
 
   private String type;
   private UpdateOrgRequest patch;

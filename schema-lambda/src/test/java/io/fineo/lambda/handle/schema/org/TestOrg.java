@@ -97,14 +97,13 @@ public class TestOrg {
   @Test
   public void testFailInternalErrors() throws Exception {
     ExternalOrgRequest external = new ExternalOrgRequest();
-    ReadOrgRequest request = new ReadOrgRequest();
     HandlerTestUtils.fail500(TestOrg::createHandler, external);
     external.setType("NOT_A_TYPE");
+    HandlerTestUtils.failNoValueWithProvider(TestOrg::createHandler, external);
+    external.setOrgId("org");
     HandlerTestUtils.fail500(TestOrg::createHandler, external);
     external.setType("patch");
     HandlerTestUtils.fail500(TestOrg::createHandler, external);
-    external.setGet(request);
-    request.setOrgId("org");
   }
 
   @Test
@@ -156,7 +155,7 @@ public class TestOrg {
     SchemaStore store, String org, REQUEST request,
     BiConsumer<ExternalOrgRequest, REQUEST> update) throws Exception {
     ExternalOrgRequest external = new ExternalOrgRequest();
-    request.setOrgId(org);
+    external.setOrgId(org);
     update.accept(external, request);
     String type = null;
     if (external.getGet() != null) {
