@@ -3,8 +3,10 @@ package io.fineo.lambda.handle.schema.create;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.fineo.lambda.handle.external.ExternalErrorsUtil;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.schema.OldSchemaException;
+import io.fineo.schema.exception.SchemaExistsException;
 import io.fineo.schema.store.StoreManager;
 
 import java.io.IOException;
@@ -31,8 +33,12 @@ public class CreateOrgHandler extends
     validateRequest(context, input);
     StoreManager manager = store.get();
     String orgId = input.getOrgId();
-    StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
-    builder.commit();
+    try {
+      StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
+      builder.commit();
+    } catch (SchemaExistsException e) {
+      throw ExternalErrorsUtil.get40X(context, 400, e.getMessage());
+    }
     return RESPONSE;
   }
 }
