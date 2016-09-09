@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.OrgMetadata;
@@ -28,7 +29,8 @@ public class StoreClerk {
   public StoreClerk(SchemaStore store, String orgId) {
     this.store = store;
     this.orgId = orgId;
-    this.metadata = store.getOrgMetadata(orgId);
+    this.metadata = Preconditions
+      .checkNotNull(store.getOrgMetadata(orgId), "No schema stored for org: %s", orgId);
   }
 
   public AvroSchemaEncoderFactory getEncoderFactory() throws
