@@ -1,5 +1,6 @@
 package io.fineo.lambda.handle.schema.create;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.exception.SchemaExistsException;
@@ -7,10 +8,12 @@ import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.junit.Assert.assertEquals;
@@ -46,7 +49,10 @@ public class TestCreateOrg {
     try {
       createOrg(store, org);
       fail();
-    } catch (SchemaExistsException e) {
+    } catch (RuntimeException e) {
+      HandlerTestUtils.expectError(e, 400, "Bad Request");
+      Map<String, Object> info = HandlerTestUtils.unwrapException(e);
+      assertTrue(((String) info.get("message")).contains("org1 already exists"));
       found = true;
     }
     assertTrue("Didn't throw a " + SchemaExistsException.class + " on second create attempt",
@@ -59,6 +65,8 @@ public class TestCreateOrg {
     CreateOrgHandler handler = new CreateOrgHandler(() -> manager);
     CreateOrgRequest request = new CreateOrgRequest();
     request.setOrgId(org);
-    assertNotNull(handler.handle(request, null));
+    Context context = Mockito.mock(Context.class);
+    Mockito.when(context.getAwsRequestId()).thenReturn("someid");
+    assertNotNull(handler.handle(request, context));
   }
 }

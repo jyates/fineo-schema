@@ -37,7 +37,7 @@ public class CreateOrgHandler extends
       StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
       builder.commit();
     } catch (SchemaExistsException e) {
-      throw ExternalErrorsUtil.get40X(context, 400, e.getMessage());
+      throw ExternalErrorsUtil.get40X(context, 0, e.getMessage());
     }
     return RESPONSE;
   }

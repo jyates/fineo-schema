@@ -136,7 +136,7 @@ public class TestAvroSchemaManager {
     Mockito.verifyZeroInteractions(base);
 
     // across all the attempts
-    Mockito.verify(store, times(9)).getOrgMetadata("orgid");
+    Mockito.verify(store, times(5)).getOrgMetadata("orgid");
   }
 
   @Test(expected = IllegalStateException.class)

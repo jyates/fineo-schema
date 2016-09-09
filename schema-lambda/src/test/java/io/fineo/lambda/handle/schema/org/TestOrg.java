@@ -30,6 +30,16 @@ import static org.junit.Assert.assertEquals;
 public class TestOrg {
 
   @Test
+  public void testFailIfOrgDoesNotExist() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    ExternalOrgRequest request = new ExternalOrgRequest();
+    request.setOrgId("not an org");
+    request.setGet(new ReadOrgRequest());
+    HandlerTestUtils.failWithProvider(() -> store, TestOrg::createHandler, request,
+      500, "Internal Server Error");
+  }
+
+  @Test
   public void testUpdateKeyAliases() throws Exception {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     String org = "orgid", metricKey = "newkey";
@@ -79,7 +89,7 @@ public class TestOrg {
     assertTimestampPatternEquals(store, org, pattern);
 
     // changing the pattern is fine
-    String pattern2 =MultiPatternTimestampParser.TimeFormats.ISO_INSTANT.name();
+    String pattern2 = MultiPatternTimestampParser.TimeFormats.ISO_INSTANT.name();
     setTimestampPatterns(store, org, pattern2);
     assertTimestampPatternEquals(store, org, pattern2);
 

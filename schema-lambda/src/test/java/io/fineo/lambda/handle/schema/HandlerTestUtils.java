@@ -39,6 +39,16 @@ public class HandlerTestUtils {
     Function<Provider<PROVIDED>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg)
     throws Exception {
     Provider manager = Mockito.mock(Provider.class);
+    failWithProvider(manager, handler, msg, 400, "Bad Request");
+    Mockito.verifyZeroInteractions(manager);
+  }
+
+
+  public static <IN, OUT, PROVIDED> void failWithProvider(Provider<PROVIDED> provider,
+    Function<Provider<PROVIDED>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg, int
+    code, String type)
+    throws Exception {
+    Provider manager = Mockito.mock(Provider.class);
     ThrowingRequestHandler<IN, OUT> handle = handler.apply(manager);
     Context context = Mockito.mock(Context.class);
     Mockito.when(context.getAwsRequestId()).thenReturn(UUID.randomUUID().toString());
@@ -46,8 +56,7 @@ public class HandlerTestUtils {
       handle.handleRequest(msg, context);
       fail();
     } catch (RuntimeException e) {
-      expectError(e, 400, "Bad Request");
-      Mockito.verifyZeroInteractions(manager);
+      expectError(e, code, type);
     }
   }
 
