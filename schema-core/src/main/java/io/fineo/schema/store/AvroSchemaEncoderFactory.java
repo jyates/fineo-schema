@@ -26,7 +26,7 @@ public class AvroSchemaEncoderFactory {
       (AvroSchemaProperties.ORG_METRIC_TYPE_KEY);
 
     String metricAlias = checkNotNull(record.getStringByField(key),
-      "No metric type found in record for fields %s or standard key %s",
+      "No metric type found in record for metric type keys: %s or standard type key '%s'",
       metadata.getMetricKeys() == null ? "[]" : metadata.getMetricKeys(),
       AvroSchemaProperties.ORG_METRIC_TYPE_KEY);record.getStringByField(key);
     StoreClerk.Metric metric = store.getMetricForUserNameOrAlias(metricAlias);
