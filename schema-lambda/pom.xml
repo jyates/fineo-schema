@@ -45,6 +45,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>compile</scope>
     </dependency>
 
     <!-- Test Dependencies -->
@@ -86,6 +87,8 @@
                   <artifactSet>
                     <excludes>
                       <!-- aws transitive dependencies-->
+                      <exclude>commons-logging:commons-logging</exclude>
+                      <exclude>com.amazonaws:aws-java-sdk-s3</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-elastic*</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-cloud*</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-cognito*</exclude>
