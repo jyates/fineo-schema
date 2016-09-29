@@ -16,8 +16,9 @@
   </modules>
 
   <properties>
-    <aws.java.sdk.version>1.10.48</aws.java.sdk.version>
+    <aws.java.sdk.version>1.11.38</aws.java.sdk.version>
     <fineo-lambda.version>1.0-SNAPSHOT</fineo-lambda.version>
+    <slf4j.version>1.7.21</slf4j.version>
 
     <!-- Avro -->
     <avro.version>1.7.7</avro.version>
@@ -159,6 +160,16 @@
         <artifactId>DynamoDBLocal</artifactId>
         <version>${aws.dynamodb.local.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.fineo.aws</groupId>
@@ -171,6 +182,26 @@
         <artifactId>logback-classic</artifactId>
         <version>1.1.3</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
