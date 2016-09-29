@@ -104,6 +104,7 @@
                   <artifactSet>
                     <excludes>
                       <!-- aws transitive dependencies-->
+                      <exclude>org.apache.logging.log4j:*</exclude>
                       <exclude>commons-logging:commons-logging</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-s3</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-elastic*</exclude>

@@ -160,16 +160,6 @@
         <artifactId>DynamoDBLocal</artifactId>
         <version>${aws.dynamodb.local.version}</version>
         <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.fineo.aws</groupId>
