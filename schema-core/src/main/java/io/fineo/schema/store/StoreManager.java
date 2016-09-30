@@ -169,6 +169,10 @@ public class StoreManager {
     public MetricBuilder addAliases(String... aliases) {
       if (aliases != null) {
         for (String alias : aliases) {
+          // happens from the API translation that we can get zero-length aliases, so skip those
+          if (alias.length() == 0) {
+            continue;
+          }
           this.metricBuilder.withName(alias);
           stop.withField(alias);
         }
@@ -198,6 +202,9 @@ public class StoreManager {
       SchemaUtils.checkFound(canonical, fieldName, "field (or alias)");
       SchemaBuilder.FieldBuilder fb = this.metricBuilder.updateField(canonical);
       for (String alias : aliases) {
+        if (alias.length() == 0) {
+          continue;
+        }
         stop.withField(alias);
         fb.withAlias(alias);
       }
@@ -274,6 +281,9 @@ public class StoreManager {
       Function<String, SchemaBuilder.FieldBuilder> func = getBuilderFunctionForType(type);
       SchemaBuilder.FieldBuilder fielder = func.apply(this.name);
       for (String alias : this.aliases) {
+        if (alias.length() == 0) {
+          continue;
+        }
         fielder.withAlias(alias);
         stop.withField(alias);
       }

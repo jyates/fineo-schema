@@ -374,6 +374,33 @@ public class TestSchemaManager {
       clerk.getMetricForUserNameOrAlias(metricName).getTimestampPatterns());
   }
 
+  @Test
+  public void testNoZeroLengthAliases() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager manager = new StoreManager(store);
+    manager.newOrg(orgId)
+           .newMetric().setDisplayName(metricName).addAliases("")
+           .newField().withName("f1").withType(StoreManager.Type.INTEGER).withAliases(asList(""))
+           .build().build().commit();
+
+    StoreClerk clerk = new StoreClerk(store, orgId);
+    noZeroLengthAliases(clerk.getMetricForUserNameOrAlias(metricName));
+
+    // and we can't update the aliases to be zero length either
+    manager.updateOrg(orgId)
+           .updateMetric(metricName).addAliases("")
+           .addFieldAlias("f1", "")
+           .build().commit();
+    noZeroLengthAliases(clerk.getMetricForUserNameOrAlias(metricName));
+  }
+
+  private void noZeroLengthAliases(StoreClerk.Metric metric) {
+    assertEquals(newArrayList(), metric.getAliases());
+    for (StoreClerk.Field field : metric.getUserVisibleFields()) {
+      assertEquals(newArrayList(), field.getAliases());
+    }
+  }
+
   private void expectAllBadFields() {
     thrown.expect(RuntimeException.class);
     thrown.expect(expectFailedFields(BAD_FIELD_NAMES));
