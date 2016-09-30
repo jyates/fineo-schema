@@ -31,5 +31,4 @@ public class AvroSchemaProperties {
    * name in the base schema that contains the metrics that all records must have
    */
   public static final String BASE_FIELDS_KEY = "baseFields";
-  public static final String BASE_TIMESTAMP_FIELD_NAME = "timestamp";
 }

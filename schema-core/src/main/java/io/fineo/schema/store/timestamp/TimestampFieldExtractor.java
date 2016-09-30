@@ -15,7 +15,7 @@ public class TimestampFieldExtractor {
   private final List<String> aliases;
 
   public static TimestampFieldExtractor create(StoreClerk.Metric metric) {
-    StoreClerk.Field field = metric.getFieldForCanonicalName(AvroSchemaProperties.TIMESTAMP_KEY);
+    StoreClerk.Field field = metric.getTimestampField();
     return new TimestampFieldExtractor(field.getAliases());
   }
 

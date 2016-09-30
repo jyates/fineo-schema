@@ -58,7 +58,7 @@ public class TestRecordMetadata {
     // ensure the base fields match as we expect from the record
     BaseFields baseFields = metadata.getBaseFields();
     // only time outside the schema that we actually reference this by name
-    assertEquals(fields.get(AvroSchemaProperties.BASE_TIMESTAMP_FIELD_NAME),
+    assertEquals(fields.get(AvroSchemaProperties.TIMESTAMP_KEY),
       baseFields.getTimestamp());
     assertEquals(metricName, baseFields.getAliasName());
     assertEquals(0, baseFields.getUnknownFields().size());

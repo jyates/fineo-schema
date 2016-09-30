@@ -31,14 +31,8 @@ public class TestUpdateField {
     String field = "field", type = "STRING";
     TestAddField.createField(store, org, metric, field, type);
 
-    UpdateFieldRequest request = new UpdateFieldRequest();
-    request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName(field);
     String alias = "fieldalias";
-    request.setAliases(new String[]{alias});
-    UpdateFieldHandler handler = handler(() -> new StoreManager(store));
-    handler.handle(request, null);
+    updateField(store, org, metric, field, alias);
     StoreClerk.Field f = HandlerTestUtils.getOnlyFirstField(org, metric, store);
     assertEquals(newArrayList(alias), f.getAliases());
   }
@@ -55,7 +49,18 @@ public class TestUpdateField {
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
   }
 
-  private static UpdateFieldHandler handler(Provider<StoreManager> provider){
+  public static void updateField(SchemaStore store, String org, String metric, String field,
+    String... aliases) throws Exception {
+    UpdateFieldRequest request = new UpdateFieldRequest();
+    request.setOrgId(org);
+    request.setMetricName(metric);
+    request.setFieldName(field);
+    request.setAliases(aliases);
+    UpdateFieldHandler handler = handler(() -> new StoreManager(store));
+    handler.handle(request, null);
+  }
+
+  private static UpdateFieldHandler handler(Provider<StoreManager> provider) {
     return new UpdateFieldHandler(provider, new UpdateRetryer(), 1);
   }
 }

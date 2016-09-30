@@ -5,9 +5,11 @@ import com.google.inject.Provider;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
+import io.fineo.lambda.handle.schema.field.update.TestUpdateField;
 import io.fineo.lambda.handle.schema.metric.create.TestCreateMetric;
 import io.fineo.lambda.handle.schema.metric.field.TestAddField;
 import io.fineo.lambda.handle.schema.metric.update.TestUpdateMetric;
+import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
@@ -39,7 +41,11 @@ public class TestReadMetric {
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
     assertEquals(current.getUserName(), response.getName());
     assertArrayEquals(new String[0], response.getAliases());
-    assertArrayEquals(new ReadFieldResponse[0], response.getFields());
+    assertArrayEquals(new ReadFieldResponse[]{ts()}, response.getFields());
+  }
+
+  private ReadFieldResponse ts() {
+    return field(AvroSchemaProperties.TIMESTAMP_KEY, "LONG");
   }
 
   @Test
@@ -58,7 +64,7 @@ public class TestReadMetric {
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
     assertEquals(current.getUserName(), response.getName());
     assertArrayEquals(new String[]{alias, alias2}, response.getAliases());
-    assertArrayEquals(new ReadFieldResponse[0], response.getFields());
+    assertArrayEquals(new ReadFieldResponse[]{ts()}, response.getFields());
   }
 
   @Test
@@ -83,8 +89,28 @@ public class TestReadMetric {
     StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
     assertEquals(current.getUserName(), response.getName());
     assertArrayEquals(new String[]{alias, alias2}, response.getAliases());
-    assertArrayEquals(new ReadFieldResponse[]{field(f1, f1Type), field(f2, f2Type, f2Alias)},
+    assertArrayEquals(new ReadFieldResponse[]{field(f1, f1Type), field(f2, f2Type, f2Alias), ts()},
       sort(response.getFields()));
+  }
+
+  @Test
+  public void testReadTimestampWithAlias() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org", metric = "metric";
+    TestCreateOrg.createOrg(store, org);
+    TestCreateMetric.createMetric(store, org, metric);
+
+    // update the timestamp alias
+    TestUpdateField.updateField(store, org, metric, AvroSchemaProperties.TIMESTAMP_KEY, "ts");
+
+    ReadMetricResponse response = read(store, org, metric);
+
+    StoreClerk clerk = new StoreClerk(store, org);
+    StoreClerk.Metric current = clerk.getMetricForUserNameOrAlias(metric);
+    assertEquals(current.getUserName(), response.getName());
+    assertArrayEquals(new String[0], response.getAliases());
+    assertArrayEquals(new ReadFieldResponse[]{field(AvroSchemaProperties.TIMESTAMP_KEY, "LONG",
+      "ts")}, response.getFields());
   }
 
   @Test

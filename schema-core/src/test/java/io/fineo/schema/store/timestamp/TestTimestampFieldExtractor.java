@@ -14,13 +14,15 @@ import static io.fineo.schema.store.AvroSchemaProperties.TIMESTAMP_KEY;
 import static io.fineo.schema.store.SchemaTestUtils.getStore;
 import static org.junit.Assert.assertEquals;
 
-/**
- *
- */
 public class TestTimestampFieldExtractor {
 
   private final String org = "org", metric = "metric";
 
+  /**
+   * If there is no alias, still read the timestamp from the timestamp field
+   *
+   * @throws Exception
+   */
   @Test
   public void testNoAliasExtraction() throws Exception {
     SchemaStore store = getStore();
@@ -33,6 +35,9 @@ public class TestTimestampFieldExtractor {
     assertEquals(TIMESTAMP_KEY, extractor.getTimestampKey(new MapRecord(map)));
   }
 
+  /**
+   * Provide a single alias and read the timestamp from that field
+   */
   @Test
   public void testSingleAliasExtraction() throws Exception {
     SchemaStore store = getStore();
@@ -48,6 +53,10 @@ public class TestTimestampFieldExtractor {
     assertEquals(alias, extractor.getTimestampKey(new MapRecord(map)));
   }
 
+
+  /**
+   * Provide a multiple aliases and read the timestamp from any of those fields (in specified order)
+   */
   @Test
   public void testMultipleAliasExtraction() throws Exception {
     SchemaStore store = getStore();

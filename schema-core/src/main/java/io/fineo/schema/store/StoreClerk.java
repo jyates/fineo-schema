@@ -12,8 +12,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static io.fineo.schema.store.AvroSchemaProperties.TIMESTAMP_KEY;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -79,28 +82,28 @@ public class StoreClerk {
     return new Metric(metadata.getDisplayName(), metric, orgId, metadata.getAliasValues());
   }
 
-  public Tenant getTenat(){
+  public Tenant getTenat() {
     return new Tenant(metadata);
   }
 
-  public static class Tenant{
+  public static class Tenant {
     private final OrgMetadata metadata;
 
     public Tenant(OrgMetadata metadata) {
       this.metadata = metadata;
     }
 
-    public List<String> getTimestampPatterns(){
+    public List<String> getTimestampPatterns() {
       List<String> patterns = metadata.getTimestampFormats();
-      if(patterns == null){
+      if (patterns == null) {
         patterns = Collections.emptyList();
       }
       return patterns;
     }
 
-    public List<String> getMetricKeyAliases(){
+    public List<String> getMetricKeyAliases() {
       List<String> aliases = metadata.getMetricKeys();
-      return aliases == null? Collections.emptyList() : aliases;
+      return aliases == null ? Collections.emptyList() : aliases;
     }
   }
 
@@ -160,16 +163,32 @@ public class StoreClerk {
         });
     }
 
+    public Field getTimestampField() {
+      // the avro way stores the type, but not the aliases
+      Schema.Field field = getSchema().getField(AvroSchemaProperties.BASE_FIELDS_KEY);
+      field = field.schema().getField(TIMESTAMP_KEY);
+
+      // the canonical way stores the aliases, but not the type
+      Field iField = this.getFieldForCanonicalName(AvroSchemaProperties.TIMESTAMP_KEY);
+      List<String> aliases = newArrayList(iField.getAliases());
+      aliases.remove(TIMESTAMP_KEY);
+      return new Field(TIMESTAMP_KEY, field.schema().getType(), aliases, TIMESTAMP_KEY);
+    }
+
     private Field buildField(String cname, String userName, List<String> aliases) {
-      if (schema == null) {
-        this.schema = new Schema.Parser().parse(metric.getMetricSchema());
-      }
-      Schema.Field field = schema.getField(cname);
+      Schema.Field field = getSchema().getField(cname);
       if (field == null) {
         return new Field(userName, aliases, cname);
       }
       Schema.Type type = field.schema().getField("value").schema().getType();
       return new Field(userName, type, aliases, cname);
+    }
+
+    private Schema getSchema() {
+      if (schema == null) {
+        this.schema = new Schema.Parser().parse(metric.getMetricSchema());
+      }
+      return this.schema;
     }
 
     public List<FieldMetadata> getHiddenFields() {
@@ -243,7 +262,7 @@ public class StoreClerk {
 
     public List<String> getTimestampPatterns() {
       List<String> patterns = this.metric.getMetadata().getTimestampFormats();
-      if(patterns == null){
+      if (patterns == null) {
         patterns = Collections.emptyList();
       }
       return patterns;

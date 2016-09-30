@@ -72,7 +72,7 @@ public class SchemaTestUtils {
     Map<String, Object> fields = new HashMap<>();
     fields.put(AvroSchemaProperties.ORG_ID_KEY, orgid);
     fields.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, metricId);
-    fields.put(AvroSchemaProperties.BASE_TIMESTAMP_FIELD_NAME, ts);
+    fields.put(AvroSchemaProperties.TIMESTAMP_KEY, ts);
     return fields;
   }
 
