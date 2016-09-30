@@ -22,6 +22,8 @@ public class ReadFieldHandler extends
 
   private final Provider<SchemaStore> store;
 
+  private static final String[] EMPTY_STRING = new String[0];
+
   @Inject
   public ReadFieldHandler(Provider<SchemaStore> store) {
     this.store = store;
@@ -58,7 +60,9 @@ public class ReadFieldHandler extends
   public static ReadFieldResponse asResponse(StoreClerk.Field field) {
     ReadFieldResponse response = new ReadFieldResponse();
     response.setName(field.getName());
-    response.setAliases(field.getAliases().toArray(new String[0]));
+    response.setAliases(field.getAliases().size() == 0 ?
+                        EMPTY_STRING :
+                        field.getAliases().toArray(EMPTY_STRING));
     response.setType(field.getType().name());
     return response;
   }
