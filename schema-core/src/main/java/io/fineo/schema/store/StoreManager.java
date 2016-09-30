@@ -11,8 +11,6 @@ import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.exception.SchemaExistsException;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.exception.SchemaTypeNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -47,7 +45,6 @@ import java.util.function.Function;
  */
 public class StoreManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(StoreManager.class);
   private final FineoStopWords stop = new FineoStopWords();
   private final SchemaNameGenerator generator;
   private final SchemaStore store;
@@ -147,8 +144,6 @@ public class StoreManager {
         store.createNewOrganization(org);
         return;
       }
-      LOG.debug("Committing org: {}\nwith updated metrics: \n{}\nPrevious: {}", org,
-        updatedMetrics, previous);
       store.updateOrg(org, updatedMetrics, previous);
     }
   }
