@@ -7,6 +7,8 @@ import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import static java.util.stream.Collectors.toList;
  */
 public class StoreClerk {
 
+  private static final Logger LOG = LoggerFactory.getLogger(StoreClerk.class);
   private final SchemaStore store;
   private final String orgId;
   private final OrgMetadata metadata;
@@ -34,6 +37,7 @@ public class StoreClerk {
     this.orgId = orgId;
     this.metadata = Preconditions
       .checkNotNull(store.getOrgMetadata(orgId), "No schema stored for org: %s", orgId);
+    LOG.debug("Got org metadata: {}", metadata);
   }
 
   public AvroSchemaEncoderFactory getEncoderFactory() throws
@@ -48,8 +52,10 @@ public class StoreClerk {
   }
 
   public List<Metric> getMetrics() {
+    LOG.debug("In metadata:\n {},looking for metrics...", metadata);
     return collectElementsForFields(metadata, (metricCname, metricUserName, aliases) -> {
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
+      LOG.debug("\tGot metric:\n {}", metric);
       return new Metric(metricUserName, metric, orgId, aliases);
     });
   }
@@ -70,6 +76,7 @@ public class StoreClerk {
       }
 
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
+      LOG.debug("In metadata:\n {}, \nGot metric:\n {}", metadata, metric);
       return new Metric(metricUserName, metric, orgId, metricAliases);
     }).stream().findFirst().orElse(null);
     SchemaUtils.checkFound(foundMetric, metricAliasName, "metric");
@@ -79,6 +86,7 @@ public class StoreClerk {
   public Metric getMetricForCanonicalName(String metricId) {
     io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricId);
     OrgMetricMetadata metadata = this.metadata.getMetrics().get(metricId);
+    LOG.debug("In metadata:\n {}, \nGot metric:\n {}", metadata, metric);
     return new Metric(metadata.getDisplayName(), metric, orgId, metadata.getAliasValues());
   }
 

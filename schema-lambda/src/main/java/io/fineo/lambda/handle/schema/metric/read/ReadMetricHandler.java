@@ -8,7 +8,6 @@ import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldHandler;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
 import io.fineo.schema.exception.SchemaNotFoundException;
-import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 
@@ -23,6 +22,8 @@ import static java.lang.String.format;
 public class ReadMetricHandler
   extends ExternalFacingRequestHandler<ReadMetricRequest, ReadMetricResponse> {
   private final Provider<SchemaStore> store;
+
+  private static final String[] EMPTY = new String[0];
 
   @Inject
   public ReadMetricHandler(Provider<SchemaStore> store) {
@@ -41,10 +42,12 @@ public class ReadMetricHandler
       ReadMetricResponse response = new ReadMetricResponse();
 
       response.setName(metric.getUserName());
-      response.setAliases(metric.getAliases().toArray(new String[0]));
-      response.setTimestampPatterns(metric.getTimestampPatterns().toArray(new String[0]));
+      response.setAliases(metric.getAliases().size() == 0 ?
+                          EMPTY : metric.getAliases().toArray(EMPTY));
+      response.setTimestampPatterns(metric.getTimestampPatterns().size() == 0 ?
+                                    EMPTY : metric.getTimestampPatterns().toArray(EMPTY));
       List<StoreClerk.Field> fields = metric.getUserVisibleFields();
-      // make the timestamp visible
+      // make the timestamp visible to the user
       fields.add(metric.getTimestampField());
       ReadFieldResponse[] readFields = new ReadFieldResponse[fields.size()];
       response.setFields(readFields);

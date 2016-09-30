@@ -85,6 +85,14 @@ class SchemaBuilder {
     public Map<String, Metric> getSchemas() {
       return schemas;
     }
+
+    @Override
+    public String toString() {
+      return "Organization{" +
+             "metadata=" + metadata +
+             ", schemas=" + schemas +
+             '}';
+    }
   }
 
   /**
@@ -193,8 +201,8 @@ class SchemaBuilder {
       );
     }
 
-    public OrganizationBuilder setMetricKeys(String ... keys){
-      if(keys == null){
+    public OrganizationBuilder setMetricKeys(String... keys) {
+      if (keys == null) {
         return this;
       }
       org.setMetricKeys(Arrays.asList(keys));
@@ -576,6 +584,7 @@ class SchemaBuilder {
       parent.addField(this);
       return parent;
     }
+
   }
 
   private static String inc(Metadata meta) {
