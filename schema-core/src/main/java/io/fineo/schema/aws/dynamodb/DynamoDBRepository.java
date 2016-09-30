@@ -14,8 +14,6 @@ import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.schemarepo.AbstractBackendRepository;
 import org.schemarepo.Repository;
 import org.schemarepo.RepositoryUtil;
@@ -24,6 +22,8 @@ import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
 import org.schemarepo.SubjectConfig;
 import org.schemarepo.ValidatorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ import java.util.Set;
 // .com/post/TxI32GE4IG2SNS/Client-side-Encryption-for-Amazon-DynamoDB
 public class DynamoDBRepository extends AbstractBackendRepository {
 
-  private static final Log LOG = LogFactory.getLog(DynamoDBRepository.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DynamoDBRepository.class);
 
   static final String PARTITION_KEY = "id";
   static final String SORT_KEY = "id_s";

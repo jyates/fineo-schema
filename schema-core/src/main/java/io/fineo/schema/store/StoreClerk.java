@@ -7,6 +7,8 @@ import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +26,7 @@ import static java.util.stream.Collectors.toList;
  */
 public class StoreClerk {
 
+  private static final Logger LOG = LoggerFactory.getLogger(StoreClerk.class);
   private final SchemaStore store;
   private final String orgId;
   private final OrgMetadata metadata;
