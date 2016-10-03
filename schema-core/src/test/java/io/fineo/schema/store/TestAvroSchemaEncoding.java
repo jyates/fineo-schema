@@ -5,6 +5,7 @@ import io.fineo.schema.MapRecord;
 import io.fineo.schema.Pair;
 import io.fineo.schema.Record;
 import io.fineo.schema.exception.SchemaNotFoundException;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -22,8 +23,6 @@ import java.util.TimeZone;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Maps.newHashMap;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
-  .RFC_1123_DATE_TIME;
 import static org.junit.Assert.assertEquals;
 
 public class TestAvroSchemaEncoding {
@@ -151,7 +150,8 @@ public class TestAvroSchemaEncoding {
     String org = "org", metric = "m1", f = "f1";
     TestSchemaManager.commitSimpleType(storeManager, org, metric, of(), p(f, "INTEGER"));
     storeManager.updateOrg(org)
-                .withTimestampFormat(RFC_1123_DATE_TIME.name())
+                .withTimestampFormat(
+                  MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name())
                 .commit();
 
     Map<String, Object> map = new HashMap<>();
@@ -179,7 +179,8 @@ public class TestAvroSchemaEncoding {
     String org = "org", metric = "m1", f = "f1", tsAlias = "alias";
     TestSchemaManager.commitSimpleType(storeManager, org, metric, of(), p(f, "INTEGER"));
     storeManager.updateOrg(org)
-                .withTimestampFormat(RFC_1123_DATE_TIME.name())
+                .withTimestampFormat(MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME
+                  .name())
                 .updateMetric(metric).addFieldAlias(AvroSchemaProperties.TIMESTAMP_KEY, tsAlias)
                 .build()
                 .commit();

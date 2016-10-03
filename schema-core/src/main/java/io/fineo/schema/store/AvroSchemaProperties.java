@@ -1,5 +1,7 @@
 package io.fineo.schema.store;
 
+import io.fineo.schema.ClientSchemaProperties;
+
 import java.util.function.Predicate;
 
 public class AvroSchemaProperties {
@@ -8,8 +10,8 @@ public class AvroSchemaProperties {
    * them by name properly
    */
   public static final String ORG_ID_KEY = "companykey";
-  public static final String ORG_METRIC_TYPE_KEY = "metrictype";
-  public static final String TIMESTAMP_KEY = "timestamp";
+  public static final String ORG_METRIC_TYPE_KEY = ClientSchemaProperties.METRIC_TYPE_KEY;
+  public static final String TIMESTAMP_KEY = ClientSchemaProperties.TIMESTAMP_KEY;
   public static final String WRITE_TIME_KEY = "writeTime";
   public static final String FIELD_INSTANCE_NAME = "displayName";
   public static final String METRIC_ORIGINAL_FIELD_ALIAS = "aliasName";

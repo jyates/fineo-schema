@@ -1,21 +1,21 @@
 package io.fineo.schema.store.timestamp;
 
-import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.schema.MapRecord;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
+import io.fineo.schema.store.TimestampUtils;
+import io.fineo.schema.timestamp.MultiLevelTimestampParser;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static io.fineo.schema.store.SchemaTestUtils.getStore;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats.ISO_INSTANT;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
-  .RFC_1123_DATE_TIME;
+import static io.fineo.schema.timestamp.MultiPatternTimestampParser.TimeFormats.ISO_INSTANT;
+import static io.fineo.schema.timestamp.MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME;
 import static org.junit.Assert.assertEquals;
 
 public class TestMultiPatternTimestampFormatParser {
@@ -97,9 +97,8 @@ public class TestMultiPatternTimestampFormatParser {
   private long parse(Map<String, Object> map, SchemaStore store) throws SchemaNotFoundException {
     StoreClerk clerk = new StoreClerk(store, org);
     StoreClerk.Metric m = clerk.getMetricForUserNameOrAlias(metric);
-    MetricMetadata metricMetadata = m.getUnderlyingMetric().getMetadata();
-    MultiPatternTimestampParser parser = new MultiPatternTimestampParser(clerk
-      .getOrgMetadataForTesting(), m.getTimestampPatterns(), TimestampFieldExtractor.create(m));
+    MultiLevelTimestampParser parser = new MultiLevelTimestampParser(m.getTimestampPatterns(), clerk
+      .getOrgMetadataForTesting().getTimestampFormats(), TimestampUtils.createExtractor(m));
 
     return parser.getTimestamp(new MapRecord(map));
   }

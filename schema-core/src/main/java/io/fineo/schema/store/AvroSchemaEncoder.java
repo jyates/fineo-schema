@@ -8,7 +8,7 @@ import io.fineo.schema.FineoStopWords;
 import io.fineo.schema.Record;
 import io.fineo.schema.avro.SchemaNameUtils;
 import io.fineo.schema.exception.SchemaNotFoundException;
-import io.fineo.schema.store.timestamp.TimestampParser;
+import io.fineo.schema.timestamp.TimestampParser;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 

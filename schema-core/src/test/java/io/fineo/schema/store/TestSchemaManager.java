@@ -8,6 +8,7 @@ import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.Pair;
 import io.fineo.schema.avro.SchemaNameGenerator;
 import io.fineo.schema.exception.SchemaTypeNotFoundException;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.apache.avro.Schema;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -26,9 +27,6 @@ import java.util.stream.Collectors;
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.fineo.schema.store.SchemaTestUtils.generateStringNames;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats.ISO_INSTANT;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
-  .RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -356,21 +354,21 @@ public class TestSchemaManager {
     SchemaStore store = getStore();
     StoreManager manager = new StoreManager(store);
     manager.newOrg(orgId)
-           .withTimestampFormat(RFC_1123_DATE_TIME.name())
+           .withTimestampFormat(MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name())
            .newMetric().setDisplayName(metricName)
-           .withTimestampFormat(ISO_INSTANT.name())
+           .withTimestampFormat(MultiPatternTimestampParser.TimeFormats.ISO_INSTANT.name())
            .build().commit();
 
     StoreClerk clerk = new StoreClerk(store, orgId);
-    assertEquals(newArrayList(ISO_INSTANT.name()),
+    assertEquals(newArrayList(MultiPatternTimestampParser.TimeFormats.ISO_INSTANT.name()),
       clerk.getMetricForUserNameOrAlias(metricName).getTimestampPatterns());
 
     // setting a new format should just have that format
     manager.updateOrg(orgId)
            .updateMetric(metricName)
-           .withTimestampFormat(RFC_1123_DATE_TIME.name())
+           .withTimestampFormat(MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name())
            .build().commit();
-    assertEquals(newArrayList(RFC_1123_DATE_TIME.name()),
+    assertEquals(newArrayList(MultiPatternTimestampParser.TimeFormats.RFC_1123_DATE_TIME.name()),
       clerk.getMetricForUserNameOrAlias(metricName).getTimestampPatterns());
   }
 

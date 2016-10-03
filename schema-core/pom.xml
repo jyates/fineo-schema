@@ -77,6 +77,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.fineo.client.schema</groupId>
+      <artifactId>schema</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
     </dependency>

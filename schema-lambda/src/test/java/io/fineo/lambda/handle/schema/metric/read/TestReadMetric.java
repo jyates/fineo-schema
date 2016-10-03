@@ -12,7 +12,7 @@ import io.fineo.lambda.handle.schema.metric.update.TestUpdateMetric;
 import io.fineo.schema.store.AvroSchemaProperties;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
-import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.schemarepo.InMemoryRepository;

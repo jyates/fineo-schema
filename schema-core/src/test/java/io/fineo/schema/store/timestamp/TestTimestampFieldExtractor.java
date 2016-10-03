@@ -5,6 +5,8 @@ import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
+import io.fineo.schema.store.TimestampUtils;
+import io.fineo.schema.timestamp.TimestampFieldExtractor;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -79,6 +81,6 @@ public class TestTimestampFieldExtractor {
   private TimestampFieldExtractor getExtractor(SchemaStore store, String org)
     throws SchemaNotFoundException {
     StoreClerk clerk = new StoreClerk(store, org);
-    return TimestampFieldExtractor.create(clerk.getMetricForUserNameOrAlias(metric));
+    return TimestampUtils.createExtractor(clerk.getMetricForUserNameOrAlias(metric));
   }
 }

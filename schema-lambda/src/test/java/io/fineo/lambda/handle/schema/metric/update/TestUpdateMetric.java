@@ -11,7 +11,7 @@ import io.fineo.schema.store.AvroSchemaEncoderFactory;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
-import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static io.fineo.schema.store.timestamp.MultiPatternTimestampParser.TimeFormats
-  .RFC_1123_DATE_TIME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

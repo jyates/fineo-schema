@@ -3,8 +3,7 @@ package io.fineo.schema.store;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.Record;
 import io.fineo.schema.exception.SchemaNotFoundException;
-import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
-import io.fineo.schema.store.timestamp.TimestampFieldExtractor;
+import io.fineo.schema.timestamp.MultiLevelTimestampParser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,7 +27,7 @@ public class AvroSchemaEncoderFactory {
     String metricAlias = checkNotNull(record.getStringByField(key),
       "No metric type found in record for metric type keys: %s or standard type key '%s'",
       metadata.getMetricKeys() == null ? "[]" : metadata.getMetricKeys(),
-      AvroSchemaProperties.ORG_METRIC_TYPE_KEY);record.getStringByField(key);
+      AvroSchemaProperties.ORG_METRIC_TYPE_KEY); record.getStringByField(key);
     StoreClerk.Metric metric = store.getMetricForUserNameOrAlias(metricAlias);
     return new RecordMetric(metricAlias, metric);
   }
@@ -36,9 +35,10 @@ public class AvroSchemaEncoderFactory {
   public AvroSchemaEncoder getEncoder(Record record)
     throws SchemaNotFoundException {
     RecordMetric rm = getMetricForRecord(record);
-    MultiPatternTimestampParser parser =
-      new MultiPatternTimestampParser(metadata, rm.metric.getTimestampPatterns(),
-        TimestampFieldExtractor.create(rm.metric));
+    MultiLevelTimestampParser parser =
+      new MultiLevelTimestampParser(rm.metric.getTimestampPatterns(),
+        metadata.getTimestampFormats(),
+        TimestampUtils.createExtractor(rm.metric));
     return new AvroSchemaEncoder(metadata.getMetadata().getCanonicalName(),
       rm.metric.getUnderlyingMetric(),
       rm.metricAlias, record, parser);

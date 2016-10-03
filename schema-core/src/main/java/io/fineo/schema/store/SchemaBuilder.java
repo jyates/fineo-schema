@@ -12,7 +12,7 @@ import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.avro.AvroSchemaInstanceBuilder;
 import io.fineo.schema.avro.SchemaNameGenerator;
-import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.apache.avro.Schema;
 
 import java.io.IOException;

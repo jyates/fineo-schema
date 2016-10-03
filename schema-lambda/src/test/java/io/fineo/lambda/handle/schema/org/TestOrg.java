@@ -16,7 +16,7 @@ import io.fineo.lambda.handle.schema.response.OrgResponse;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
-import io.fineo.schema.store.timestamp.MultiPatternTimestampParser;
+import io.fineo.schema.timestamp.MultiPatternTimestampParser;
 import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
