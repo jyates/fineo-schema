@@ -2,6 +2,8 @@ package io.fineo.lambda.handle.schema.metric.read;
 
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
 
+import java.util.Arrays;
+
 public class ReadMetricResponse {
   public String name;
   public String[] aliases;
@@ -38,5 +40,15 @@ public class ReadMetricResponse {
 
   public String[] getTimestampPatterns() {
     return timestampPatterns;
+  }
+
+  @Override
+  public String toString() {
+    return "ReadMetricResponse{" +
+           "name='" + name + '\'' +
+           ", aliases=" + Arrays.toString(aliases) +
+           ", fields=" + Arrays.toString(fields) +
+           ", timestampPatterns=" + Arrays.toString(timestampPatterns) +
+           '}';
   }
 }

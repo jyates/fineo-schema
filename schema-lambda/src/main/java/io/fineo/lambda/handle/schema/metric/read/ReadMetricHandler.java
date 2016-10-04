@@ -10,6 +10,8 @@ import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ import static java.lang.String.format;
  */
 public class ReadMetricHandler
   extends ExternalFacingRequestHandler<ReadMetricRequest, ReadMetricResponse> {
+  private static final Logger LOG = LoggerFactory.getLogger(ReadMetricHandler.class);
   private final Provider<SchemaStore> store;
 
   private static final String[] EMPTY = new String[0];
@@ -54,6 +57,7 @@ public class ReadMetricHandler
       for (int i = 0; i < readFields.length; i++) {
         readFields[i] = ReadFieldHandler.asResponse(fields.get(i));
       }
+      LOG.debug("Returning: {}", response);
       return response;
     } catch (SchemaNotFoundException e) {
       throw ExternalErrorsUtil.get40X(context, 4, format("Metric [%s] not found!", metricName));
