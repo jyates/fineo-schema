@@ -41,7 +41,6 @@ public class StoreClerk {
   public AvroSchemaEncoderFactory getEncoderFactory() throws
     SchemaNotFoundException {
     OrgMetadata orgMetadata = store.getOrgMetadata(orgId);
-
     return new AvroSchemaEncoderFactory(new StoreClerk(store, orgId), orgMetadata);
   }
 
@@ -64,7 +63,9 @@ public class StoreClerk {
    * @return helper to access fields of the metric
    */
   public Metric getMetricForUserNameOrAlias(String metricAliasName) throws SchemaNotFoundException {
+    LOG.debug("Reading metric: {} from store", metricAliasName);
     String expected = store.getMetricCNameFromAlias(metadata, metricAliasName);
+    LOG.debug("Got metric cname: ", expected);
     Metric foundMetric = collectElementsForFields(metadata, (metricCname, metricUserName,
       metricAliases) -> {
       if (expected != metricCname) {
@@ -74,6 +75,7 @@ public class StoreClerk {
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
       return new Metric(metricUserName, metric, orgId, metricAliases);
     }).stream().findFirst().orElse(null);
+    LOG.debug("Found metric for cname");
     SchemaUtils.checkFound(foundMetric, metricAliasName, "metric");
     return foundMetric;
   }

@@ -10,12 +10,12 @@ import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.avro.RecordMetadata;
 import io.fineo.schema.avro.SchemaNameUtils;
 import org.apache.avro.Schema;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.schemarepo.Repository;
 import org.schemarepo.SchemaEntry;
 import org.schemarepo.SchemaValidationException;
 import org.schemarepo.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Stores and retrieves schema for record instances
  */
 public class SchemaStore {
-  private static final Log LOG = LogFactory.getLog(SchemaStore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SchemaStore.class);
   private final Repository repo;
 
   public SchemaStore(Repository repo) {
@@ -176,14 +176,17 @@ public class SchemaStore {
    * @return the stored metadata for the org, if its present
    */
   public OrgMetadata getOrgMetadata(String orgId) {
+    LOG.debug("Looking up org: {}", orgId);
     Subject subject = repo.lookup(orgId);
     if (subject == null) {
       return null;
     }
-
+    LOG.debug("Got subject for org: {}", orgId);
     SchemaEntry entry = subject.latest();
     OrgMetadata metadata = parse(entry, OrgMetadata.getClassSchema());
+    LOG.debug("Parsed org metadata");
     setVersion(metadata, entry);
+    LOG.debug("Set version");
     return metadata;
   }
 
@@ -193,7 +196,6 @@ public class SchemaStore {
   public Metric getMetricMetadata(RecordMetadata meta) {
     return getMetricMetadata(meta.getOrgID(), meta.getMetricCanonicalType());
   }
-
 
   public String getMetricCNameFromAlias(OrgMetadata org, String aliasMetricName) {
     if (org.getMetrics() == null) {

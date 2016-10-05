@@ -36,12 +36,16 @@ public class ReadMetricHandler
   @Override
   public ReadMetricResponse handle(ReadMetricRequest request, Context context)
     throws Exception {
+    LOG.debug("Starting request");
     validateMetricRequest(context, request);
 
+    LOG.debug("validated request");
     StoreClerk clerk = new StoreClerk(store.get(), request.getOrgId());
+    LOG.debug("got clerk");
     String metricName = request.getMetricName();
     try {
       StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
+      LOG.debug("got metric");
       ReadMetricResponse response = new ReadMetricResponse();
 
       response.setName(metric.getUserName());

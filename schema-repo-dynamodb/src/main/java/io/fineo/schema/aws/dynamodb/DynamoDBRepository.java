@@ -95,7 +95,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
       .setRangeKey(subjectName)
       .setConfigs(RepositoryUtil.safeConfig(config).asMap());
     try {
+      LOG.debug("Saving subject: {}", subjectName);
       mapper.save(schema);
+      LOG.debug("-->Saved subject: {}", subjectName);
     } catch (ConditionalCheckFailedException e) {
       LOG.debug("Failed to register subject, it was already present!");
     }
@@ -108,8 +110,10 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     spec.withPrimaryKey(getPK(subjectName))
         .withConsistentRead(true)
         .withAttributesToGet(PARTITION_KEY);
-    return table.getItem(spec) != null;
-
+    LOG.debug("Checking if subject exists");
+    Item i = table.getItem(spec);
+    LOG.debug("-->checked if subject exists");
+    return i != null;
   }
 
   /**
@@ -185,7 +189,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     }
 
     private void reload() {
+      LOG.debug("Reloading subject");
       this.subject = mapper.load(SubjectSchema.class, getName(), getName());
+      LOG.debug("-->Reloaded subject");
     }
 
     @Override
