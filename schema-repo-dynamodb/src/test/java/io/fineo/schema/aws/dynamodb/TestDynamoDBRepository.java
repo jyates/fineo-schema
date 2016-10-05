@@ -4,7 +4,6 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
 import com.amazonaws.services.dynamodbv2.model.UpdateItemRequest;
-import io.fineo.aws.AwsDependentTests;
 import io.fineo.aws.rule.AwsCredentialResource;
 import javafx.util.Pair;
 import org.apache.commons.logging.Log;
@@ -14,7 +13,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.schemarepo.AbstractTestPersistentRepository;
 import org.schemarepo.Repository;
 import org.schemarepo.SchemaEntry;
@@ -35,9 +33,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Test the {@link DynamoDBRepository} against a local dynamodb instance (no network overhead).
+ * Test the {@link DynamoDBRepository} against a local io.fineo.schema.aws.dynamodb instance (no network overhead).
  */
-@Category(AwsDependentTests.class)
 public class TestDynamoDBRepository extends AbstractTestPersistentRepository<DynamoDBRepository> {
 
   private static final Log LOG = LogFactory.getLog(TestDynamoDBRepository.class);

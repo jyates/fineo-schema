@@ -1,6 +1,5 @@
 package io.fineo.schema.aws.dynamodb;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
@@ -13,7 +12,6 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import org.schemarepo.AbstractBackendRepository;
 import org.schemarepo.Repository;
 import org.schemarepo.RepositoryUtil;
@@ -75,7 +73,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     super(validators);
     this.client = dynamoDB;
     this.dynamo = new DynamoDB(dynamoDB);
-    this.table = getTable(tablename);
+    // this doesn't actually do anything besides set a reference to the table. It may not exist,
+    // or be in an unusable state, at which point we will just throw an exception
+    this.table = dynamo.getTable(tablename);
     DynamoDBMapperConfig.Builder b = new DynamoDBMapperConfig.Builder();
     b.setTableNameOverride(new DynamoDBMapperConfig.TableNameOverride(tablename));
     b.setConsistentReads(DynamoDBMapperConfig.ConsistentReads.CONSISTENT);
@@ -83,33 +83,13 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     this.mapper = new DynamoDBMapper(client, b.build());
   }
 
-  private Table getTable(String name) {
-    Table t;
-    try {
-      // table probably exists, so check that first
-      LOG.debug("Checking to see if " + name + " exists...");
-      TableUtils.waitUntilExists(client, name, 1000, 100);
-      LOG.debug("Table [" + name + "] exists! Getting it.");
-      t = dynamo.getTable(name);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    } catch (AmazonClientException e) {
-      LOG.warn("Got an exception while waiting for table", e);
-      throw e;
-    }
-
-    return t;
-  }
-
   @Override
   protected Subject getSubjectInstance(String subjectName) {
-    waitForTable();
     return new DynamoSubject(subjectName);
   }
 
   @Override
   protected void registerSubjectInBackend(String subjectName, SubjectConfig config) {
-    waitForTable();
     SubjectSchema schema = new SubjectSchema()
       .setSubject(subjectName)
       .setRangeKey(subjectName)
@@ -143,7 +123,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
    * @param value  value of the column
    */
   public void addDynamicColumn(String subjectname, String column, String value) {
-    waitForTable();
     UpdateItemSpec updateItemSpec = new UpdateItemSpec()
       .withPrimaryKey(getExtensionPK(subjectname))
       .withUpdateExpression("ADD #c :val1")
@@ -161,7 +140,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
    * @return all the dynamic columns for the subject
    */
   public Map<String, Set<String>> getDynamicColumns(String subject) {
-    waitForTable();
     GetItemSpec get = new GetItemSpec()
       .withPrimaryKey(getExtensionPK(subject))
       .withConsistentRead(true);
@@ -169,10 +147,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     Map<String, Set<String>> columns = new HashMap<>();
     for (Map.Entry<String, Object> column : item.attributes()) {
       // skip the PK columns
-      if (column.getKey().equals(PARTITION_KEY) || column.getKey().equals(
-
-
-        SORT_KEY)) {
+      if (column.getKey().equals(PARTITION_KEY) || column.getKey().equals(SORT_KEY)) {
         continue;
       }
       columns.put(column.getKey(), (Set<String>) column.getValue());
@@ -197,19 +172,6 @@ public class DynamoDBRepository extends AbstractBackendRepository {
 
   private String getExtensionName(String subjectname) {
     return subjectname + "_ext";
-  }
-
-  private void waitForTable() {
-    waitForTable(this.table);
-  }
-
-  private void waitForTable(Table table) {
-    LOG.debug("Waiting for " + table + " to become active");
-    try {
-      table.waitForActive();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /**

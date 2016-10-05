@@ -11,11 +11,6 @@
   </parent>
   <artifactId>schema-core</artifactId>
 
-  <properties>
-    <schema-repo.version>0.1.3</schema-repo.version>
-    <aws.dynamodb.local.version>1.10.5.1</aws.dynamodb.local.version>
-  </properties>
-
   <build>
     <plugins>
       <!-- Test Jar -->
@@ -109,6 +104,10 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fineo.schema</groupId>
+      <artifactId>schema-repo-dynamodb</artifactId>
     </dependency>
     <!-- Test dependencies -->
     <dependency>

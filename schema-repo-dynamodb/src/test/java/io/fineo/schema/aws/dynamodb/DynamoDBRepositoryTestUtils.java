@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
-import io.fineo.schema.Pair;
+import javafx.util.Pair;
 import org.schemarepo.ValidatorFactory;
 
 import java.util.ArrayList;
