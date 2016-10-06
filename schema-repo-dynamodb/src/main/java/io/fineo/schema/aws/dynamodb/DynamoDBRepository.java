@@ -110,9 +110,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     spec.withPrimaryKey(getPK(subjectName))
         .withConsistentRead(true)
         .withAttributesToGet(PARTITION_KEY);
-    LOG.debug("Checking if subject exists");
+    LOG.debug("Checking if subject {} exists", subjectName);
     Item i = table.getItem(spec);
-    LOG.debug("-->checked if subject exists");
+    LOG.debug("-->checked if subject {} exists", subjectName);
     return i != null;
   }
 
@@ -189,9 +189,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     }
 
     private void reload() {
-      LOG.debug("Reloading subject");
+      LOG.debug("Reloading subject {}", getName());
       this.subject = mapper.load(SubjectSchema.class, getName(), getName());
-      LOG.debug("-->Reloaded subject");
+      LOG.debug("-->Reloaded subject {}", getName());
     }
 
     @Override
