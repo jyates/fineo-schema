@@ -12,7 +12,6 @@
   <modules>
     <module>schema-core</module>
     <module>schema-lambda</module>
-    <module>schema-lambda-e2e</module>
     <module>schema-repo-dynamodb</module>
   </modules>
 
@@ -279,4 +278,18 @@
     </dependency>
   </dependencies>
 
+
+  <profiles>
+    <profile>
+      <id>deploy</id>
+      <activation>
+        <property>
+          <name>deploy</name>
+        </property>
+      </activation>
+      <modules>
+        <module>schema-lambda-e2e</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>
