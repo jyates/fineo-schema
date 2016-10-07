@@ -16,7 +16,7 @@ import org.schemarepo.ValidatorFactory;
 
 import java.util.List;
 
-import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.DYNAMO_SCHEMA_STORE_TABLE;
+import static io.fineo.lambda.handle.schema.inject.DynamoDBRepositoryProvider.DYNAMO_SCHEMA_STORE_TABLE;
 
 /**
  * Store module that ensures that the schema store table exists

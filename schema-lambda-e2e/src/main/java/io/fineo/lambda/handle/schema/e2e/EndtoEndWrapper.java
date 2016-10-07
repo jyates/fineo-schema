@@ -12,6 +12,7 @@ import io.fineo.lambda.handle.schema.e2e.options.command.AddFieldCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.BaseCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.CreateMetricCommand;
 import io.fineo.lambda.handle.schema.e2e.options.command.CreateOrgCommand;
+import io.fineo.lambda.handle.schema.inject.DynamoDBRepositoryProvider;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class EndtoEndWrapper {
     props.setProperty(DynamoTestConfiguratorModule.DYNAMO_URL_FOR_TESTING,
       "http://" + localStore.host + ":" + localStore.port);
     props.setProperty(SchemaStoreModule.SCHEMA_UPDATE_RETRIES, "1");
-    props.setProperty(SchemaStoreModule.DYNAMO_SCHEMA_STORE_TABLE, localStore.table);
+    props.setProperty(DynamoDBRepositoryProvider.DYNAMO_SCHEMA_STORE_TABLE, localStore.table);
     modules.add(new PropertiesModule(props));
 
     // core, non-production modules. These are used in combination with the modules above to
