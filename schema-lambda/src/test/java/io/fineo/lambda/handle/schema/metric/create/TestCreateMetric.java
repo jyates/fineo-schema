@@ -50,7 +50,8 @@ public class TestCreateMetric {
     try {
       createMetric(store, org, metric);
       fail();
-    } catch (IllegalArgumentException e) {
+    } catch (RuntimeException e) {
+      HandlerTestUtils.expectError(e, 400, "Bad Request");
     }
   }
 
@@ -67,6 +68,21 @@ public class TestCreateMetric {
     create.setOrgId("org");
     HandlerTestUtils
       .failNoValue(manager -> new CreateMetricHandler(manager, new UpdateRetryer(), 1), create);
+  }
+
+  @Test
+  public void testFailWithDuplicateMetricTypes() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org1";
+    TestCreateOrg.createOrg(store, org);
+    String metric = "metricname";
+    createMetric(store, org, metric);
+    CreateMetricRequestInternal create = new CreateMetricRequestInternal();
+    create.setOrgId("org");
+    create.setBody(new CreateMetricRequest().setMetricName(metric));
+    HandlerTestUtils.failWithProvider(() -> new StoreManager(store),
+      manager -> new CreateMetricHandler(manager, new UpdateRetryer(), 1), create, 400,
+      "Bad Request");
   }
 
   public static void createMetric(SchemaStore store, String org, String metric) throws Exception {

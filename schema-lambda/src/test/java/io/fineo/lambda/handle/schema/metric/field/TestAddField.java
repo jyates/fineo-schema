@@ -109,7 +109,8 @@ public class TestAddField {
     try {
       createField(store, org, metric, field, type);
       fail();
-    } catch (IllegalArgumentException e) {
+    } catch (RuntimeException e) {
+      HandlerTestUtils.expectError(e, 400, "Bad Request");
     }
   }
 

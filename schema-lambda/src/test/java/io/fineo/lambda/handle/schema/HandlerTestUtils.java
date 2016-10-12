@@ -48,8 +48,7 @@ public class HandlerTestUtils {
     Function<Provider<PROVIDED>, ExternalFacingRequestHandler<IN, OUT>> handler, IN msg, int
     code, String type)
     throws Exception {
-    Provider manager = Mockito.mock(Provider.class);
-    ThrowingRequestHandler<IN, OUT> handle = handler.apply(manager);
+    ThrowingRequestHandler<IN, OUT> handle = handler.apply(provider);
     Context context = Mockito.mock(Context.class);
     Mockito.when(context.getAwsRequestId()).thenReturn(UUID.randomUUID().toString());
     try {

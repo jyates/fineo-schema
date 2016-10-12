@@ -8,10 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Run the attempts to update the schema a configurable number of times. Ignores
- * {@link OldSchemaException} and attempts to re-run because the update may have nothing to do
- * with the old schema. {@link SchemaNotFoundException} also gets retried to avoid eventual
- * consistency problems, but if never found will throw a 404 error.
+ * Run the attempts to update the schema a configurable number of times.
+ * <ol>
+ * <li> Ignores {@link OldSchemaException} and attempts to re-run because the update may have
+ * nothing to do with the old schema.</li>
+ * <li>{@link SchemaNotFoundException} also gets retried to avoid eventual consistency
+ * problems, but if never found will throw a 404 error.</li>
+ * <li>{@link IllegalArgumentException} immediately throws 400 error</li>
+ * </ol>
  */
 public class UpdateRetryer {
 
@@ -37,6 +41,8 @@ public class UpdateRetryer {
         if (done(e2, i)) {
           throw ExternalErrorsUtil.get40X(context, 4, e2.getMessage());
         }
+      } catch (IllegalArgumentException e) {
+        throw ExternalErrorsUtil.get40X(context, 0, e.getMessage());
       }
     }
     throw ex;

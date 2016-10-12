@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import io.fineo.client.model.schema.metric.UpdateMetricRequest;
+import io.fineo.lambda.handle.external.ExternalErrorsUtil;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
