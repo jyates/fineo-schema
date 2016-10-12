@@ -36,6 +36,6 @@ public class DeleteMetricHandler
       manager.updateOrg(request.getOrgId()).deleteMetric(request.getBody().getMetricName())
              .commit();
       return RESPONSE;
-    });
+    }, context);
   }
 }

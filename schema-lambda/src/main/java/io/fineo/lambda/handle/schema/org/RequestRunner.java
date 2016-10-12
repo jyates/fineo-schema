@@ -1,5 +1,6 @@
 package io.fineo.lambda.handle.schema.org;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -24,7 +25,7 @@ public class RequestRunner {
     this.retry.setRetries(retries);
   }
 
-  public <T> T run(ThrowingSupplier<T> supplier) throws Exception {
-    return retry.run(supplier);
+  public <T> T run(ThrowingSupplier<T> supplier, Context context) throws Exception {
+    return retry.run(supplier, context);
   }
 }

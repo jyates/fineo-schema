@@ -57,7 +57,7 @@ public class UpdateFieldHandler extends
       manager.updateOrg(irequest.getOrgId()).updateMetric(request.getMetricName())
              .addFieldAlias(request.getFieldName(), aliases).build().commit();
       return RESPONSE;
-    });
+    }, context);
 
   }
 }

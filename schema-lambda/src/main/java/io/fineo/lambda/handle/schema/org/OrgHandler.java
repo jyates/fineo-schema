@@ -3,6 +3,7 @@ package io.fineo.lambda.handle.schema.org;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import io.fineo.lambda.handle.external.ExternalErrorsUtil;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.org.read.ReadOrgHandler;
 import io.fineo.lambda.handle.schema.org.update.UpdateOrgHandler;
@@ -36,11 +37,10 @@ public class OrgHandler extends ExternalFacingRequestHandler<ExternalOrgRequest,
         return get.handle(orgRequest.getGet().setOrgId(orgRequest.getOrgId()), context).doGet();
       case "PATCH":
         return runner
-          .run(patch.handle(orgRequest.getPatch().setOrgId(orgRequest.getOrgId()), context));
+          .run(patch.handle(orgRequest.getPatch().setOrgId(orgRequest.getOrgId()), context),
+            context);
       default:
-        throw new IllegalArgumentException("Unsupported request type: " + orgRequest.getType() +
-                                           ". Likely an internal error - please send this stack "
-                                           + "trace to errors@fineo.io");
+        throw new IllegalArgumentException("Unsupported request type: " + orgRequest.getType());
     }
   }
 }

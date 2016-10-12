@@ -54,7 +54,7 @@ public class UpdateMetricHandler
       metric.withTimestampFormat(request.getTimestampPatterns());
       metric.build().commit();
       return RESPONSE;
-    });
+    }, context);
   }
 
   private boolean validArray(String[] fields) {

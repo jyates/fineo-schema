@@ -39,7 +39,7 @@ public class DeleteFieldHandler extends
       manager.updateOrg(request.getOrgId()).updateMetric(request.getBody().getMetricName())
              .deleteField(request.getBody().getFieldName()).build().commit();
       return RESPONSE;
-    });
+    }, context);
 
   }
 }

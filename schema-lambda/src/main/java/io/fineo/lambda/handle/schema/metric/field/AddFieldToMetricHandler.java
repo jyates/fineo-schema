@@ -56,6 +56,6 @@ public class AddFieldToMetricHandler
       }
       builder.build().build().commit();
       return RESPONSE;
-    });
+    }, context);
   }
 }

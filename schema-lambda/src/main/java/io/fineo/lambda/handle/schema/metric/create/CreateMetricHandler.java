@@ -44,6 +44,6 @@ public class CreateMetricHandler
              .newMetric().setDisplayName(request.getMetricName()).addAliases(request.getAliases())
              .build().commit();
       return RESPONSE;
-    });
+    }, context);
   }
 }

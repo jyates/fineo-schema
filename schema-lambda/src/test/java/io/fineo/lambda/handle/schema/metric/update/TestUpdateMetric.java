@@ -1,15 +1,11 @@
 package io.fineo.lambda.handle.schema.metric.update;
 
 import com.google.inject.Provider;
-import io.fineo.client.model.schema.metric.MetricRequest;
 import io.fineo.client.model.schema.metric.UpdateMetricRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.metric.create.TestCreateMetric;
-import io.fineo.schema.MapRecord;
-import io.fineo.schema.exception.SchemaNotFoundException;
-import io.fineo.schema.store.AvroSchemaEncoderFactory;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
@@ -18,14 +14,11 @@ import org.junit.Test;
 import org.schemarepo.InMemoryRepository;
 import org.schemarepo.ValidatorFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class TestUpdateMetric {
 
@@ -89,26 +82,20 @@ public class TestUpdateMetric {
     assertEquals(newArrayList(name), m.getTimestampPatterns());
   }
 
-  private void assertReadMetricForKey(SchemaStore store, String org, String metric, String
-    metricKey) throws SchemaNotFoundException {
-    StoreClerk clerk = new StoreClerk(store, org);
-    Map<String, Object> map = new HashMap<>();
-    map.put(metricKey, metric);
-    MapRecord mapRecord = new MapRecord(map);
-    AvroSchemaEncoderFactory.RecordMetric rm = clerk.getEncoderFactory().getMetricForRecord
-      (mapRecord);
-    assertEquals(metric, rm.metricAlias);
-  }
+  /**
+   * A metric that isn't found should be a 404 error
+   */
+  @Test
+  public void testReadMetricNotFound() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "orgid", metric = "metricname", metric2 = "newmetric";
+    TestCreateOrg.createOrg(store, org);
+    TestCreateMetric.createMetric(store, org, metric);
 
-  private void tryReadMetricNotFound(StoreClerk clerk, String metric, String metricKey)
-    throws SchemaNotFoundException {
     try {
-      Map<String, Object> map = new HashMap<>();
-      map.put(metricKey, metric);
-      clerk.getEncoderFactory().getMetricForRecord(new MapRecord(map));
-      fail("Should not have been able to read metric without key!");
-    } catch (NullPointerException e) {
-      //expected
+      handleRequest(store, org, metric2, request -> {request.getBody().setNewDisplayName("m2");});
+    } catch (Exception e) {
+      HandlerTestUtils.expectError(e, 404, "Not Found");
     }
   }
 
@@ -142,6 +129,6 @@ public class TestUpdateMetric {
     update.accept(request);
 
     UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));
-    handler.handle(request, null);
+    handler.handleRequest(request, null);
   }
 }
