@@ -1,6 +1,7 @@
 package io.fineo.lambda.handle.schema.org;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.SchemaManagementRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -148,7 +149,8 @@ public class TestOrg {
     throws Exception {
     return handleRequest(store, org, new UpdateOrgRequest(), (ex, patch) -> {
       ex.setPatch(patch);
-      patch.setMetricTypeKeys(keys);
+      patch.setBody(new SchemaManagementRequest());
+      patch.getBody().setMetricTypeKeys(keys);
     });
   }
 
@@ -157,7 +159,8 @@ public class TestOrg {
     throws Exception {
     return handleRequest(store, org, new UpdateOrgRequest(), (ex, patch) -> {
       ex.setPatch(patch);
-      patch.setTimestampPatterns(patterns);
+      patch.setBody(new SchemaManagementRequest());
+      patch.getBody().setTimestampPatterns(patterns);
     });
   }
 

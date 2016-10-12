@@ -21,6 +21,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.fineo.client.models</groupId>
+      <artifactId>schema</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.fineo.lambda</groupId>
       <artifactId>lambda-core</artifactId>
     </dependency>

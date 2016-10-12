@@ -1,6 +1,7 @@
 package io.fineo.lambda.handle.schema.field.delete;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.field.FieldRequest;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.metric.create.TestCreateMetric;
@@ -28,10 +29,12 @@ public class TestDeleteField {
     TestAddField.createField(store, org, metric, field, type);
 
     DeleteFieldHandler handler = handler(() -> new StoreManager(store));
-    DeleteFieldRequest request = new DeleteFieldRequest();
+    DeleteFieldRequestInternal request = new DeleteFieldRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName(field);
+    FieldRequest body = new FieldRequest();
+    body.setMetricName(metric);
+    body.setFieldName(field);
+    request.setBody(body);
     handler.handle(request, null);
 
     StoreClerk clerk = new StoreClerk(store, org);

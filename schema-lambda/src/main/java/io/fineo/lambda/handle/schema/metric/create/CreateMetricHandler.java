@@ -4,15 +4,17 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import io.fineo.client.model.schema.metric.CreateMetricRequest;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.inject.SchemaStoreModule;
 import io.fineo.schema.store.StoreManager;
 
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
+import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateRequest;
 
 public class CreateMetricHandler
-  extends ExternalFacingRequestHandler<CreateMetricRequest, CreateMetricResponse> {
+  extends ExternalFacingRequestHandler<CreateMetricRequestInternal, CreateMetricResponse> {
 
   private static final CreateMetricResponse RESPONSE = new CreateMetricResponse();
   private final Provider<StoreManager> store;
@@ -29,12 +31,17 @@ public class CreateMetricHandler
 
 
   @Override
-  public CreateMetricResponse handle(CreateMetricRequest input, Context context) throws Exception {
-    validateMetricRequest(context, input);
+  public CreateMetricResponse handle(CreateMetricRequestInternal irequest, Context context)
+    throws Exception {
+    validateRequest(context, irequest);
+
+    CreateMetricRequest request = irequest.getBody();
+    validateMetricRequest(context, request);
+
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(input.getOrgId())
-             .newMetric().setDisplayName(input.getMetricName()).addAliases(input.getAliases())
+      manager.updateOrg(irequest.getOrgId())
+             .newMetric().setDisplayName(request.getMetricName()).addAliases(request.getAliases())
              .build().commit();
       return RESPONSE;
     });

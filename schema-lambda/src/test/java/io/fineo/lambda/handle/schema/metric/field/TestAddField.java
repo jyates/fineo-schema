@@ -1,6 +1,7 @@
 package io.fineo.lambda.handle.schema.metric.field;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.field.CreateFieldRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -50,14 +51,16 @@ public class TestAddField {
 
   public static void createField(SchemaStore store, String org, String metric, String field,
     String type, String... aliases) throws Exception {
-    AddFieldToMetricRequest request = new AddFieldToMetricRequest();
+    AddFieldToMetricRequestInternal request = new AddFieldToMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName(field);
-    request.setFieldType(type);
+    CreateFieldRequest body = new CreateFieldRequest();
+    body.setMetricName(metric);
+    body.setFieldName(field);
+    body.setFieldType(type);
     if (aliases != null && aliases.length > 0) {
-      request.setAliases(aliases);
+      body.setAliases(aliases);
     }
+    request.setBody(body);
 
     AddFieldToMetricHandler handler = handler(store);
     handler.handle(request, null);
@@ -82,13 +85,15 @@ public class TestAddField {
 
   @Test
   public void testFailOnMissingFields() throws Exception {
-    AddFieldToMetricRequest request = new AddFieldToMetricRequest();
+    AddFieldToMetricRequestInternal request = new AddFieldToMetricRequestInternal();
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
     request.setOrgId("org");
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
-    request.setMetricName("metric");
+    CreateFieldRequest body = new CreateFieldRequest();
+    body.setMetricName("metric");
+    request.setBody(body);
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
-    request.setFieldName("field");
+    body.setFieldName("field");
     HandlerTestUtils.failNoValue(TestAddField::handler, request);
   }
 

@@ -1,6 +1,7 @@
 package io.fineo.lambda.handle.schema.metric.delete;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.metric.MetricRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -27,9 +28,11 @@ public class TestDeleteMetric {
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
 
-    DeleteMetricRequest request = new DeleteMetricRequest();
+    DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
+    MetricRequest body = new MetricRequest();
+    body.setMetricName(metric);
+    request.setBody(body);
     DeleteMetricHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);
 
@@ -45,9 +48,11 @@ public class TestDeleteMetric {
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
 
-    DeleteMetricRequest request = new DeleteMetricRequest();
+    DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
+    MetricRequest body = new MetricRequest();
+    body.setMetricName(metric);
+    request.setBody(body);
     DeleteMetricHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);
 
@@ -59,7 +64,7 @@ public class TestDeleteMetric {
 
   @Test
   public void testDeleteMissingParameters() throws Exception {
-    DeleteMetricRequest request = new DeleteMetricRequest();
+    DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
     HandlerTestUtils.failNoValue(TestDeleteMetric::handler, request);
   }
 

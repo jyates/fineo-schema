@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to handle requests to delete a field from a metric
  */
 public class DeleteField extends
-                         LambdaResponseWrapper<DeleteFieldRequest, DeleteFieldResponse, DeleteFieldHandler> {
+                         LambdaResponseWrapper<DeleteFieldRequestInternal, DeleteFieldResponse, DeleteFieldHandler> {
 
   public DeleteField() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
@@ -25,7 +25,7 @@ public class DeleteField extends
   }
 
   @Override
-  public DeleteFieldResponse handle(DeleteFieldRequest input, Context context)
+  public DeleteFieldResponse handle(DeleteFieldRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

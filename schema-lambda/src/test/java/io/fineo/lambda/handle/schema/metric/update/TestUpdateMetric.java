@@ -1,6 +1,8 @@
 package io.fineo.lambda.handle.schema.metric.update;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.metric.MetricRequest;
+import io.fineo.client.model.schema.metric.UpdateMetricRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -65,9 +67,11 @@ public class TestUpdateMetric {
 
   @Test
   public void testMissingRequestFields() throws Exception {
-    UpdateMetricRequest request = new UpdateMetricRequest();
+    UpdateMetricRequestInternal request = new UpdateMetricRequestInternal();
     HandlerTestUtils.failNoValue(TestUpdateMetric::createHandler, request);
     request.setOrgId("org");
+    HandlerTestUtils.failNoValue(TestUpdateMetric::createHandler, request);
+    request.setBody(new UpdateMetricRequest());
     HandlerTestUtils.failNoValue(TestUpdateMetric::createHandler, request);
   }
 
@@ -114,27 +118,27 @@ public class TestUpdateMetric {
 
   public static void updateMetricAliases(SchemaStore store, String org, String metric,
     String... aliases) throws Exception {
-    handleRequest(store, org, metric, request -> request.setAliases(aliases));
+    handleRequest(store, org, metric, request -> request.getBody().setAliases(aliases));
   }
 
 
   public static void updateMetricDisplayName(SchemaStore store, String org, String metric,
     String name) throws Exception {
-    handleRequest(store, org, metric, request -> request.setNewDisplayName(name));
+    handleRequest(store, org, metric, request -> request.getBody().setNewDisplayName(name));
   }
 
   public static void setTimestampPatterns(SchemaStore store, String org, String metric, String
     ... patterns) throws Exception {
     handleRequest(store, org, metric, request -> {
-      request.setTimestampPatterns(patterns);
+      request.getBody().setTimestampPatterns(patterns);
     });
   }
 
   private static void handleRequest(SchemaStore store, String org, String metric,
-    Consumer<UpdateMetricRequest> update) throws Exception {
-    UpdateMetricRequest request = new UpdateMetricRequest();
+    Consumer<UpdateMetricRequestInternal> update) throws Exception {
+    UpdateMetricRequestInternal request = new UpdateMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
+    request.setBody(new UpdateMetricRequest().setMetricName(metric));
     update.accept(request);
 
     UpdateMetricHandler handler = createHandler(() -> new StoreManager(store));

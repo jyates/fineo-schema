@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to instantiate the raw stage
  */
 public class ReadMetric
-  extends LambdaResponseWrapper<ReadMetricRequest, ReadMetricResponse, ReadMetricHandler> {
+  extends LambdaResponseWrapper<ReadMetricRequestInternal, ReadMetricResponse, ReadMetricHandler> {
 
   public ReadMetric() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
@@ -25,7 +25,7 @@ public class ReadMetric
   }
 
   @Override
-  public ReadMetricResponse handle(ReadMetricRequest input, Context context)
+  public ReadMetricResponse handle(ReadMetricRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

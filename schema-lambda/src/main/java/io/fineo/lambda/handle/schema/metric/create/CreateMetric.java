@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to instantiate the raw stage
  */
 public class CreateMetric extends
-                          LambdaResponseWrapper<CreateMetricRequest, CreateMetricResponse,
+                          LambdaResponseWrapper<CreateMetricRequestInternal, CreateMetricResponse,
                             CreateMetricHandler> {
 
   public CreateMetric() throws IOException {
@@ -26,7 +26,7 @@ public class CreateMetric extends
   }
 
   @Override
-  public CreateMetricResponse handle(CreateMetricRequest input, Context context)
+  public CreateMetricResponse handle(CreateMetricRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

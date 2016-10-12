@@ -1,5 +1,6 @@
 package io.fineo.lambda.handle.schema.metric.create;
 
+import io.fineo.client.model.schema.metric.CreateMetricRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -55,14 +56,14 @@ public class TestCreateMetric {
 
   @Test
   public void testFailIfNoOrgName() throws Exception {
-    CreateMetricRequest create = new CreateMetricRequest();
+    CreateMetricRequestInternal create = new CreateMetricRequestInternal();
     HandlerTestUtils
       .failNoValue(manager -> new CreateMetricHandler(manager, new UpdateRetryer(), 1), create);
   }
 
   @Test
   public void testFailIfNoMetricName() throws Exception {
-    CreateMetricRequest create = new CreateMetricRequest();
+    CreateMetricRequestInternal create = new CreateMetricRequestInternal();
     create.setOrgId("org");
     HandlerTestUtils
       .failNoValue(manager -> new CreateMetricHandler(manager, new UpdateRetryer(), 1), create);
@@ -70,9 +71,11 @@ public class TestCreateMetric {
 
   public static void createMetric(SchemaStore store, String org, String metric) throws Exception {
     // create a new metric
-    CreateMetricRequest create = new CreateMetricRequest();
+    CreateMetricRequestInternal create = new CreateMetricRequestInternal();
     create.setOrgId(org);
-    create.setMetricName(metric);
+    CreateMetricRequest body = new CreateMetricRequest();
+    body.setMetricName(metric);
+    create.setBody(body);
     CreateMetricHandler handler =
       new CreateMetricHandler(() -> new StoreManager(store), new UpdateRetryer(), 1);
     handler.handle(create, null);

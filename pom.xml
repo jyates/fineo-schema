@@ -142,6 +142,13 @@
     </plugins>
   </build>
 
+  <repositories>
+    <repository>
+      <id>Fineo</id>
+      <url>http://maven.fineo.io/release</url>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <!-- Intra-project -->
@@ -193,6 +200,11 @@
         <version>${fineo-lambda.version}</version>
         <classifier>tests</classifier>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.fineo.client.models</groupId>
+        <artifactId>schema</artifactId>
+        <version>LATEST</version>
       </dependency>
 
       <!-- Other -->

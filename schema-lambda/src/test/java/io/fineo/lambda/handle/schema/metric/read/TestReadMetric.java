@@ -2,6 +2,7 @@ package io.fineo.lambda.handle.schema.metric.read;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.metric.MetricRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.field.read.ReadFieldResponse;
@@ -115,7 +116,7 @@ public class TestReadMetric {
 
   @Test
   public void testMissingParameters() throws Exception {
-    ReadMetricRequest request = new ReadMetricRequest();
+    ReadMetricRequestInternal request = new ReadMetricRequestInternal();
     HandlerTestUtils.failNoValueWithProvider(TestReadMetric::handleProvider, request);
 
     request.setOrgId("org");
@@ -127,9 +128,9 @@ public class TestReadMetric {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     String org = "org";
     TestCreateOrg.createOrg(store, org);
-    ReadMetricRequest request = new ReadMetricRequest();
+    ReadMetricRequestInternal request = new ReadMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName("metric");
+    request.setBody(new MetricRequest().setMetricName("metric"));
 
     try {
       Context context = Mockito.mock(Context.class);
@@ -169,9 +170,10 @@ public class TestReadMetric {
 
   public static ReadMetricResponse read(SchemaStore store, String org, String metric)
     throws Exception {
-    ReadMetricRequest request = new ReadMetricRequest();
+    ReadMetricRequestInternal request = new ReadMetricRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
+    MetricRequest body = new MetricRequest();
+    request.setBody(body.setMetricName(metric));
     ReadMetricHandler handler = handler(store);
     return handler.handle(request, null);
   }

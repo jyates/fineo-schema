@@ -12,7 +12,7 @@ import io.fineo.schema.store.StoreManager;
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateMetricRequest;
 
 public class DeleteMetricHandler
-  extends ExternalFacingRequestHandler<DeleteMetricRequest, DeleteMetricResponse> {
+  extends ExternalFacingRequestHandler<DeleteMetricRequestInternal, DeleteMetricResponse> {
 
   private static final DeleteMetricResponse RESPONSE = new DeleteMetricResponse();
   private final Provider<StoreManager> store;
@@ -28,11 +28,13 @@ public class DeleteMetricHandler
   }
 
   @Override
-  public DeleteMetricResponse handle(DeleteMetricRequest input, Context context) throws Exception {
-    validateMetricRequest(context, input);
+  public DeleteMetricResponse handle(DeleteMetricRequestInternal request, Context context)
+    throws Exception {
+    validateMetricRequest(context, request);
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(input.getOrgId()).deleteMetric(input.getMetricName()).commit();
+      manager.updateOrg(request.getOrgId()).deleteMetric(request.getBody().getMetricName())
+             .commit();
       return RESPONSE;
     });
   }

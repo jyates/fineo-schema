@@ -15,7 +15,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDA
  * A lambda handler that handles Kinesis events
  */
 public class DeleteFieldHandler extends
-                                ExternalFacingRequestHandler<DeleteFieldRequest, DeleteFieldResponse> {
+                                ExternalFacingRequestHandler<DeleteFieldRequestInternal, DeleteFieldResponse> {
 
   private static final DeleteFieldResponse RESPONSE = new DeleteFieldResponse();
   private final Provider<StoreManager> store;
@@ -30,14 +30,14 @@ public class DeleteFieldHandler extends
   }
 
   @Override
-  protected DeleteFieldResponse handle(DeleteFieldRequest request, Context context)
+  protected DeleteFieldResponse handle(DeleteFieldRequestInternal request, Context context)
     throws Exception {
     validateMetricRequest(context, request);
 
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricName())
-             .deleteField(request.getFieldName()).build().commit();
+      manager.updateOrg(request.getOrgId()).updateMetric(request.getBody().getMetricName())
+             .deleteField(request.getBody().getFieldName()).build().commit();
       return RESPONSE;
     });
 

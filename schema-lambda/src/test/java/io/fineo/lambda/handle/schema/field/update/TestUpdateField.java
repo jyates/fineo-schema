@@ -1,6 +1,7 @@
 package io.fineo.lambda.handle.schema.field.update;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.field.UpdateFieldRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
@@ -49,13 +50,16 @@ public class TestUpdateField {
 
   @Test
   public void testNoMissingFields() throws Exception {
-    UpdateFieldRequest request = new UpdateFieldRequest();
+    UpdateFieldRequestInternal request = new UpdateFieldRequestInternal();
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
     request.setOrgId("o");
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
-    request.setMetricName("m");
+    UpdateFieldRequest body = new UpdateFieldRequest();
+    body.setMetricName("m");
+    request.setBody(body);
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
-    request.setAliases(new String[]{"al"});
+    body.setAliases(new String[]{"al"});
+    request.setBody(body);
     HandlerTestUtils.failNoValue(TestUpdateField::handler, request);
   }
 
@@ -80,11 +84,13 @@ public class TestUpdateField {
 
   public static void updateField(SchemaStore store, String org, String metric, String field,
     String... aliases) throws Exception {
-    UpdateFieldRequest request = new UpdateFieldRequest();
+    UpdateFieldRequestInternal request = new UpdateFieldRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName(field);
-    request.setAliases(aliases);
+    UpdateFieldRequest body = new UpdateFieldRequest();
+    body.setMetricName(metric);
+    body.setFieldName(field);
+    body.setAliases(aliases);
+    request.setBody(body);
     UpdateFieldHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);
   }

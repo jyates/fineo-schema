@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to instantiate the raw stage
  */
 public class DeleteMetric extends
-                          LambdaResponseWrapper<DeleteMetricRequest, DeleteMetricResponse,
+                          LambdaResponseWrapper<DeleteMetricRequestInternal, DeleteMetricResponse,
                             DeleteMetricHandler> {
 
   public DeleteMetric() throws IOException {
@@ -26,7 +26,7 @@ public class DeleteMetric extends
   }
 
   @Override
-  public DeleteMetricResponse handle(DeleteMetricRequest input, Context context)
+  public DeleteMetricResponse handle(DeleteMetricRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

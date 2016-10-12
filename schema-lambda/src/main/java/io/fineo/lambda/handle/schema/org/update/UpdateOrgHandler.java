@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.SchemaManagementRequest;
 import io.fineo.lambda.handle.schema.ThrowingSupplier;
 import io.fineo.lambda.handle.schema.org.RunnableHandler;
 import io.fineo.schema.store.StoreManager;
@@ -21,19 +22,20 @@ public class UpdateOrgHandler extends RunnableHandler<UpdateOrgRequest, UpdateOr
   }
 
   @Override
-  public ThrowingSupplier<UpdateOrgResponse> handle(UpdateOrgRequest input, Context
+  public ThrowingSupplier<UpdateOrgResponse> handle(UpdateOrgRequest irequest, Context
     context) throws JsonProcessingException {
-    validateRequest(context, input);
-    boolean valid = validArray(input.getMetricTypeKeys());
-    valid = valid || validArray(input.getTimestampPatterns());
+    validateRequest(context, irequest);
+    SchemaManagementRequest request = irequest.getBody();
+    boolean valid = validArray(request.getMetricTypeKeys());
+    valid = valid || validArray(request.getTimestampPatterns());
     if (!valid) {
       return () -> RESPONSE;
     }
     return () -> {
       StoreManager manager = store.get();
-      manager.updateOrg(input.getOrgId())
-             .withMetricKeys(input.getMetricTypeKeys())
-             .withTimestampFormat(input.getTimestampPatterns())
+      manager.updateOrg(irequest.getOrgId())
+             .withMetricKeys(request.getMetricTypeKeys())
+             .withTimestampFormat(request.getTimestampPatterns())
              .commit();
       return RESPONSE;
     };

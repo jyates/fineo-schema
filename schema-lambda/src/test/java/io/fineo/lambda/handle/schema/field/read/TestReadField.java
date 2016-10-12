@@ -2,6 +2,7 @@ package io.fineo.lambda.handle.schema.field.read;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.field.ReadFieldRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.metric.create.TestCreateMetric;
@@ -46,28 +47,38 @@ public class TestReadField {
 
   private static void verifyReadField(SchemaStore store, String org, String metric, String field,
     String type, String... aliases) throws Exception {
-    ReadFieldRequest request = new ReadFieldRequest();
+    ReadFieldRequestInternal request = new ReadFieldRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName(field);
+    ReadFieldRequest body = new ReadFieldRequest();
+    body.setMetricName(metric);
+    body.setFieldName(field);
+    request.setBody(body);
     ReadFieldHandler handler = handler(store);
     assertEquals(field(field, type, aliases), handler.handle(request, null));
   }
 
   @Test
   public void testMissingParameters() throws Exception {
-    ReadFieldRequest request = verifyFailForRequest(null, r -> {
+    ReadFieldRequestInternal request = verifyFailForRequest(null, r -> {
     });
+
+    ReadFieldRequest body = new ReadFieldRequest();
     verifyFailForRequest(request, r -> r.setOrgId(""));
     verifyFailForRequest(request, r -> r.setOrgId("orgId"));
-    verifyFailForRequest(request, r -> r.setMetricName(""));
-    verifyFailForRequest(request, r -> r.setMetricName("metric"));
+    verifyFailForRequest(request, r -> {
+      body.setMetricName("");
+      request.setBody(body);
+    });
+    verifyFailForRequest(request, r -> {
+      body.setMetricName("");
+      request.setBody(body);
+    });
   }
 
-  private ReadFieldRequest verifyFailForRequest(ReadFieldRequest request,
-    Consumer<ReadFieldRequest> update) throws Exception {
+  private ReadFieldRequestInternal verifyFailForRequest(ReadFieldRequestInternal request,
+    Consumer<ReadFieldRequestInternal> update) throws Exception {
     if (request == null) {
-      request = new ReadFieldRequest();
+      request = new ReadFieldRequestInternal();
     }
     update.accept(request);
     HandlerTestUtils.failNoValueWithProvider(TestReadField::handleProvider, request);
@@ -80,10 +91,12 @@ public class TestReadField {
     String org = "org", metric = "metric";
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
-    ReadFieldRequest request = new ReadFieldRequest();
+    ReadFieldRequestInternal request = new ReadFieldRequestInternal();
     request.setOrgId(org);
-    request.setMetricName(metric);
-    request.setFieldName("field");
+    ReadFieldRequest body = new ReadFieldRequest();
+    body.setMetricName(metric);
+    body.setFieldName("field");
+    request.setBody(body);
 
     try {
       Context context = Mockito.mock(Context.class);

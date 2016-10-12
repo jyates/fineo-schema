@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to instantiate the raw stage
  */
 public class ReadField
-  extends LambdaResponseWrapper<ReadFieldRequest, ReadFieldResponse, ReadFieldHandler> {
+  extends LambdaResponseWrapper<ReadFieldRequestInternal, ReadFieldResponse, ReadFieldHandler> {
 
   public ReadField() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
@@ -25,7 +25,7 @@ public class ReadField
   }
 
   @Override
-  public ReadFieldResponse handle(ReadFieldRequest input, Context context)
+  public ReadFieldResponse handle(ReadFieldRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }

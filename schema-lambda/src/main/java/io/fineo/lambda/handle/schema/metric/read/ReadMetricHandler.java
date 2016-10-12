@@ -22,7 +22,7 @@ import static java.lang.String.format;
  * A lambda handler that handles Kinesis events
  */
 public class ReadMetricHandler
-  extends ExternalFacingRequestHandler<ReadMetricRequest, ReadMetricResponse> {
+  extends ExternalFacingRequestHandler<ReadMetricRequestInternal, ReadMetricResponse> {
   private static final Logger LOG = LoggerFactory.getLogger(ReadMetricHandler.class);
   private final Provider<SchemaStore> store;
 
@@ -34,7 +34,7 @@ public class ReadMetricHandler
   }
 
   @Override
-  public ReadMetricResponse handle(ReadMetricRequest request, Context context)
+  public ReadMetricResponse handle(ReadMetricRequestInternal request, Context context)
     throws Exception {
     LOG.debug("Starting request");
     validateMetricRequest(context, request);
@@ -42,7 +42,7 @@ public class ReadMetricHandler
     LOG.debug("validated request");
     StoreClerk clerk = new StoreClerk(store.get(), request.getOrgId());
     LOG.debug("got clerk");
-    String metricName = request.getMetricName();
+    String metricName = request.getBody().getMetricName();
     try {
       StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);
       LOG.debug("got metric");

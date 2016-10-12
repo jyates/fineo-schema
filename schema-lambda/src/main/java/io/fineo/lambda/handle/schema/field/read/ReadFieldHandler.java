@@ -3,6 +3,7 @@ package io.fineo.lambda.handle.schema.field.read;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.field.FieldRequest;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.schema.exception.SchemaNotFoundException;
 import io.fineo.schema.store.SchemaStore;
@@ -18,7 +19,7 @@ import static java.lang.String.format;
  * A lambda handler that handles Kinesis events
  */
 public class ReadFieldHandler extends
-                              ExternalFacingRequestHandler<ReadFieldRequest, ReadFieldResponse> {
+                              ExternalFacingRequestHandler<ReadFieldRequestInternal, ReadFieldResponse> {
 
   private final Provider<SchemaStore> store;
 
@@ -30,11 +31,12 @@ public class ReadFieldHandler extends
   }
 
   @Override
-  protected ReadFieldResponse handle(ReadFieldRequest request, Context context)
+  protected ReadFieldResponse handle(ReadFieldRequestInternal internalRequest, Context context)
     throws Exception {
-    validateFieldRequest(context, request);
+    validateFieldRequest(context, internalRequest);
+    FieldRequest request = internalRequest.getBody();
 
-    StoreClerk clerk = new StoreClerk(store.get(), request.getOrgId());
+    StoreClerk clerk = new StoreClerk(store.get(), internalRequest.getOrgId());
     String metricName = request.getMetricName();
     try {
       StoreClerk.Metric metric = clerk.getMetricForUserNameOrAlias(metricName);

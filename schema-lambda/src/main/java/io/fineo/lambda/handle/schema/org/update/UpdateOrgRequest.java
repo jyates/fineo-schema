@@ -1,25 +1,17 @@
 package io.fineo.lambda.handle.schema.org.update;
 
+import io.fineo.client.model.schema.SchemaManagementRequest;
 import io.fineo.lambda.handle.schema.request.OrgRequest;
 
 public class UpdateOrgRequest extends OrgRequest {
 
-  private String[] metricTypeKeys;
-  private String[] timestampPatterns;
+  private SchemaManagementRequest body;
 
-  public String[] getMetricTypeKeys() {
-    return metricTypeKeys;
+  public SchemaManagementRequest getBody() {
+    return body;
   }
 
-  public void setMetricTypeKeys(String[] metricTypeKeys) {
-    this.metricTypeKeys = metricTypeKeys;
-  }
-
-  public String[] getTimestampPatterns() {
-    return timestampPatterns;
-  }
-
-  public void setTimestampPatterns(String[] timestampPatterns) {
-    this.timestampPatterns = timestampPatterns;
+  public void setBody(SchemaManagementRequest body) {
+    this.body = body;
   }
 }

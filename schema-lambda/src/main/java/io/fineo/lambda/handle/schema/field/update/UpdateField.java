@@ -14,7 +14,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.getModules;
  * Wrapper to instantiate the raw stage
  */
 public class UpdateField extends
-                         LambdaResponseWrapper<UpdateFieldRequest, UpdateFieldResponse, UpdateFieldHandler> {
+                         LambdaResponseWrapper<UpdateFieldRequestInternal, UpdateFieldResponse, UpdateFieldHandler> {
 
   public UpdateField() throws IOException {
     this(getModules(PropertiesLoaderUtil.load()));
@@ -25,7 +25,7 @@ public class UpdateField extends
   }
 
   @Override
-  public UpdateFieldResponse handle(UpdateFieldRequest input, Context context)
+  public UpdateFieldResponse handle(UpdateFieldRequestInternal input, Context context)
     throws IOException {
     return getInstance().handleRequest(input, context);
   }
