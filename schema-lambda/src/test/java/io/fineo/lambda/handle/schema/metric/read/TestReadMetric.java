@@ -167,7 +167,8 @@ public class TestReadMetric {
       new String[]{t1, t2}, response.getTimestampPatterns());
   }
 
-  private ReadMetricResponse read(SchemaStore store, String org, String metric) throws Exception {
+  public static ReadMetricResponse read(SchemaStore store, String org, String metric)
+    throws Exception {
     ReadMetricRequest request = new ReadMetricRequest();
     request.setOrgId(org);
     request.setMetricName(metric);

@@ -7,6 +7,8 @@ import com.google.inject.name.Named;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.schema.store.StoreManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateFieldRequest;
 import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDATE_RETRIES;
@@ -15,8 +17,10 @@ import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDA
  * A lambda handler that handles Kinesis events
  */
 public class UpdateFieldHandler extends
-                                ExternalFacingRequestHandler<UpdateFieldRequest, UpdateFieldResponse> {
+                                ExternalFacingRequestHandler<UpdateFieldRequest,
+                                  UpdateFieldResponse> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(UpdateFieldHandler.class);
   private static final UpdateFieldResponse RESPONSE = new UpdateFieldResponse();
   private final Provider<StoreManager> store;
   private final UpdateRetryer retry;
@@ -38,6 +42,10 @@ public class UpdateFieldHandler extends
       return RESPONSE;
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[{} - {}] Updating field: {} with aliases: '{}'", request.getOrgId(),
+        request.getMetricName(), request.getFieldName(), request.getAliases());
+    }
     return retry.run(() -> {
       StoreManager manager = store.get();
       manager.updateOrg(request.getOrgId()).updateMetric(request.getMetricName())
