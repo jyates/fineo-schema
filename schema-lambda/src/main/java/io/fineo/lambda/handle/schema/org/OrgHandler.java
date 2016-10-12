@@ -3,10 +3,11 @@ package io.fineo.lambda.handle.schema.org;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import io.fineo.lambda.handle.external.ExternalErrorsUtil;
 import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.lambda.handle.schema.org.read.ReadOrgHandler;
+import io.fineo.lambda.handle.schema.org.read.ReadOrgRequest;
 import io.fineo.lambda.handle.schema.org.update.UpdateOrgHandler;
+import io.fineo.lambda.handle.schema.org.update.UpdateOrgRequest;
 import io.fineo.lambda.handle.schema.response.OrgResponse;
 
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateRequest;
@@ -34,11 +35,14 @@ public class OrgHandler extends ExternalFacingRequestHandler<ExternalOrgRequest,
     validateRequest(context, orgRequest);
     switch (type.toUpperCase()) {
       case "GET":
-        return get.handle(orgRequest.getGet().setOrgId(orgRequest.getOrgId()), context).doGet();
+        ReadOrgRequest request = new ReadOrgRequest();
+        request.setOrgId(orgRequest.getOrgId());
+        return get.handle(request, context).doGet();
       case "PATCH":
-        return runner
-          .run(patch.handle(orgRequest.getPatch().setOrgId(orgRequest.getOrgId()), context),
-            context);
+        UpdateOrgRequest patchRequest = new UpdateOrgRequest();
+        patchRequest.setOrgId(orgRequest.getOrgId());
+        patchRequest.setBody(orgRequest.getPatch());
+        return runner.run(patch.handle(patchRequest, context), context);
       default:
         throw new IllegalArgumentException("Unsupported request type: " + orgRequest.getType());
     }

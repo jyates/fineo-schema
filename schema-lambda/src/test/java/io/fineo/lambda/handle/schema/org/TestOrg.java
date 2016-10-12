@@ -1,18 +1,16 @@
 package io.fineo.lambda.handle.schema.org;
 
 import com.google.inject.Provider;
+import io.fineo.client.model.schema.ReadSchemaManagement;
 import io.fineo.client.model.schema.SchemaManagementRequest;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
 import io.fineo.lambda.handle.schema.metric.create.TestCreateMetric;
 import io.fineo.lambda.handle.schema.org.read.ReadOrgHandler;
-import io.fineo.lambda.handle.schema.org.read.ReadOrgRequest;
 import io.fineo.lambda.handle.schema.org.read.ReadOrgResponse;
 import io.fineo.lambda.handle.schema.org.update.UpdateOrgHandler;
-import io.fineo.lambda.handle.schema.org.update.UpdateOrgRequest;
 import io.fineo.lambda.handle.schema.org.update.UpdateOrgResponse;
-import io.fineo.lambda.handle.schema.request.OrgRequest;
 import io.fineo.lambda.handle.schema.response.OrgResponse;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
@@ -35,7 +33,7 @@ public class TestOrg {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     ExternalOrgRequest request = new ExternalOrgRequest();
     request.setOrgId("not an org");
-    request.setGet(new ReadOrgRequest());
+    request.setGet(new ReadSchemaManagement());
     HandlerTestUtils.failWithProvider(() -> store, TestOrg::createHandler, request,
       500, "Internal Server Error");
   }
@@ -120,18 +118,16 @@ public class TestOrg {
   @Test
   public void testFailMalformedRead() throws Exception {
     ExternalOrgRequest external = new ExternalOrgRequest();
-    ReadOrgRequest request = new ReadOrgRequest();
     external.setType("get");
-    external.setGet(request);
+    external.setGet(new ReadSchemaManagement());
     HandlerTestUtils.failNoValueWithProvider(TestOrg::createHandler, external);
   }
 
   @Test
   public void testFailMalformedUpdate() throws Exception {
     ExternalOrgRequest external = new ExternalOrgRequest();
-    UpdateOrgRequest request = new UpdateOrgRequest();
     external.setType("patch");
-    external.setPatch(request);
+    external.setPatch(new SchemaManagementRequest());
     HandlerTestUtils.failNoValueWithProvider(TestOrg::createHandler, external);
   }
 
@@ -142,29 +138,27 @@ public class TestOrg {
   }
 
   public static ReadOrgResponse read(SchemaStore store, String org) throws Exception {
-    return handleRequest(store, org, new ReadOrgRequest(), (ex, get) -> ex.setGet(get));
+    return handleRequest(store, org, new ReadSchemaManagement(), (ex, get) -> ex.setGet(get));
   }
 
   public static UpdateOrgResponse setMetricKeys(SchemaStore store, String org, String... keys)
     throws Exception {
-    return handleRequest(store, org, new UpdateOrgRequest(), (ex, patch) -> {
+    return handleRequest(store, org, new SchemaManagementRequest(), (ex, patch) -> {
       ex.setPatch(patch);
-      patch.setBody(new SchemaManagementRequest());
-      patch.getBody().setMetricTypeKeys(keys);
+      patch.setMetricTypeKeys(keys);
     });
   }
 
   public static UpdateOrgResponse setTimestampPatterns(SchemaStore store, String org, String...
     patterns)
     throws Exception {
-    return handleRequest(store, org, new UpdateOrgRequest(), (ex, patch) -> {
+    return handleRequest(store, org, new SchemaManagementRequest(), (ex, patch) -> {
       ex.setPatch(patch);
-      patch.setBody(new SchemaManagementRequest());
-      patch.getBody().setTimestampPatterns(patterns);
+      patch.setTimestampPatterns(patterns);
     });
   }
 
-  private static <REQUEST extends OrgRequest, RESPONSE extends OrgResponse> RESPONSE handleRequest(
+  private static <REQUEST, RESPONSE extends OrgResponse> RESPONSE handleRequest(
     SchemaStore store, String org, REQUEST request,
     BiConsumer<ExternalOrgRequest, REQUEST> update) throws Exception {
     ExternalOrgRequest external = new ExternalOrgRequest();

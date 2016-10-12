@@ -1,8 +1,8 @@
 package io.fineo.lambda.handle.schema.org;
 
-import io.fineo.lambda.handle.schema.org.read.ReadOrgRequest;
+import io.fineo.client.model.schema.ReadSchemaManagement;
+import io.fineo.client.model.schema.SchemaManagementRequest;
 import io.fineo.lambda.handle.schema.request.OrgRequest;
-import io.fineo.lambda.handle.schema.org.update.UpdateOrgRequest;
 
 /**
  *
@@ -10,8 +10,8 @@ import io.fineo.lambda.handle.schema.org.update.UpdateOrgRequest;
 public class ExternalOrgRequest extends OrgRequest{
 
   private String type;
-  private UpdateOrgRequest patch;
-  private ReadOrgRequest get;
+  private SchemaManagementRequest patch;
+  private ReadSchemaManagement get;
 
   public String getType() {
     return type;
@@ -21,19 +21,19 @@ public class ExternalOrgRequest extends OrgRequest{
     this.type = type;
   }
 
-  public UpdateOrgRequest getPatch() {
+  public SchemaManagementRequest getPatch() {
     return patch;
   }
 
-  public void setPatch(UpdateOrgRequest patch) {
+  public void setPatch(SchemaManagementRequest patch) {
     this.patch = patch;
   }
 
-  public ReadOrgRequest getGet() {
+  public ReadSchemaManagement getGet() {
     return get;
   }
 
-  public void setGet(ReadOrgRequest get) {
+  public void setGet(ReadSchemaManagement get) {
     this.get = get;
   }
 }
