@@ -185,8 +185,8 @@ public class StoreClerk {
         return new Field(userName, aliases, cname);
       }
       Schema schema = field.schema();
-      if (schema.getType() == Schema.Type.UNION) {
-        schema = field.schema().getTypes().get(1);// first one is null, to support nullable fields
+      if (schema.getType().equals(Schema.Type.UNION)) {
+        schema = AvroSchemaEncoder.findNonNullSchemaInUnion(field);
       }
       Schema.Type type = schema.getField("value").schema().getType();
       return new Field(userName, type, aliases, cname);

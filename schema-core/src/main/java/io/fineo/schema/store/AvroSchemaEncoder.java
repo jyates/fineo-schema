@@ -91,7 +91,8 @@ public class AvroSchemaEncoder {
   public static GenericData.Record asTypedRecord(Schema objectSchema, String canonicalName,
     String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
-    Schema schema = field.schema().getTypes().get(1); // first is null
+
+    Schema schema = findNonNullSchemaInUnion(field);
     Schema.Type type = schema.getField("value").schema().getType();
     Object value = getFieldValue(source, field, type, recordFieldName);
     if (value == null) {
@@ -117,12 +118,7 @@ public class AvroSchemaEncoder {
           throw new IllegalArgumentException("Got nested event type: " + type);
         case UNION:
           // find the non-null type
-          Schema inst = null;
-          for (Schema s : field.schema().getField("value").schema().getTypes()) {
-            if (!s.getType().equals(Schema.Type.NULL)) {
-              inst = s;
-            }
-          }
+          Schema inst = findNonNullSchemaInUnion(field.schema().getField("value"));
           Schema.Type fieldType = inst.getType();
           return getFieldValue(source, field, fieldType, recordFieldName);
         case STRING:
@@ -154,6 +150,12 @@ public class AvroSchemaEncoder {
       // ignore the field
     }
     return value;
+  }
+
+  static Schema findNonNullSchemaInUnion(Schema.Field field) {
+    return field.schema().getTypes().stream()
+                .filter(s -> !s.getType().equals(Schema.Type.NULL))
+                .findFirst().orElse(null);
   }
 
   private void populateBaseFields(Record record, GenericData.Record avroRecord) {
