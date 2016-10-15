@@ -18,12 +18,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 class AvroSchemaManager {
 
   private final SchemaStore store;
-  private final OrgMetadata orgMetadata;
 
   public AvroSchemaManager(SchemaStore store, String orgId) {
     this.store = store;
-    this.orgMetadata =
-      checkNotNull(store.getOrgMetadata(checkNotNull(orgId, "OrgID can never be null!")));
+    checkNotNull(store.getOrgMetadata(checkNotNull(orgId, "OrgID can never be null!")));
   }
 
   public static AvroRecordTranslator translator(SchemaStore store, GenericRecord record) {

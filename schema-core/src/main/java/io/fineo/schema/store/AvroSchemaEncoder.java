@@ -70,8 +70,10 @@ public class AvroSchemaEncoder {
       STOP.withField(key);
 
       if (fieldCName != null) {
-        avroRecord
-          .put(fieldCName, asTypedRecord(avroRecord.getSchema(), fieldCName, key, record));
+        GenericData.Record gr = asTypedRecord(avroRecord.getSchema(), fieldCName, key, record);
+        if (gr != null) {
+          avroRecord.put(fieldCName, gr);
+        }
         continue;
       }
       // we have no idea what field this is, so track it under unknown fields
@@ -85,48 +87,54 @@ public class AvroSchemaEncoder {
     return avroRecord;
   }
 
+  @VisibleForTesting
   public static GenericData.Record asTypedRecord(Schema objectSchema, String canonicalName,
     String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
-    GenericData.Record record = new GenericData.Record(field.schema());
-    record.put(AvroSchemaProperties.FIELD_INSTANCE_NAME, recordFieldName);
     Schema.Type type = field.schema().getField("value").schema().getType();
     Object value = null;
-    switch (type) {
-      case RECORD:
-      case ENUM:
-      case ARRAY:
-      case MAP:
-      case UNION:
-      case FIXED:
-        throw new IllegalArgumentException("Got nested event type: " + type);
-      case STRING:
-        value = source.getStringByField(recordFieldName);
-        break;
-      case BYTES:
-        value = source.getBytesByFieldName(recordFieldName);
-        break;
-      case INT:
-        value = source.getIntegerByField(recordFieldName);
-        break;
-      case LONG:
-        value = source.getLongByFieldName(recordFieldName);
-        break;
-      case FLOAT:
-        value = source.getFloatByFieldName(recordFieldName);
-        break;
-      case DOUBLE:
-        value = source.getDoubleByFieldName(recordFieldName);
-        break;
-      case BOOLEAN:
-        value = source.getBooleanByField(recordFieldName);
-        break;
-      case NULL:
-        value = null;
-        break;
+    try {
+      switch (type) {
+        case RECORD:
+        case ENUM:
+        case ARRAY:
+        case MAP:
+        case UNION:
+        case FIXED:
+          throw new IllegalArgumentException("Got nested event type: " + type);
+        case STRING:
+          value = source.getStringByField(recordFieldName);
+          break;
+        case BYTES:
+          value = source.getBytesByFieldName(recordFieldName);
+          break;
+        case INT:
+          value = source.getIntegerByField(recordFieldName);
+          break;
+        case LONG:
+          value = source.getLongByFieldName(recordFieldName);
+          break;
+        case FLOAT:
+          value = source.getFloatByFieldName(recordFieldName);
+          break;
+        case DOUBLE:
+          value = source.getDoubleByFieldName(recordFieldName);
+          break;
+        case BOOLEAN:
+          value = source.getBooleanByField(recordFieldName);
+          break;
+        case NULL:
+          value = null;
+          break;
+      }
+      GenericData.Record record = new GenericData.Record(field.schema());
+      record.put(AvroSchemaProperties.FIELD_INSTANCE_NAME, recordFieldName);
+      record.put("value", value);
+      return record;
+    } catch (NumberFormatException e) {
+      // ignore the field
+      return null;
     }
-    record.put("value", value);
-    return record;
   }
 
   private void populateBaseFields(Record record, GenericData.Record avroRecord) {

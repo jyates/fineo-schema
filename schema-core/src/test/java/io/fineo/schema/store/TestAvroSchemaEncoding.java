@@ -24,6 +24,7 @@ import java.util.TimeZone;
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TestAvroSchemaEncoding {
 
@@ -201,6 +202,40 @@ public class TestAvroSchemaEncoding {
     // check the field values
     Record translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
     assertEquals(map.get(f), translated.getIntegerByField(f));
+  }
+
+  @Test
+  public void testMissingFieldInRecord() throws Exception {
+    SchemaStore store = getStore();
+    StoreManager storeManager = new StoreManager(store);
+    String org = "org", metric = "m1", f = "f1", f2 = "f2";
+    TestSchemaManager.commitSimpleType(storeManager, org, metric, of(), p(f, "INTEGER"), p(f2,
+      "VARCHAR"));
+
+    // varchar field missing
+    Map<String, Object> map = new HashMap<>();
+    map.put(AvroSchemaProperties.ORG_ID_KEY, org);
+    map.put(AvroSchemaProperties.ORG_METRIC_TYPE_KEY, metric);
+    map.put(AvroSchemaProperties.TIMESTAMP_KEY, fixedTs);
+    map.put(f, 1);
+
+    GenericRecord out = writeRecordAndValidateAtNow(store, org, map);
+    Record translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
+    assertEquals(map.get(f), translated.getIntegerByField(f));
+    assertNull(translated.getField(f2));
+
+    map.put(f2, null);
+    out = writeRecordAndValidateAtNow(store, org, map);
+    translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
+    assertEquals(map.get(f), translated.getIntegerByField(f));
+    assertNull(translated.getField(f2));
+
+    map.remove(f);
+    out = writeRecordAndValidateAtNow(store, org, map);
+    translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
+    assertNull(translated.getField(f));
+    assertNull(translated.getField(f2));
+
   }
 
   private GenericRecord writeRecordAndValidateAtNow(SchemaStore store, String org,

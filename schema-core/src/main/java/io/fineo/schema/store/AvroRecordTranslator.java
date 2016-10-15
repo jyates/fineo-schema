@@ -13,7 +13,7 @@ import java.util.Map;
  * Translate a record from the canonical names to the aliased names that a user understands. Does
  * not copy the record, but instead uses the record to get the underlying fields.
  */
-public class AvroRecordTranslator {
+class AvroRecordTranslator {
 
   final RecordMetadata metadata;
   private final GenericRecord record;
@@ -91,7 +91,7 @@ public class AvroRecordTranslator {
         return record.get(cname);
       }
       IndexedRecord field = (IndexedRecord) record.get(cname);
-      return field.get(1);
+      return field == null ? null : field.get(1);
     }
   }
 }

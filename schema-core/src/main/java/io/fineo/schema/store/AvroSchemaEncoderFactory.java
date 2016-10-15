@@ -10,7 +10,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Factory to around the encoding of a record
  */
-public class AvroSchemaEncoderFactory {
+class AvroSchemaEncoderFactory {
 
   private final StoreClerk store;
   private final OrgMetadata metadata;
