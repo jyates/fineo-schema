@@ -1,5 +1,6 @@
 package io.fineo.schema.store;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.Record;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -8,9 +9,14 @@ import io.fineo.schema.timestamp.MultiLevelTimestampParser;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Factory to around the encoding of a record
+ * Factory to around the encoding of a record.
+ * <p>
+ *  Testing note: You should not use the class if you can help it. Its exposed for legacy reasons.
+ *  Instead, you should use the higher-level interfaces exposed in this package
+ * </p>
  */
-class AvroSchemaEncoderFactory {
+@VisibleForTesting
+public class AvroSchemaEncoderFactory {
 
   private final StoreClerk store;
   private final OrgMetadata metadata;
