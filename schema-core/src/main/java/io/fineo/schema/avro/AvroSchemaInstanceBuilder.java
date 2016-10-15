@@ -134,16 +134,16 @@ public class AvroSchemaInstanceBuilder {
 
     private Schema getTypedField() {
       Schema fieldSchema = FieldInstance.getClassSchema();
-      SchemaBuilder.RecordBuilder<Schema> builder =
-        SchemaBuilder.record(name+"_schema")
-                     .namespace(namespace);
-      final SchemaBuilder.FieldAssembler<Schema> assembler = builder.fields();
+      SchemaBuilder.RecordBuilder<SchemaBuilder.UnionAccumulator<Schema>> builder =
+        SchemaBuilder.unionOf().nullType().and().record(name + "_schema").namespace(namespace);
+      final SchemaBuilder.FieldAssembler<SchemaBuilder.UnionAccumulator<Schema>> assembler =
+        builder.fields();
       // add all the existing fields that a field instance needs
       for (Schema.Field field : fieldSchema.getFields()) {
         assembler.name(field.name()).type(field.schema()).noDefault();
       }
       // set the type of the field instance
-      return assembler.name("value").type(type).noDefault().endRecord();
+      return assembler.name("value").type(type).noDefault().endRecord().endUnion();
     }
   }
 }

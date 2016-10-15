@@ -223,19 +223,24 @@ public class TestAvroSchemaEncoding {
     Record translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
     assertEquals(map.get(f), translated.getIntegerByField(f));
     assertNull(translated.getField(f2));
+    // read/write a record with a missing field
+    SchemaTestUtils.readWriteData(out);
 
     map.put(f2, null);
     out = writeRecordAndValidateAtNow(store, org, map);
     translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
     assertEquals(map.get(f), translated.getIntegerByField(f));
     assertNull(translated.getField(f2));
+    // read/write a record with a missing field
+    SchemaTestUtils.readWriteData(out);
 
     map.remove(f);
     out = writeRecordAndValidateAtNow(store, org, map);
     translated = new AvroRecordTranslator(out, store).getTranslatedRecord();
     assertNull(translated.getField(f));
     assertNull(translated.getField(f2));
-
+    // read/write a record with a missing field
+    SchemaTestUtils.readWriteData(out);
   }
 
   private GenericRecord writeRecordAndValidateAtNow(SchemaStore store, String org,

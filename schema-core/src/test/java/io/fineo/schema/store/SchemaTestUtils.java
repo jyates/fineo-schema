@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 
 public class SchemaTestUtils {
 
-  public static SchemaStore getStore(){
+  public static SchemaStore getStore() {
     return new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
   }
 
@@ -90,7 +90,7 @@ public class SchemaTestUtils {
     return decoded;
   }
 
-  private static GenericRecord readWriteData(GenericData.Record record) throws IOException {
+  static GenericRecord readWriteData(GenericRecord record) throws IOException {
     byte[] data = writeRecord(record);
     GenericDatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
     DataFileReader<GenericRecord> reader =
@@ -98,7 +98,7 @@ public class SchemaTestUtils {
     return reader.next();
   }
 
-  public static byte[] writeRecord(GenericData.Record outRecord) throws IOException {
+  public static byte[] writeRecord(GenericRecord outRecord) throws IOException {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(outRecord.getSchema());
     DataFileWriter<GenericRecord> fileWriter = new DataFileWriter<>(writer);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -168,8 +168,11 @@ public class SchemaTestUtils {
 
   public static void verifyFieldType(String type, Schema.Field field) {
     Schema fieldSchema = field.schema();
-    assertEquals("Schema field instance should be a record!", Schema.Type.RECORD,
+    assertEquals("Schema field instance should be a union!", Schema.Type.UNION,
       fieldSchema.getType());
+    assertEquals("First field schema should be a null type!", Schema.Type.NULL,
+      fieldSchema.getTypes().get(0).getType());
+    fieldSchema = fieldSchema.getTypes().get(1);
     List<Schema.Field> fields = fieldSchema.getFields();
     assertEquals("Wrong number of fields in FieldInstanceVisitor! Got fields " + fields, 2,
       fields.size());

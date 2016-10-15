@@ -91,7 +91,21 @@ public class AvroSchemaEncoder {
   public static GenericData.Record asTypedRecord(Schema objectSchema, String canonicalName,
     String recordFieldName, Record source) {
     Schema.Field field = objectSchema.getField(canonicalName);
-    Schema.Type type = field.schema().getField("value").schema().getType();
+    Schema schema = field.schema().getTypes().get(1); // first is null
+    Schema.Type type = schema.getField("value").schema().getType();
+    Object value = getFieldValue(source, field, type, recordFieldName);
+    if (value == null) {
+      // only can return null here because we type the record as union(null, record)
+      return null;
+    }
+    GenericData.Record record = new GenericData.Record(schema);
+    record.put(AvroSchemaProperties.FIELD_INSTANCE_NAME, recordFieldName);
+    record.put("value", value); // must be a non-null value
+    return record;
+  }
+
+  private static Object getFieldValue(Record source, Schema.Field field, Schema.Type type, String
+    recordFieldName) {
     Object value = null;
     try {
       switch (type) {
@@ -99,9 +113,18 @@ public class AvroSchemaEncoder {
         case ENUM:
         case ARRAY:
         case MAP:
-        case UNION:
         case FIXED:
           throw new IllegalArgumentException("Got nested event type: " + type);
+        case UNION:
+          // find the non-null type
+          Schema inst = null;
+          for (Schema s : field.schema().getField("value").schema().getTypes()) {
+            if (!s.getType().equals(Schema.Type.NULL)) {
+              inst = s;
+            }
+          }
+          Schema.Type fieldType = inst.getType();
+          return getFieldValue(source, field, fieldType, recordFieldName);
         case STRING:
           value = source.getStringByField(recordFieldName);
           break;
@@ -127,14 +150,10 @@ public class AvroSchemaEncoder {
           value = null;
           break;
       }
-      GenericData.Record record = new GenericData.Record(field.schema());
-      record.put(AvroSchemaProperties.FIELD_INSTANCE_NAME, recordFieldName);
-      record.put("value", value);
-      return record;
     } catch (NumberFormatException e) {
       // ignore the field
-      return null;
     }
+    return value;
   }
 
   private void populateBaseFields(Record record, GenericData.Record avroRecord) {

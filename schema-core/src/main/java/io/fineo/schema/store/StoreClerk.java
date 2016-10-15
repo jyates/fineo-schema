@@ -184,7 +184,11 @@ public class StoreClerk {
       if (field == null) {
         return new Field(userName, aliases, cname);
       }
-      Schema.Type type = field.schema().getField("value").schema().getType();
+      Schema schema = field.schema();
+      if (schema.getType() == Schema.Type.UNION) {
+        schema = field.schema().getTypes().get(1);// first one is null, to support nullable fields
+      }
+      Schema.Type type = schema.getField("value").schema().getType();
       return new Field(userName, type, aliases, cname);
     }
 
