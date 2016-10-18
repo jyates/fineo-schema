@@ -66,11 +66,11 @@ class SchemaBuilder {
     return new OrganizationBuilder(org);
   }
 
-  public class Organization {
+  public static class Organization {
     private final OrgMetadata metadata;
     private final Map<String, Metric> schemas;
 
-    private Organization(OrgMetadata metadata, Map<String, Metric> schemas) {
+    Organization(OrgMetadata metadata, Map<String, Metric> schemas) {
       this.metadata = metadata;
       this.schemas = schemas;
     }
