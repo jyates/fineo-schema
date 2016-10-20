@@ -48,13 +48,7 @@ public class TestDeleteMetric {
     TestCreateOrg.createOrg(store, org);
     TestCreateMetric.createMetric(store, org, metric);
 
-    DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
-    request.setOrgId(org);
-    MetricRequest body = new MetricRequest();
-    body.setMetricName(metric);
-    request.setBody(body);
-    DeleteMetricHandler handler = handler(() -> new StoreManager(store));
-    handler.handle(request, null);
+    deleteMetric(store, org, metric);
 
     TestCreateMetric.createMetric(store, org, metric);
     StoreClerk clerk = new StoreClerk(store, org);
@@ -66,6 +60,16 @@ public class TestDeleteMetric {
   public void testDeleteMissingParameters() throws Exception {
     DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
     HandlerTestUtils.failNoValue(TestDeleteMetric::handler, request);
+  }
+
+  public static void deleteMetric(SchemaStore store, String org, String metric) throws Exception {
+    DeleteMetricRequestInternal request = new DeleteMetricRequestInternal();
+    request.setOrgId(org);
+    MetricRequest body = new MetricRequest();
+    body.setMetricName(metric);
+    request.setBody(body);
+    DeleteMetricHandler handler = handler(() -> new StoreManager(store));
+    handler.handle(request, null);
   }
 
   private static DeleteMetricHandler handler(Provider<StoreManager> provider) {

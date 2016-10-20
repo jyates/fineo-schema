@@ -1,9 +1,12 @@
 package io.fineo.lambda.handle.schema.metric.create;
 
 import io.fineo.client.model.schema.metric.CreateMetricRequest;
+import io.fineo.client.model.schema.metric.ReadMetricResponse;
 import io.fineo.lambda.handle.schema.HandlerTestUtils;
 import io.fineo.lambda.handle.schema.UpdateRetryer;
 import io.fineo.lambda.handle.schema.create.TestCreateOrg;
+import io.fineo.lambda.handle.schema.metric.delete.TestDeleteMetric;
+import io.fineo.lambda.handle.schema.metric.read.TestReadMetric;
 import io.fineo.schema.store.SchemaStore;
 import io.fineo.schema.store.StoreClerk;
 import io.fineo.schema.store.StoreManager;
@@ -83,6 +86,19 @@ public class TestCreateMetric {
     HandlerTestUtils.failWithProvider(() -> new StoreManager(store),
       manager -> new CreateMetricHandler(manager, new UpdateRetryer(), 1), create, 400,
       "Bad Request");
+  }
+
+  @Test
+  public void testCreateDeleteCreate() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org1";
+    TestCreateOrg.createOrg(store, org);
+    String metric = "metricname";
+    createMetric(store, org, metric);
+    TestDeleteMetric.deleteMetric(store, org, metric);
+    createMetric(store, org, metric);
+    io.fineo.lambda.handle.schema.metric.read.ReadMetricResponse
+      response = TestReadMetric.read(store, org, metric);
   }
 
   public static void createMetric(SchemaStore store, String org, String metric) throws Exception {

@@ -64,8 +64,9 @@ public class StoreClerk {
    */
   public Metric getMetricForUserNameOrAlias(String metricAliasName) throws SchemaNotFoundException {
     LOG.debug("Reading metric: {} from store", metricAliasName);
+    LOG.trace("Got metric metadata: \n{}", metadata);
     String expected = store.getMetricCNameFromAlias(metadata, metricAliasName);
-    LOG.debug("Got metric cname: ", expected);
+    LOG.debug("Got metric cname: {}", expected);
     Metric foundMetric = collectElementsForFields(metadata, (metricCname, metricUserName,
       metricAliases) -> {
       if (expected != metricCname) {

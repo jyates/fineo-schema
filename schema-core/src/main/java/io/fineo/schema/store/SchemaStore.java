@@ -184,9 +184,9 @@ public class SchemaStore {
     LOG.debug("Got subject for org: {}", orgId);
     SchemaEntry entry = subject.latest();
     OrgMetadata metadata = parse(entry, OrgMetadata.getClassSchema());
-    LOG.debug("Parsed org metadata");
+    LOG.debug("Parsed org metadata: \n{}", metadata);
     setVersion(metadata, entry);
-    LOG.debug("Set version");
+    LOG.debug("Set version to: {}", entry.getId());
     return metadata;
   }
 
@@ -226,7 +226,8 @@ public class SchemaStore {
            null;
   }
 
-  public OrgMetricMetadata getOrgMetricMetadataForAliasMetricName(OrgMetadata org, String aliasMetricName) {
+  public OrgMetricMetadata getOrgMetricMetadataForAliasMetricName(OrgMetadata org,
+    String aliasMetricName) {
     Optional<Map.Entry<String, OrgMetricMetadata>> match =
       org.getMetrics().entrySet().stream()
          .filter(SchemaUtils.metricHasAlias(aliasMetricName))
@@ -280,7 +281,8 @@ public class SchemaStore {
   /**
    * Update the organziation for the specified metrics. Expects the previous metadata to not be
    * <tt>null</tt>, since the org should already exist.
-   *  @param org            updated organization to publish
+   *
+   * @param org            updated organization to publish
    * @param updatedMetrics map of metric name and version to update
    * @param previous       metadata describing the previous organization
    */
