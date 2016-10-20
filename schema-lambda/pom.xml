@@ -52,7 +52,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <scope>compile</scope>
+      <scope>test</scope>
     </dependency>
     <!-- Include all the slf4j that we could want -->
     <dependency>
@@ -85,6 +85,18 @@
           <name>deploy</name>
         </property>
       </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+          <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-lambda-java-log4j</artifactId>
+          <version>1.0.0</version>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>
           <plugin>
@@ -105,9 +117,11 @@
                   <shadedClassifierName>aws</shadedClassifierName>
                   <artifactSet>
                     <excludes>
+                      <exclude>log4j:log4j</exclude>
                       <!-- aws transitive dependencies-->
                       <exclude>org.apache.logging.log4j:*</exclude>
                       <exclude>commons-logging:commons-logging</exclude>
+                      <exclude>com.amazonaws:aws-java-sdk-servicecatalog</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-s3</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-elastic*</exclude>
                       <exclude>com.amazonaws:aws-java-sdk-cloud*</exclude>
@@ -159,7 +173,7 @@
                       <exclude>com.amazonaws:aws-java-sdk-swf-libraries</exclude>
                       <!-- Test jars -->
                       <exclude>junit:junit</exclude>
-                      <exclude>org.mockito:mockito-all</exclude>
+                      <exclude>org.mockito:*</exclude>
                       <exclude>com.amazonaws:DynamoDBLocal</exclude>
                       <exclude>io.fineo.aws:aws-common</exclude>
                     </excludes>
