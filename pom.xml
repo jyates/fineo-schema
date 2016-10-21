@@ -192,6 +192,11 @@
         <version>${fineo-client.version}</version>
       </dependency>
       <dependency>
+        <groupId>io.fineo.client.models</groupId>
+        <artifactId>schema</artifactId>
+        <version>${fineo-client.version}</version>
+      </dependency>
+      <dependency>
         <groupId>io.fineo.lambda</groupId>
         <artifactId>lambda-core</artifactId>
         <version>${fineo-lambda.version}</version>
@@ -207,11 +212,6 @@
         <version>${fineo-lambda.version}</version>
         <classifier>tests</classifier>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.fineo.client.models</groupId>
-        <artifactId>schema</artifactId>
-        <version>LATEST</version>
       </dependency>
 
       <!-- Other -->
