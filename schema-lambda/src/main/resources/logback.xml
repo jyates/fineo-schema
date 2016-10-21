@@ -10,6 +10,3 @@
     <appender-ref ref="LAMBDA"/>
   </root>
 </configuration>
-
-
-
