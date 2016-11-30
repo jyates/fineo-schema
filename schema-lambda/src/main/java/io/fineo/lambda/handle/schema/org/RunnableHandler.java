@@ -14,7 +14,7 @@ public abstract class RunnableHandler<REQUEST, RESPONSE>{
 
 
   protected boolean validArray(String[] fields) {
-    return fields != null && fields.length > 0;
+    return fields != null;
   }
 
 }

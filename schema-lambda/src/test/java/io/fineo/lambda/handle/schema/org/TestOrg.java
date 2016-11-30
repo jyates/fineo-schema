@@ -65,6 +65,10 @@ public class TestOrg {
     // and its kind of on you if you have duplicates
     setMetricKeys(store, org, metricKey2, metricKey2);
     assertMetricKeysEquals(store, org, metricKey2, metricKey2);
+
+    // and that we can get rid of all the metric keys too
+    setMetricKeys(store, org);
+    assertMetricKeysEquals(store, org);
   }
 
   private static void assertMetricKeysEquals(SchemaStore store, String org, String... keys)
@@ -101,6 +105,13 @@ public class TestOrg {
     // and you are on your own for duplicates
     setTimestampPatterns(store, org, pattern, pattern);
     assertTimestampPatternEquals(store, org, pattern, pattern);
+
+    // and that you can delete the timestamp patterns
+    handleRequest(store, org, new SchemaManagementRequest(), (ex, patch) -> {
+      ex.setPatch(patch);
+      patch.setTimestampPatterns(new String[0]);
+    });
+    assertTimestampPatternEquals(store, org);
   }
 
   @Test
