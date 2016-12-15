@@ -295,7 +295,8 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     @Override
     public SchemaEntry latest() {
       reload();
-      return asEntry(subject.getSchemas(), subject.getSchemas().size() - 1);
+      int size = subject.getSchemas() == null ? -1 : subject.getSchemas().size() - 1;
+      return asEntry(subject.getSchemas(), size);
     }
 
 
@@ -311,7 +312,7 @@ public class DynamoDBRepository extends AbstractBackendRepository {
     }
 
     private SchemaEntry asEntry(Collection<String> schemas, int index) {
-      if (index > schemas.size() - 1) {
+      if (schemas == null || index > schemas.size() - 1) {
         return null;
       }
       int i = 0;
