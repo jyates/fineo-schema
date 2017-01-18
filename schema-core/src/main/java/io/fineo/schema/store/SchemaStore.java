@@ -194,6 +194,7 @@ public class SchemaStore {
    * Helper method for {@link #getMetricMetadata(CharSequence, String)}
    */
   public Metric getMetricMetadata(RecordMetadata meta) {
+    Preconditions.checkNotNull(meta, "Missing record metadata!");
     return getMetricMetadata(meta.getOrgID(), meta.getMetricCanonicalType());
   }
 
@@ -243,7 +244,8 @@ public class SchemaStore {
    * @return metric information for the specific metric name under the organization
    */
   public Metric getMetricMetadata(CharSequence orgId, String canonicalMetricName) {
-    Subject subject = getMetricSubject(orgId, canonicalMetricName);
+    Subject subject = Preconditions.checkNotNull(getMetricSubject(orgId, canonicalMetricName),
+      "[{}] No schema subject present for metric id: {}", orgId, canonicalMetricName);
     SchemaEntry entry = subject.latest();
     Metric metric = parse(entry, Metric.getClassSchema());
     setVersion(metric.getMetadata(), entry);
@@ -252,6 +254,7 @@ public class SchemaStore {
 
   private Subject getMetricSubject(CharSequence orgId, CharSequence metricName) {
     String subjectName = getMetricSubjectName(orgId, metricName);
+    LOG.info("Got subject name: {}", subjectName);
     return repo.lookup(subjectName);
   }
 

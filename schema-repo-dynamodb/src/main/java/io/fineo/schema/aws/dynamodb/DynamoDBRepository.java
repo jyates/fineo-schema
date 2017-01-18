@@ -112,8 +112,9 @@ public class DynamoDBRepository extends AbstractBackendRepository {
         .withAttributesToGet(PARTITION_KEY);
     LOG.debug("Checking if subject {} exists", subjectName);
     Item i = table.getItem(spec);
-    LOG.debug("-->checked if subject {} exists", subjectName);
-    return i != null;
+    boolean exists = i != null;
+    LOG.debug("-->checked if subject {} exists: {}", subjectName, exists);
+    return exists;
   }
 
   /**

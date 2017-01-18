@@ -42,12 +42,8 @@ public class ReadOrgMetricsHandler
     context) throws JsonProcessingException{
     return () -> {
       StoreClerk clerk = new StoreClerk(store.get(), input.getOrgId());
-      Map<String, String> idToMetric = new HashMap<>();
-      for(StoreClerk.Metric metric: clerk.getMetrics()){
-        idToMetric.put(metric.getMetricId(), metric.getUserName());
-      }
       ReadOrgMetricsResponse response = new ReadOrgMetricsResponse();
-      response.setIdToMetricName(idToMetric);
+      response.setIdToMetricName(clerk.getMetricIdsToNames());
       return response;
     };
   }

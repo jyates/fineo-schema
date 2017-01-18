@@ -3,6 +3,7 @@ package io.fineo.schema.store;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.fineo.internal.customer.FieldMetadata;
+import io.fineo.internal.customer.MetricMetadata;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.internal.customer.OrgMetricMetadata;
 import io.fineo.schema.exception.SchemaNotFoundException;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -53,6 +55,14 @@ public class StoreClerk {
       io.fineo.internal.customer.Metric metric = store.getMetricMetadata(orgId, metricCname);
       return new Metric(metricUserName, metric, orgId, aliases);
     });
+  }
+
+  public Map<String, String> getMetricIdsToNames() {
+    return metadata.getMetrics().keySet().stream()
+                   .collect(Collectors.toMap(Function.identity(), key -> {
+                     OrgMetricMetadata mm = metadata.getMetrics().get(key);
+                     return mm.getDisplayName();
+                   }));
   }
 
   /**
