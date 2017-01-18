@@ -51,7 +51,9 @@ public class UpdateMetricHandler
       StoreManager.OrganizationBuilder builder = manager.updateOrg(irequest.getOrgId());
       StoreManager.MetricBuilder metric = builder.updateMetric(request.getMetricName());
       metric.addAliases(request.getAliases());
-      metric.setDisplayName(request.getNewDisplayName());
+      if (request.getNewDisplayName() != null) {
+        metric.setDisplayName(request.getNewDisplayName());
+      }
       metric.withTimestampFormat(request.getTimestampPatterns());
       metric.build().commit();
       return RESPONSE;
