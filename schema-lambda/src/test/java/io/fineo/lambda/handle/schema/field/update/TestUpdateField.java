@@ -33,7 +33,7 @@ public class TestUpdateField {
   public static final String TIMESTAMP = "timestamp";
 
   @Test
-  public void testUpdateField() throws Exception {
+  public void testUpdateFieldAliases() throws Exception {
     SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
     String org = "org1";
     TestCreateOrg.createOrg(store, org);
@@ -82,14 +82,85 @@ public class TestUpdateField {
     assertArrayEquals(new String[]{alias}, timestamp.getAliases());
   }
 
+  @Test
+  public void testUpdateFieldDisplayName() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org1";
+    TestCreateOrg.createOrg(store, org);
+    String metric = "metricname";
+    TestCreateMetric.createMetric(store, org, metric);
+    String field = "field", type = "STRING";
+    TestAddField.createField(store, org, metric, field, type);
+
+    String newDisplayName = "newfield";
+    UpdateFieldRequest request = new UpdateFieldRequest()
+      .setNewDisplayName(newDisplayName)
+      .setFieldName(field)
+      .setMetricName(metric);
+    ReadMetricResponse read = writeAndReadMetric(store, org, request);
+    ReadFieldResponse fieldResponse = getFieldWithName(read, newDisplayName);
+    assertEquals(newDisplayName, fieldResponse.getName());
+    assertArrayEquals(new String[]{field}, fieldResponse.getAliases());
+  }
+
+  /**
+   * This is a little bit of a strange edge case. The aliases include the display name, but here
+   * we are explicitly setting the aliases to a value. In that case, we should actually overwrite
+   * the stored aliases (including the display name) and use the specified aliases.
+   *
+   * @throws Exception on failure
+   */
+  @Test
+  public void testUpdateFieldDisplayNameAndAliases() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org1";
+    TestCreateOrg.createOrg(store, org);
+    String metric = "metricname";
+    TestCreateMetric.createMetric(store, org, metric);
+    String field = "field", type = "STRING";
+    TestAddField.createField(store, org, metric, field, type);
+
+    String newDisplayName = "newfield";
+    String[] aliases = new String[]{"alias1"};
+    UpdateFieldRequest request = new UpdateFieldRequest()
+      .setNewDisplayName(newDisplayName)
+      .setAliases(aliases)
+      .setFieldName(field)
+      .setMetricName(metric);
+    ReadMetricResponse read = writeAndReadMetric(store, org, request);
+    ReadFieldResponse fieldResponse = getFieldWithName(read, newDisplayName);
+    assertEquals(newDisplayName, fieldResponse.getName());
+    assertArrayEquals(aliases, fieldResponse.getAliases());
+  }
+
+  private static ReadFieldResponse getFieldWithName(ReadMetricResponse response, String name) {
+    return Arrays.asList(response.getFields())
+                 .stream()
+                 .filter(f -> f.getName().equals(name))
+                 .findAny()
+                 .orElseThrow(() -> new IllegalStateException("Field:" + name + " not found!"));
+  }
+
+  private static ReadMetricResponse writeAndReadMetric(SchemaStore store, String org,
+    UpdateFieldRequest body)
+    throws Exception {
+    updateField(store, org, body);
+    return TestReadMetric.read(store, org, body.getMetricName());
+  }
+
   public static void updateField(SchemaStore store, String org, String metric, String field,
     String... aliases) throws Exception {
-    UpdateFieldRequestInternal request = new UpdateFieldRequestInternal();
-    request.setOrgId(org);
     UpdateFieldRequest body = new UpdateFieldRequest();
     body.setMetricName(metric);
     body.setFieldName(field);
     body.setAliases(aliases);
+    updateField(store, org, body);
+  }
+
+  public static void updateField(SchemaStore store, String org, UpdateFieldRequest body)
+    throws Exception {
+    UpdateFieldRequestInternal request = new UpdateFieldRequestInternal();
+    request.setOrgId(org);
     request.setBody(body);
     UpdateFieldHandler handler = handler(() -> new StoreManager(store));
     handler.handle(request, null);

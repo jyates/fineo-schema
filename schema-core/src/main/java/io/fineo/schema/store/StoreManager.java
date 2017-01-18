@@ -3,6 +3,7 @@ package io.fineo.schema.store;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import io.fineo.internal.customer.FieldMetadata;
 import io.fineo.internal.customer.Metric;
 import io.fineo.internal.customer.OrgMetadata;
 import io.fineo.schema.FineoStopWords;
@@ -17,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Easily manage and modify schema for an organization or previous.
@@ -234,6 +237,60 @@ public class StoreManager {
 
       this.metricBuilder.withTimestampFormat(formats);
       return this;
+    }
+
+    public FieldUpdater updateField(String name) {
+      Map<String, String> aliasToCaname = AvroSchemaManager.getAliasRemap(this.previous);
+      String cname = aliasToCaname.get(name);
+      if (cname == null) {
+        throw new IllegalArgumentException("No known field with name: " + name);
+      }
+      FieldMetadata fm = this.previous.getMetadata().getFields().get(cname);
+      return new FieldUpdater(this, this.metricBuilder, cname, fm);
+    }
+  }
+
+  public class FieldUpdater {
+    private final MetricBuilder parent;
+    private final SchemaBuilder.MetricBuilder builder;
+    private final String name;
+    private final FieldMetadata meta;
+
+    public FieldUpdater(MetricBuilder metricBuilder, SchemaBuilder.MetricBuilder smb,
+      String canonicalName, FieldMetadata fm) {
+      this.parent = metricBuilder;
+      this.builder = smb;
+      this.name = canonicalName;
+      this.meta = FieldMetadata.newBuilder(fm).build();
+    }
+
+    public FieldUpdater withDisplayName(String name) {
+      stop.withField(name);
+      this.meta.setDisplayName(name);
+      this.meta.getFieldAliases().add(name);
+      return this;
+    }
+
+    /**
+     * Explicitly set the aliases. Ignores an previous aliases. Use with caution.
+     * @param aliases
+     * @return
+     */
+    public FieldUpdater withAliases(String... aliases) {
+      // ensure the aliases are valid names
+      for(String s: aliases){
+        stop.withField(s);
+      }
+      this.meta.setFieldAliases(newArrayList(aliases));
+      return this;
+    }
+
+    public MetricBuilder build() {
+      this.builder.updateField(this.name)
+                  .withName(this.meta.getDisplayName())
+                  .withAliases(meta.getFieldAliases())
+                  .asField();
+      return parent;
     }
   }
 

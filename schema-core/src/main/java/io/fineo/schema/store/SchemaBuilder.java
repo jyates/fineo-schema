@@ -585,6 +585,10 @@ class SchemaBuilder {
       return parent;
     }
 
+    public FieldBuilder withAliases(List<String> fieldAliases) {
+      this.fieldMetadata.setFieldAliases(fieldAliases);
+      return this;
+    }
   }
 
   private static String inc(Metadata meta) {

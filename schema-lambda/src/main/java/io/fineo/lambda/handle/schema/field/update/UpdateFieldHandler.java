@@ -11,6 +11,8 @@ import io.fineo.schema.store.StoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateFieldRequest;
 import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateRequest;
 import static io.fineo.lambda.handle.schema.inject.SchemaStoreModule.SCHEMA_UPDATE_RETRIES;
@@ -43,19 +45,35 @@ public class UpdateFieldHandler extends
     UpdateFieldRequest request = irequest.getBody();
     validateFieldRequest(context, request);
 
+    boolean update = false;
+    String newName = request.getNewDisplayName();
+    if (newName != null) {
+      update = true;
+    }
+
     String[] aliases = request.getAliases();
-    if (aliases == null || aliases.length == 0) {
+    if (!update && (aliases == null || aliases.length == 0)) {
       return RESPONSE;
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("[{} - {}] Updating field: {} with aliases: '{}'", irequest.getOrgId(),
-        request.getMetricName(), request.getFieldName(), request.getAliases());
+      LOG.debug("[{} - {}] Updating field: {} with aliases: '{}', new name: {}",
+        irequest.getOrgId(), request.getMetricName(),
+        request.getFieldName(), Arrays.toString(aliases), newName);
     }
     return retry.run(() -> {
       StoreManager manager = store.get();
-      manager.updateOrg(irequest.getOrgId()).updateMetric(request.getMetricName())
-             .addFieldAlias(request.getFieldName(), aliases).build().commit();
+      StoreManager.MetricBuilder mb = manager.updateOrg(irequest.getOrgId()).updateMetric(request
+        .getMetricName());
+      StoreManager.FieldUpdater updater = mb.updateField(request.getFieldName());
+      if (newName != null) {
+        updater.withDisplayName(newName);
+      }
+      if (aliases != null) {
+        updater.withAliases(aliases);
+      }
+      updater.build().build().commit();
+
       return RESPONSE;
     }, context);
 
