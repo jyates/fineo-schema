@@ -8,6 +8,8 @@ import io.fineo.lambda.handle.external.ExternalFacingRequestHandler;
 import io.fineo.schema.OldSchemaException;
 import io.fineo.schema.exception.SchemaExistsException;
 import io.fineo.schema.store.StoreManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -19,6 +21,7 @@ import static io.fineo.lambda.handle.schema.inject.SchemaHandlerUtil.validateReq
 public class CreateOrgHandler extends
                               ExternalFacingRequestHandler<CreateOrgRequest, CreateOrgResponse> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(CreateOrgHandler.class);
   private static final CreateOrgResponse RESPONSE = new CreateOrgResponse();
   private final Provider<StoreManager> store;
 
@@ -33,6 +36,7 @@ public class CreateOrgHandler extends
     validateRequest(context, input);
     StoreManager manager = store.get();
     String orgId = input.getOrgId();
+    LOG.debug("Attempting to create org: {}", orgId);
     try {
       StoreManager.OrganizationBuilder builder = manager.newOrg(orgId);
       builder.commit();
