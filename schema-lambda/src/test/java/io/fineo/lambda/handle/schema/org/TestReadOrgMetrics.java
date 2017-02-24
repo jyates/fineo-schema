@@ -24,6 +24,7 @@ import java.util.Map;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -88,6 +89,16 @@ public class TestReadOrgMetrics {
     ReadOrgRequest request = new ReadOrgRequest();
     HandlerTestUtils.failNoValueWithProvider(TestReadOrgMetrics::createHandler, request);
   }
+
+  @Test
+  public void testReadNamesButNoMetrics() throws Exception {
+    SchemaStore store = new SchemaStore(new InMemoryRepository(ValidatorFactory.EMPTY));
+    String org = "org";
+    TestCreateOrg.createOrg(store, org);
+    ReadOrgMetricsResponse response = read(store, org);
+    assertTrue(response.getIdToMetricName().isEmpty());
+  }
+
 
   public static ReadOrgMetricsResponse read(SchemaStore store, String org) throws Exception {
     ReadOrgRequest request = new ReadOrgRequest();

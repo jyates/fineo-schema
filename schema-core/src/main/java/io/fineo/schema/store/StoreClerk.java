@@ -59,17 +59,20 @@ public class StoreClerk {
 
   public Map<String, String> getMetricIdsToNames() {
     Map<String, OrgMetricMetadata> metrics = metadata.getMetrics();
-    if(LOG.isDebugEnabled()){
-      LOG.debug("Reading metric names for metrics:");
-      for(Map.Entry<String, OrgMetricMetadata> e : metrics.entrySet()){
-        LOG.debug("{} : {}", e.getKey(), e.getValue());
+    if (metrics == null) {
+      return Collections.emptyMap();
+    }
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Reading metric names for metrics:");
+      for (Map.Entry<String, OrgMetricMetadata> e : metrics.entrySet()) {
+        LOG.trace("  {} : {}", e.getKey(), e.getValue());
       }
     }
     return metrics.keySet().stream()
-                   .collect(Collectors.toMap(Function.identity(), key -> {
-                     OrgMetricMetadata mm = metadata.getMetrics().get(key);
-                     return mm.getDisplayName();
-                   }));
+                  .collect(Collectors.toMap(Function.identity(), key -> {
+                    OrgMetricMetadata mm = metadata.getMetrics().get(key);
+                    return mm.getDisplayName();
+                  }));
   }
 
   /**
