@@ -58,7 +58,14 @@ public class StoreClerk {
   }
 
   public Map<String, String> getMetricIdsToNames() {
-    return metadata.getMetrics().keySet().stream()
+    Map<String, OrgMetricMetadata> metrics = metadata.getMetrics();
+    if(LOG.isDebugEnabled()){
+      LOG.debug("Reading metric names for metrics:");
+      for(Map.Entry<String, OrgMetricMetadata> e : metrics.entrySet()){
+        LOG.debug("{} : {}", e.getKey(), e.getValue());
+      }
+    }
+    return metrics.keySet().stream()
                    .collect(Collectors.toMap(Function.identity(), key -> {
                      OrgMetricMetadata mm = metadata.getMetrics().get(key);
                      return mm.getDisplayName();
